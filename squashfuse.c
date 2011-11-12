@@ -25,6 +25,10 @@ int main(int argc, char *argv[]) {
 		goto cleanup;
 	}
 	sqfs_swapin_super_block(&sb);
+	if (sb.s_magic != SQUASHFS_MAGIC) {
+		fprintf(stderr, "Not a squashfs image\n");
+		goto cleanup;
+	}
 	
 	printf("Inodes: %d\n", sb.inodes);
 	err = 0;

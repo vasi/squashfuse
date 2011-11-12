@@ -28,6 +28,8 @@ typedef uint16_t __le16;
 typedef uint32_t __le32;
 typedef uint64_t __le64;
 
+#define SQUASHFS_MAGIC 0x73717368
+
 
 #define SQUASHFS_CACHED_FRAGMENTS	CONFIG_SQUASHFS_FRAGMENT_CACHE_SIZE
 #define SQUASHFS_MAJOR			4
