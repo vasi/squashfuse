@@ -2,6 +2,7 @@
 #define SQFS_COMMON_H
 
 #include <stdint.h>
+#include <sys/types.h>
 
 typedef enum {
 	SQFS_OK,
@@ -9,8 +10,14 @@ typedef enum {
 	SQFS_FORMAT,
 } sqfs_err;
 
-typedef uint64_t sqfs_inode_num;
+typedef uint64_t sqfs_inode_id;
 
 typedef struct sqfs sqfs;
+typedef struct sqfs_inode sqfs_inode;
+
+typedef struct {
+	off_t block;
+	size_t offset;
+} sqfs_md_cursor;
 
 #endif

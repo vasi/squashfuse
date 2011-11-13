@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -37,6 +38,21 @@ int main(int argc, char *argv[]) {
 	if (sqfs_id_get(&fs, inode.base.uid, &id))
 		die("error getting uid");
 	printf("UID: %d\n", id);
+	
+	if (S_ISDIR(inode.base.mode)) {
+		sqfs_dir dir;
+		if (sqfs_opendir(&fs, &inode, &dir))
+			die("error opening dir");
+		
+		sqfs_err err;
+		sqfs_dir_entry *entry;
+		printf("\n");
+		while ((entry = sqfs_readdir(&dir, &err))) {
+			printf("%s\n", entry->name);
+		}
+		if (err)
+			die("error reading dir");
+	}
 	
 	sqfs_destroy(&fs);
 	close(fd);

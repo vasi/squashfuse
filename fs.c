@@ -89,10 +89,9 @@ void sqfs_block_dispose(sqfs_block *block) {
 	free(block);
 }
 
-void sqfs_md_cursor_inum(sqfs_md_cursor *cur, sqfs_inode_num num,
-		off_t base) {
-	cur->block = (num >> 16) + base;
-	cur->offset = num & 0xffff;
+void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base) {
+	cur->block = (id >> 16) + base;
+	cur->offset = id & 0xffff;
 }
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
@@ -170,12 +169,12 @@ mode_t sqfs_mode(int inode_type) {
 	if (err) return err; \
 	sqfs_swapin_##_type##_inode(&x)
 
-sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_num num) {
+sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 	memset(inode, 0, sizeof(*inode));
 	inode->xattr = SQUASHFS_INVALID_XATTR;
 	
 	sqfs_md_cursor cur;
-	sqfs_md_cursor_inum(&cur, num, fs->sb.inode_table_start);
+	sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
 	inode->next = cur;
 	
 	sqfs_err err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
@@ -198,6 +197,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_num num) {
 			INODE_TYPE(dir);
 			inode->nlink = x.nlink;
 			inode->xtra.dir.start_block = x.start_block;
+			inode->xtra.dir.offset = x.offset;
 			inode->xtra.dir.dir_size = x.file_size;
 			inode->xtra.dir.idx_count = 0;
 			inode->xtra.dir.parent_inode = x.parent_inode;

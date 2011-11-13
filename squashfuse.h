@@ -2,6 +2,7 @@
 #define SQFS_SWAPFUSE_H
 
 #include "common.h"
+#include "dir.h"
 #include "squashfs_fs.h"
 #include "swap.h"
 #include "table.h"
@@ -17,13 +18,8 @@ typedef struct {
 	void *data;
 } sqfs_block;
 
-typedef struct {
-	off_t block;
-	size_t offset;
-} sqfs_md_cursor;
-
 typedef uint32_t sqfs_xattr_idx;
-typedef struct {
+struct sqfs_inode {
 	struct squashfs_base_inode base;
 	int nlink;
 	sqfs_xattr_idx xattr;
@@ -41,12 +37,13 @@ typedef struct {
 		} reg;
 		struct {
 			uint32_t start_block;
+			uint16_t offset;
 			uint32_t dir_size;
 			uint16_t idx_count;
 			uint32_t parent_inode;
 		} dir;
 	} xtra;
-} sqfs_inode;
+};
 
 
 // Number of groups of size 'group' required to hold size 'total'
@@ -58,12 +55,12 @@ void sqfs_destroy(sqfs *fs);
 sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
 void sqfs_block_dispose(sqfs_block *block);
 
-void sqfs_md_cursor_inum(sqfs_md_cursor *cur, sqfs_inode_num num, off_t base);
+void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base);
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
 
 mode_t sqfs_mode(int inode_type);
-sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_num num);
+sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 
