@@ -8,6 +8,8 @@
 #include <zlib.h>
 
 sqfs_err sqfs_init(sqfs *fs, int fd) {
+	memset(fs, 0, sizeof(*fs));
+	
 	fs->fd = fd;
 	if (pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
 		return SQFS_ERR;
@@ -20,7 +22,16 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	if (fs->sb.compression != ZLIB_COMPRESSION) // FIXME
 		return SQFS_ERR;
 	
+	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
+		sizeof(sqfs_id), fs->sb.no_ids);
+	if (err)
+		return err;
+	
 	return SQFS_OK;
+}
+
+void sqfs_destroy(sqfs *fs) {
+	sqfs_table_destroy(&fs->id_table);
 }
 
 sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block) {
@@ -106,5 +117,20 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 			cur->offset += take;
 		}		
 	}
+	return SQFS_OK;
+}
+
+size_t sqfs_divceil(size_t total, size_t group) {
+	size_t q = total / group;
+	if (total % group)
+		q += 1;
+	return q;
+}
+
+sqfs_err sqfs_lookup_id(sqfs *fs, sqfs_id_idx idx, sqfs_id *id) {
+	sqfs_err err = sqfs_table_get(&fs->id_table, fs, idx, id);
+	if (err)
+		return err;
+	*id = sqfs_swapin32(*id);
 	return SQFS_OK;
 }

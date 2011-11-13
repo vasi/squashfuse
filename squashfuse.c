@@ -37,6 +37,12 @@ int main(int argc, char *argv[]) {
 	time_t mtime = base.mtime;
 	printf("Root mtime: %s", ctime(&mtime));
 	
+	sqfs_id id;
+	if (sqfs_lookup_id(&fs, base.uid, &id))
+		die("error getting uid");
+	printf("UID: %d\n", id);
+	
+	sqfs_destroy(&fs);
 	close(fd);
 	return 0;
 }
