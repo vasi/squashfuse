@@ -17,11 +17,6 @@ struct sqfs {
 	sqfs_table frag_table;
 };
 
-typedef struct {
-	size_t size;
-	void *data;
-} sqfs_block;
-
 typedef uint32_t sqfs_xattr_idx;
 struct sqfs_inode {
 	struct squashfs_base_inode base;
@@ -58,11 +53,11 @@ sqfs_err sqfs_init(sqfs *fs, int fd);
 void sqfs_destroy(sqfs *fs);
 
 
-void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *len);
-void sqfs_data_header(uint16_t hdr, bool *compressed, uint16_t *len);
+void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size);
+void sqfs_data_header(uint16_t hdr, bool *compressed, uint16_t *size);
 
-sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed, uint16_t len,
-	size_t outlen, sqfs_block **block);
+sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed, uint16_t size,
+	size_t outsize, sqfs_block **block);
 void sqfs_block_dispose(sqfs_block *block);
 
 sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);

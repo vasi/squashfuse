@@ -36,9 +36,12 @@ int main(int argc, char *argv[]) {
 	if (sqfs_lookup_path(&fs, &inode, path))
 		die("error looking up path");
 	
-	struct squashfs_fragment_entry frag;
-	if (sqfs_frag_entry(&fs, &frag, inode.xtra.reg.frag_idx))
-		die("error getting fragment entry");
+	size_t offset, size;
+	sqfs_block *block;
+	if (sqfs_frag_block(&fs, &inode, &offset, &size, &block))
+		die("error reading fragment");
+	
+	fwrite(block->data + offset, size, 1, stdout);
 		
 	sqfs_destroy(&fs);
 	close(fd);
