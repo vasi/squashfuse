@@ -10,20 +10,30 @@ typedef enum {
 	SQFS_FORMAT,
 } sqfs_err;
 
-struct sqfs {
+typedef uint64_t sqfs_inode_num;
+
+typedef struct {
 	int fd;
 	struct squashfs_super_block sb;
-};
+} sqfs;
 
-struct sqfs_block {
+typedef struct {
 	size_t size;
-	char *data;
-};
+	void *data;
+} sqfs_block;
 
-sqfs_err sqfs_init(struct sqfs *fs, int fd);
+typedef struct {
+	off_t block;
+	size_t offset;
+} sqfs_md_cursor;
 
-sqfs_err sqfs_read_md_block(struct sqfs *fs, off_t pos,
-	struct sqfs_block *block);
-void sqfs_dispose_block(struct sqfs_block *block);
+sqfs_err sqfs_init(sqfs *fs, int fd);
+
+sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
+void sqfs_block_dispose(sqfs_block *block);
+
+void sqfs_md_cursor_inum(sqfs_md_cursor *cur, sqfs_inode_num num, off_t base);
+
+sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
 
 #endif

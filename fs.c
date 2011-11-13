@@ -2,11 +2,12 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <zlib.h>
 
-sqfs_err sqfs_init(struct sqfs *fs, int fd) {
+sqfs_err sqfs_init(sqfs *fs, int fd) {
 	fs->fd = fd;
 	if (pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
 		return SQFS_ERR;
@@ -22,14 +23,15 @@ sqfs_err sqfs_init(struct sqfs *fs, int fd) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_read_md_block(struct sqfs *fs, off_t pos,
-		struct sqfs_block *block) {
-	block->data = NULL;
+sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block) {
+	if (!(*block = malloc(sizeof(**block))))
+		return SQFS_ERR;
+	(*block)->data = NULL;
 	
 	uint16_t hdr;
-	if (pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
-		return SQFS_ERR;
-	pos += sizeof(hdr);
+	if (pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
+		goto err;
+	*pos += sizeof(hdr);
 	hdr = sqfs_swapin16(hdr);
 	
 	bool compressed = !(hdr & SQUASHFS_COMPRESSED_BIT);
@@ -37,10 +39,11 @@ sqfs_err sqfs_read_md_block(struct sqfs *fs, off_t pos,
 	if (!len)
 		len = SQUASHFS_COMPRESSED_BIT;
 	
-	if (!(block->data = malloc(len)))
-		return SQFS_ERR;
-	if (pread(fs->fd, block->data, len, pos) != len)
+	if (!((*block)->data = malloc(len)))
 		goto err;
+	if (pread(fs->fd, (*block)->data, len, *pos) != len)
+		goto err;
+	*pos += len;
 	
 	if (compressed) {
 		size_t osize = SQUASHFS_METADATA_SIZE;
@@ -49,26 +52,59 @@ sqfs_err sqfs_read_md_block(struct sqfs *fs, off_t pos,
 			goto err;
 		
 		int zerr = uncompress((Bytef*)decomp, &osize,
-			(Bytef*)block->data, len);
+			(Bytef*)(*block)->data, len);
 		if (zerr != Z_OK) {
 			free(decomp);
 			goto err;
 		}
-		free(block->data);
-		block->data = decomp;
-		block->size = osize;
+		free((*block)->data);
+		(*block)->data = decomp;
+		(*block)->size = osize;
 	} else {
-		block->size = len;
+		(*block)->size = len;
 	}
 	
 	return SQFS_OK;
 
 err:
-	free(block->data);
-	block->data = NULL;
+	sqfs_block_dispose(*block);
+	*block = NULL;
 	return SQFS_ERR;
 }
 
-void sqfs_dispose_block(struct sqfs_block *block) {
+void sqfs_block_dispose(sqfs_block *block) {
 	free(block->data);
+	free(block);
+}
+
+void sqfs_md_cursor_inum(sqfs_md_cursor *cur, sqfs_inode_num num,
+		off_t base) {
+	cur->block = (num >> 16) + base;
+	cur->offset = num & 0xffff;
+}
+
+sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
+	off_t pos = cur->block;
+	while (size > 0) {
+		sqfs_block *block;
+		sqfs_err err = sqfs_md_block_read(fs, &pos, &block);
+		if (err)
+			return err;
+		
+		size_t take = block->size - cur->offset;
+		if (take > size)
+			take = size;		
+		memcpy(buf, (char*)block->data + cur->offset, take);
+		sqfs_block_dispose(block);
+		
+		buf = (char*)buf + take;
+		size -= take;
+		if (size) {
+			cur->block = pos;
+			cur->offset = 0;
+		} else {
+			cur->offset += take;
+		}		
+	}
+	return SQFS_OK;
 }
