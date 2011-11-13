@@ -1,0 +1,30 @@
+Read files
+	Fragments
+	Blocks
+	Holes
+Fuse interface
+MD block caches
+More file types
+	readlink
+xattrs
+
+Data block cache
+32-bit inodes
+	Export table
+Dir index
+Compression types + options
+Blocklist index
+
+Build system
+	libsquashfuse
+README
+License
+Cross-platform
+
+Threading?
+	Thread-safety
+Delegation of caching, threading?
+	Evented style?
+Speculative readahead?
+Unsquashfs clone
+Sanity checks
