@@ -55,22 +55,34 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	return &dir->entry;
 }
 
-sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, char *name,
-		sqfs_dir_entry *entry) {
-	entry->name = NULL;
-	
-	sqfs_dir dir;
-	sqfs_err err = sqfs_opendir(fs, inode, &dir);
+sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
+		char *name, sqfs_dir_entry *entry) {
+	sqfs_err err = sqfs_opendir(fs, inode, dir);
 	if (err)
 		return err;
 	
 	sqfs_dir_entry *dentry;
-	while ((dentry = sqfs_readdir(&dir, &err))) {
-		if (strcmp(dentry->name, name) != 0)
-			continue;
-		
-		*entry = *dentry;
-		return SQFS_OK;
+	while ((dentry = sqfs_readdir(dir, &err))) {
+		if (strcmp(dentry->name, name) == 0) {
+			*entry = *dentry;
+			entry->name = NULL;
+			return SQFS_OK;
+		}
 	}
 	return SQFS_ERR;
+}
+
+sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
+	sqfs_dir dir;
+	sqfs_dir_entry entry;
+	while (path && *path) {
+		char *name = strsep(&path, "/");
+		sqfs_err err = sqfs_lookup_dir(fs, inode, &dir, name, &entry);
+		if (err)
+			return err;
+		
+		if ((err = sqfs_inode_get(fs, inode, entry.inode)))
+			return err;
+	}
+	return SQFS_OK;
 }

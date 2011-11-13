@@ -62,11 +62,9 @@ int main(int argc, char *argv[]) {
 		if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
 			die("error reading inode");
 		
-		sqfs_dir_entry entry;
-		if (sqfs_lookup_dir(&fs, &inode, "etc", &entry))
-			die("error looking up /etc");
-		if (sqfs_inode_get(&fs, &inode, entry.inode))
-			die("error reading /etc inode");
+		char path[] = "etc/X11/fonts/Type1/xfonts-mathml.scale";
+		if (sqfs_lookup_path(&fs, &inode, path))
+			die("error looking up path");
 		
 		time_t mtime = inode.base.mtime;
 		printf("%s", ctime(&mtime));

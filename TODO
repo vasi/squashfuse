@@ -27,4 +27,6 @@ Delegation of caching, threading?
 	Evented style?
 Speculative readahead?
 Unsquashfs clone
-Sanity checks
+Error handling
+	Better error codes
+	Sanity checks
