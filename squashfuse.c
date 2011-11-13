@@ -1,8 +1,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "squashfuse.h"
@@ -10,6 +10,31 @@
 static void die(char *msg) {
 	fprintf(stderr, "%s\n", msg);
 	exit(1);
+}
+
+static void scandir(sqfs *fs, sqfs_inode_id id, char *path) {
+	char *end = path + strlen(path);
+	*end++ = '/';
+	
+	sqfs_inode inode;
+	if (sqfs_inode_get(fs, &inode, id))
+		die("error reading inode");
+	
+	sqfs_dir dir;
+	if (sqfs_opendir(fs, &inode, &dir))
+		die("error opening dir");
+	
+	sqfs_err err;
+	sqfs_dir_entry *entry;
+	while ((entry = sqfs_readdir(&dir, &err))) {
+		strcpy(end, entry->name);
+		printf("%s\n", path);
+		
+		if (S_ISDIR(sqfs_mode(entry->type)))
+			scandir(fs, entry->inode, path);
+	}
+	if (err)
+		die("error reading dir");
 }
 
 int main(int argc, char *argv[]) {
@@ -27,33 +52,10 @@ int main(int argc, char *argv[]) {
 	if (sqfs_init(&fs, fd))
 		die("error initializing fs");
 	
-	sqfs_inode inode;
-	if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
-		die("error reading inode");
-	
-	time_t mtime = inode.base.mtime;
-	printf("Root mtime: %s", ctime(&mtime));
-	
-	uid_t id;
-	if (sqfs_id_get(&fs, inode.base.uid, &id))
-		die("error getting uid");
-	printf("UID: %d\n", id);
-	
-	if (S_ISDIR(inode.base.mode)) {
-		sqfs_dir dir;
-		if (sqfs_opendir(&fs, &inode, &dir))
-			die("error opening dir");
+	char path[PATH_MAX+1];
+	path[0] = '\0';
+	scandir(&fs, fs.sb.root_inode, path);
 		
-		sqfs_err err;
-		sqfs_dir_entry *entry;
-		printf("\n");
-		while ((entry = sqfs_readdir(&dir, &err))) {
-			printf("%s\n", entry->name);
-		}
-		if (err)
-			die("error reading dir");
-	}
-	
 	sqfs_destroy(&fs);
 	close(fd);
 	return 0;

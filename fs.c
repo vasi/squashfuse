@@ -203,6 +203,17 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.dir.parent_inode = x.parent_inode;
 			break;
 		}
+		case SQUASHFS_LDIR_TYPE: {
+			INODE_TYPE(ldir);
+			inode->nlink = x.nlink;
+			inode->xtra.dir.start_block = x.start_block;
+			inode->xtra.dir.offset = x.offset;
+			inode->xtra.dir.dir_size = x.file_size;
+			inode->xtra.dir.idx_count = x.i_count;
+			inode->xtra.dir.parent_inode = x.parent_inode;
+			inode->xattr = x.xattr;
+			break;
+		}
 		
 		// FIXME
 		default: return SQFS_ERR;
