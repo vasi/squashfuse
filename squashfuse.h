@@ -1,6 +1,8 @@
 #ifndef SQFS_SWAPFUSE_H
 #define SQFS_SWAPFUSE_H
 
+#include <stdbool.h>
+
 #include "common.h"
 #include "dir.h"
 #include "file.h"
@@ -51,19 +53,31 @@ struct sqfs_inode {
 // Number of groups of size 'group' required to hold size 'total'
 size_t sqfs_divceil(size_t total, size_t group);
 
+
 sqfs_err sqfs_init(sqfs *fs, int fd);
 void sqfs_destroy(sqfs *fs);
 
-sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
+
+void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *len);
+void sqfs_data_header(uint16_t hdr, bool *compressed, uint16_t *len);
+
+sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed, uint16_t len,
+	size_t outlen, sqfs_block **block);
 void sqfs_block_dispose(sqfs_block *block);
+
+sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
+sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint16_t hdr,
+	sqfs_block **block);
+
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base);
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
 
-mode_t sqfs_mode(int inode_type);
+
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 
+mode_t sqfs_mode(int inode_type);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 
 #endif
