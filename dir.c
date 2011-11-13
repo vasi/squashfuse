@@ -54,3 +54,23 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	*err = SQFS_OK;
 	return &dir->entry;
 }
+
+sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, char *name,
+		sqfs_dir_entry *entry) {
+	entry->name = NULL;
+	
+	sqfs_dir dir;
+	sqfs_err err = sqfs_opendir(fs, inode, &dir);
+	if (err)
+		return err;
+	
+	sqfs_dir_entry *dentry;
+	while ((dentry = sqfs_readdir(&dir, &err))) {
+		if (strcmp(dentry->name, name) != 0)
+			continue;
+		
+		*entry = *dentry;
+		return SQFS_OK;
+	}
+	return SQFS_ERR;
+}

@@ -27,4 +27,8 @@ typedef struct {
 sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir);
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err);
 
+// Returned entry will have no name field
+sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, char *name,
+	sqfs_dir_entry *entry);
+
 #endif

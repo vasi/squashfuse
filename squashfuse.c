@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "squashfuse.h"
@@ -52,9 +53,24 @@ int main(int argc, char *argv[]) {
 	if (sqfs_init(&fs, fd))
 		die("error initializing fs");
 	
-	char path[PATH_MAX+1];
-	path[0] = '\0';
-	scandir(&fs, fs.sb.root_inode, path);
+	if (0) {
+		char path[PATH_MAX+1];
+		path[0] = '\0';
+		scandir(&fs, fs.sb.root_inode, path);
+	} else if (1) {
+		sqfs_inode inode;
+		if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
+			die("error reading inode");
+		
+		sqfs_dir_entry entry;
+		if (sqfs_lookup_dir(&fs, &inode, "etc", &entry))
+			die("error looking up /etc");
+		if (sqfs_inode_get(&fs, &inode, entry.inode))
+			die("error reading /etc inode");
+		
+		time_t mtime = inode.base.mtime;
+		printf("%s", ctime(&mtime));
+	}
 		
 	sqfs_destroy(&fs);
 	close(fd);
