@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <zlib.h>
@@ -23,7 +24,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 		return SQFS_ERR;
 	
 	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
-		sizeof(sqfs_id), fs->sb.no_ids);
+		sizeof(uint32_t), fs->sb.no_ids);
 	if (err)
 		return err;
 	
@@ -127,10 +128,86 @@ size_t sqfs_divceil(size_t total, size_t group) {
 	return q;
 }
 
-sqfs_err sqfs_lookup_id(sqfs *fs, sqfs_id_idx idx, sqfs_id *id) {
-	sqfs_err err = sqfs_table_get(&fs->id_table, fs, idx, id);
+sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
+	uint32_t rid;
+	sqfs_err err = sqfs_table_get(&fs->id_table, fs, idx, &rid);
 	if (err)
 		return err;
-	*id = sqfs_swapin32(*id);
+	*id = sqfs_swapin32(rid);
 	return SQFS_OK;
 }
+
+mode_t sqfs_mode(int inode_type) {
+	switch (inode_type) {
+		case SQUASHFS_DIR_TYPE:
+		case SQUASHFS_LDIR_TYPE:
+			return S_IFDIR;
+		case SQUASHFS_REG_TYPE:
+		case SQUASHFS_LREG_TYPE:
+			return S_IFREG;
+		case SQUASHFS_SYMLINK_TYPE:
+		case SQUASHFS_LSYMLINK_TYPE:
+			return S_IFLNK;
+		case SQUASHFS_BLKDEV_TYPE:
+		case SQUASHFS_LBLKDEV_TYPE:
+			return S_IFBLK;
+		case SQUASHFS_CHRDEV_TYPE:
+		case SQUASHFS_LCHRDEV_TYPE:
+			return S_IFCHR;
+		case SQUASHFS_FIFO_TYPE:
+		case SQUASHFS_LFIFO_TYPE:
+			return S_IFIFO;
+		case SQUASHFS_SOCKET_TYPE:
+		case SQUASHFS_LSOCKET_TYPE:
+			return S_IFSOCK;
+	}
+	return 0;
+}
+
+#define INODE_TYPE(_type) \
+	struct squashfs_##_type##_inode x; \
+	err = sqfs_md_read(fs, &inode->next, &x, sizeof(x)); \
+	if (err) return err; \
+	sqfs_swapin_##_type##_inode(&x)
+
+sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_num num) {
+	memset(inode, 0, sizeof(*inode));
+	inode->xattr = SQUASHFS_INVALID_XATTR;
+	
+	sqfs_md_cursor cur;
+	sqfs_md_cursor_inum(&cur, num, fs->sb.inode_table_start);
+	inode->next = cur;
+	
+	sqfs_err err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
+	if (err)
+		return err;
+	sqfs_swapin_base_inode(&inode->base);
+	
+	inode->base.mode |= sqfs_mode(inode->base.inode_type);
+	switch (inode->base.inode_type) {
+		case SQUASHFS_REG_TYPE: {
+			INODE_TYPE(reg);
+			inode->nlink = 1;
+			inode->xtra.reg.start_block = x.start_block;
+			inode->xtra.reg.file_size = x.file_size;
+			inode->xtra.reg.frag_block = x.fragment;
+			inode->xtra.reg.frag_off = x.offset;
+			break;
+		}
+		case SQUASHFS_DIR_TYPE: {
+			INODE_TYPE(dir);
+			inode->nlink = x.nlink;
+			inode->xtra.dir.start_block = x.start_block;
+			inode->xtra.dir.dir_size = x.file_size;
+			inode->xtra.dir.idx_count = 0;
+			inode->xtra.dir.parent_inode = x.parent_inode;
+			break;
+		}
+		
+		// FIXME
+		default: return SQFS_ERR;
+	}
+	
+	return SQFS_OK;
+}
+#undef INODE_TYPE

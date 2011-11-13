@@ -26,19 +26,15 @@ int main(int argc, char *argv[]) {
 	if (sqfs_init(&fs, fd))
 		die("error initializing fs");
 	
-	sqfs_md_cursor cur;
-	sqfs_md_cursor_inum(&cur, fs.sb.root_inode, fs.sb.inode_table_start);
-	
-	struct squashfs_base_inode base;
-	if (sqfs_md_read(&fs, &cur, &base, sizeof(base)))
+	sqfs_inode inode;
+	if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
 		die("error reading inode");
-	sqfs_swapin_base_inode(&base);
 	
-	time_t mtime = base.mtime;
+	time_t mtime = inode.base.mtime;
 	printf("Root mtime: %s", ctime(&mtime));
 	
-	sqfs_id id;
-	if (sqfs_lookup_id(&fs, base.uid, &id))
+	uid_t id;
+	if (sqfs_id_get(&fs, inode.base.uid, &id))
 		die("error getting uid");
 	printf("UID: %d\n", id);
 	
