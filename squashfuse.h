@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "dir.h"
+#include "file.h"
 #include "squashfs_fs.h"
 #include "swap.h"
 #include "table.h"
@@ -11,6 +12,7 @@ struct sqfs {
 	int fd;
 	struct squashfs_super_block sb;
 	sqfs_table id_table;
+	sqfs_table frag_table;
 };
 
 typedef struct {
@@ -32,7 +34,7 @@ struct sqfs_inode {
 		struct {
 			uint64_t start_block;
 			uint64_t file_size;
-			uint32_t frag_block;
+			uint32_t frag_idx;
 			uint32_t frag_off;
 		} reg;
 		struct {

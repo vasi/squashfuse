@@ -13,31 +13,6 @@ static void die(char *msg) {
 	exit(1);
 }
 
-static void scandir(sqfs *fs, sqfs_inode_id id, char *path) {
-	char *end = path + strlen(path);
-	*end++ = '/';
-	
-	sqfs_inode inode;
-	if (sqfs_inode_get(fs, &inode, id))
-		die("error reading inode");
-	
-	sqfs_dir dir;
-	if (sqfs_opendir(fs, &inode, &dir))
-		die("error opening dir");
-	
-	sqfs_err err;
-	sqfs_dir_entry *entry;
-	while ((entry = sqfs_readdir(&dir, &err))) {
-		strcpy(end, entry->name);
-		printf("%s\n", path);
-		
-		if (S_ISDIR(sqfs_mode(entry->type)))
-			scandir(fs, entry->inode, path);
-	}
-	if (err)
-		die("error reading dir");
-}
-
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s IMAGE\n", argv[0]);
@@ -53,22 +28,17 @@ int main(int argc, char *argv[]) {
 	if (sqfs_init(&fs, fd))
 		die("error initializing fs");
 	
-	if (0) {
-		char path[PATH_MAX+1];
-		path[0] = '\0';
-		scandir(&fs, fs.sb.root_inode, path);
-	} else if (1) {
-		sqfs_inode inode;
-		if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
-			die("error reading inode");
+	sqfs_inode inode;
+	if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
+		die("error reading inode");
 		
-		char path[] = "etc/X11/fonts/Type1/xfonts-mathml.scale";
-		if (sqfs_lookup_path(&fs, &inode, path))
-			die("error looking up path");
-		
-		time_t mtime = inode.base.mtime;
-		printf("%s", ctime(&mtime));
-	}
+	char path[] = "squashfs/Makefile";
+	if (sqfs_lookup_path(&fs, &inode, path))
+		die("error looking up path");
+	
+	struct squashfs_fragment_entry frag;
+	if (sqfs_frag_entry(&fs, &frag, inode.xtra.reg.frag_idx))
+		die("error getting fragment entry");
 		
 	sqfs_destroy(&fs);
 	close(fd);

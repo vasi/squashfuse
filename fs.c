@@ -28,6 +28,11 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	if (err)
 		return err;
 	
+	err = sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
+		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
+	if (err)
+		return err;
+	
 	return SQFS_OK;
 }
 
@@ -189,7 +194,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->nlink = 1;
 			inode->xtra.reg.start_block = x.start_block;
 			inode->xtra.reg.file_size = x.file_size;
-			inode->xtra.reg.frag_block = x.fragment;
+			inode->xtra.reg.frag_idx = x.fragment;
 			inode->xtra.reg.frag_off = x.offset;
 			break;
 		}
