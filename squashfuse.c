@@ -1,65 +1,116 @@
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
+#define FUSE_USE_VERSION 26
+#include <fuse/fuse_lowlevel.h>
+
 #include "squashfuse.h"
 
-static void die(char *msg) {
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
+static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
+		struct fuse_file_info *fi) {
+	fuse_reply_err(req, ENOENT);
+}
+
+static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+		off_t off, struct fuse_file_info *fi) {
+	fuse_reply_err(req, ENOENT);
+}
+
+static struct fuse_lowlevel_ops sqfs_ll = {
+	.getattr	= sqfs_ll_getattr,
+	.readdir	= sqfs_ll_readdir,
+};
+
+typedef struct {
+	const char *image;
+	int mountpoint;
+} sqfs_ll_opts;
+
+static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
+		struct fuse_args *outargs) {
+	sqfs_ll_opts *opts = (sqfs_ll_opts*)data;
+	if (key == FUSE_OPT_KEY_NONOPT) {
+		if (opts->mountpoint) {
+			return -1; // Too many args
+		} else if (opts->image) {
+			opts->mountpoint = 1;
+			return 1;
+		} else {
+			opts->image = arg;
+			return 0;
+		}
+	}
+	return 1; // Keep
 }
 
 int main(int argc, char *argv[]) {
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s IMAGE\n", argv[0]);
-		return -1;
+	// FIXME: 32-bit inodes?
+	if (sizeof(fuse_ino_t) < 6) {
+		fprintf(stderr, "Need at least 48-bit inodes!\n");
+		exit(-3);
 	}
 	
-	char *file = argv[1];
-	int fd = open(file, O_RDONLY);
-	if (fd == -1)
-		die("error opening image");
+	// PARSE ARGS
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+	sqfs_ll_opts opts = { .image = NULL, .mountpoint = 0 };
+	int usage = 0;
+	if (fuse_opt_parse(&args, &opts, NULL, sqfs_ll_opt_proc) == -1)
+		usage = 1;
+
+	char *mountpoint = NULL;
+	int mt, fg;
+	if (usage || fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1 ||
+			mountpoint == NULL) {
+		fprintf(stderr, "Usage: %s [OPTIONS] IMAGE MOUNTPOINT\n", argv[0]);
+		exit(-2);
+	}
 	
+	
+	// OPEN FS
+	int err = 0;
+	int fd = open(opts.image, O_RDONLY);
+	if (fd == -1) {
+		perror("Can't open squashfs image");
+		err = 1;
+	}
+
 	sqfs fs;
-	if (sqfs_init(&fs, fd))
-		die("error initializing fs");
+	sqfs_err serr = sqfs_init(&fs, fd);
+	if (serr) {
+		fprintf(stderr, "Can't open image: %d\n", serr);
+		err = 1;
+	}
 	
-	sqfs_inode inode;
-	if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
-		die("error reading inode");
 	
-	
-	if (argc != 5)
-		die("bad args");
-	char *endptr, *path = argv[2];
-	off_t start = strtoll(argv[3], &endptr, 0);
-	if (!*argv[3] || *endptr)
-		die("bad len");
-	off_t size = strtoll(argv[4], &endptr, 0);
-	if (!*argv[4] || *endptr)
-		die("bad len");
-	
-	if (sqfs_lookup_path(&fs, &inode, path))
-		die("error looking up path");
-	
-	char *buf = malloc(size);
-	if (!buf)
-		die("malloc");
-	
-	off_t read = size;
-	if (sqfs_read_range(&fs, &inode, start, &read, buf))
-		die("read range");
-	
-	fprintf(stderr, "Read: %jd\n", (intmax_t)read);
-	if (fwrite(buf, read, 1, stdout) != 1)
-		die("fwrite");
-	
-	free(buf);
-	sqfs_destroy(&fs);
-	close(fd);
-	return 0;
+	// STARTUP FUSE
+	if (!err) {
+		err = -1;
+		struct fuse_chan *ch = fuse_mount(mountpoint, &args);
+		if (ch) {
+			struct fuse_session *se = fuse_lowlevel_new(&args,
+				&sqfs_ll, sizeof(sqfs_ll), &fs);	
+			if (se != NULL) {
+				if (fuse_daemonize(fg) != -1) {
+					if (fuse_set_signal_handlers(se) != -1) {
+						fuse_session_add_chan(se, ch);
+						// FIXME: multithreading
+						err = fuse_session_loop(se);
+						fuse_remove_signal_handlers(se);
+						fuse_session_remove_chan(ch);
+					}
+				}
+				fuse_session_destroy(se);
+			}
+			fuse_unmount(mountpoint, ch);
+		}
+	}
+	fuse_opt_free_args(&args);
+	free(mountpoint);
+
+	return -err;
 }
