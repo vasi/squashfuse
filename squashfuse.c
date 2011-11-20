@@ -14,7 +14,7 @@ static void die(char *msg) {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc != 2) {
+	if (argc < 2) {
 		fprintf(stderr, "Usage: %s IMAGE\n", argv[0]);
 		return -1;
 	}
@@ -31,18 +31,34 @@ int main(int argc, char *argv[]) {
 	sqfs_inode inode;
 	if (sqfs_inode_get(&fs, &inode, fs.sb.root_inode))
 		die("error reading inode");
-		
-	char path[] = "squashfs/Makefile";
+	
+	
+	if (argc != 5)
+		die("bad args");
+	char *endptr, *path = argv[2];
+	off_t start = strtoll(argv[3], &endptr, 0);
+	if (!*argv[3] || *endptr)
+		die("bad len");
+	off_t size = strtoll(argv[4], &endptr, 0);
+	if (!*argv[4] || *endptr)
+		die("bad len");
+	
 	if (sqfs_lookup_path(&fs, &inode, path))
 		die("error looking up path");
 	
-	size_t offset, size;
-	sqfs_block *block;
-	if (sqfs_frag_block(&fs, &inode, &offset, &size, &block))
-		die("error reading fragment");
+	char *buf = malloc(size);
+	if (!buf)
+		die("malloc");
 	
-	fwrite(block->data + offset, size, 1, stdout);
-		
+	off_t read = size;
+	if (sqfs_read_range(&fs, &inode, start, &read, buf))
+		die("read range");
+	
+	fprintf(stderr, "Read: %jd\n", (intmax_t)read);
+	if (fwrite(buf, read, 1, stdout) != 1)
+		die("fwrite");
+	
+	free(buf);
 	sqfs_destroy(&fs);
 	close(fd);
 	return 0;

@@ -47,13 +47,13 @@ void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size) {
 		*size = SQUASHFS_COMPRESSED_BIT;
 }
 
-void sqfs_data_header(uint16_t hdr, bool *compressed, uint16_t *size) {
+void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
 	*compressed = !(hdr & SQUASHFS_COMPRESSED_BIT_BLOCK);
 	*size = hdr & ~SQUASHFS_COMPRESSED_BIT_BLOCK;
 }
 
 sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
-		uint16_t size, size_t outsize, sqfs_block **block) {
+		uint32_t size, size_t outsize, sqfs_block **block) {
 	if (!(*block = malloc(sizeof(**block))))
 		return SQFS_ERR;
 	if (!((*block)->data = malloc(size)))
@@ -105,10 +105,10 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block) {
 	return err;
 }
 
-sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint16_t hdr,
+sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 		sqfs_block **block) {
 	bool compressed;
-	uint16_t size;
+	uint32_t size;
 	sqfs_data_header(hdr, &compressed, &size);
 	return sqfs_block_read(fs, pos, compressed, size,
 		fs->sb.block_size, block);

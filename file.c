@@ -1,5 +1,7 @@
 #include "file.h"
 
+#include <stddef.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "squashfuse.h"
@@ -31,4 +33,117 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 	*offset = inode->xtra.reg.frag_off;
 	*size = inode->xtra.reg.file_size % fs->sb.block_size;
 	return SQFS_OK;
+}
+
+size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode) {
+	uint64_t size = inode->xtra.reg.file_size, block = fs->sb.block_size;
+	if (inode->xtra.reg.frag_idx == SQUASHFS_INVALID_FRAG) {
+		return sqfs_divceil(size, block);
+	} else {
+		return size / block;
+	}
+}
+
+void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode, sqfs_blocklist *bl) {
+	bl->fs = fs;
+	bl->remain = sqfs_blocklist_count(fs, inode);
+	bl->cur = inode->next;
+	bl->started = false;
+	bl->pos = 0;
+	bl->block = inode->xtra.reg.start_block;
+	bl->input_size = 0;
+}
+
+sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl) {
+	if (bl->remain == 0)
+		return SQFS_ERR;
+	--(bl->remain);
+	
+	sqfs_err err = sqfs_md_read(bl->fs, &bl->cur, &bl->header,
+		sizeof(bl->header));
+	if (err)
+		return err;
+	bl->header = sqfs_swapin32(bl->header);
+	
+	bl->block += bl->input_size;
+	bool compressed;
+	sqfs_data_header(bl->header, &compressed, &bl->input_size);
+	
+	if (bl->started)
+		bl->pos += bl->fs->sb.block_size;
+	bl->started = true;
+	
+	return SQFS_OK;
+}
+
+sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
+		off_t *size, void *buf) {
+	if (!S_ISREG(inode->base.mode))
+		return SQFS_ERR;
+	
+	off_t file_size = inode->xtra.reg.file_size;
+	size_t block_size = fs->sb.block_size;
+	
+	if (size < 0 || start > file_size)
+		return SQFS_ERR;
+	if (start == file_size) {
+		*size = 0;
+		return SQFS_OK;
+	}
+	
+	sqfs_blocklist bl;
+	sqfs_blocklist_init(fs, inode, &bl);
+	
+	size_t read_off = start % block_size;
+	char *buf_orig = buf;
+	while (*size > 0) {
+		sqfs_block *block = NULL;
+		sqfs_err err;
+		size_t data_off, data_size;
+		
+		bool fragment = (bl.remain == 0);
+		if (fragment) { // fragment
+			if (inode->xtra.reg.frag_idx == SQUASHFS_INVALID_FRAG)
+				break;
+			err = sqfs_frag_block(fs, inode, &data_off, &data_size, &block);
+			if (err)
+				return err;
+		} else {			
+			if ((err = sqfs_blocklist_next(&bl)))
+				return err;
+			if (bl.pos + block_size <= start)
+				continue;
+			
+			data_off = 0;
+			if (bl.input_size == 0) { // Hole!
+				data_size = file_size - bl.pos;
+				if (data_size > block_size)
+					data_size = block_size;
+			} else {
+				err = sqfs_data_block_read(fs, bl.block, bl.header, &block);
+				if (err)
+					return err;
+				data_size = block->size;
+			}
+		}
+		
+		size_t take = data_size - read_off;
+		if (take > *size)
+			take = *size;
+		if (block) {
+			memcpy(buf, block->data + data_off + read_off, take);
+			sqfs_block_dispose(block);
+		} else {
+			memset(buf, 0, take);
+		}
+		read_off = 0;
+		*size -= take;
+		buf += take;
+		
+		if (fragment)
+			break;
+	}
+	
+	*size = (char*)buf - buf_orig;
+	return *size ? SQFS_OK : SQFS_ERR;
 }
