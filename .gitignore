@@ -1,3 +1,4 @@
 *.inc
 squashfuse
 *.dSYM
+*.o
