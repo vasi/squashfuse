@@ -10,6 +10,7 @@ typedef enum {
 	SQFS_FORMAT,
 } sqfs_err;
 
+#define SQFS_INODE_ID_BYTES 6
 typedef uint64_t sqfs_inode_id;
 
 typedef struct sqfs sqfs;

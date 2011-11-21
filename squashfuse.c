@@ -1,7 +1,9 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -11,9 +13,62 @@
 
 #include "squashfuse.h"
 
+
+static const double SQFS_TIMEOUT = DBL_MAX;
+
+// FUSE wants the root to have inode 1. Convert back and forth
+static fuse_ino_t sqfs_ll_ino_fuse(sqfs *fs, sqfs_inode_id i);
+static sqfs_inode_id sqfs_ll_ino_sqfs(sqfs *fs, fuse_ino_t i);
+
+
+typedef struct {
+	const char *image;
+	int mountpoint;
+} sqfs_ll_opts;
+
+static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
+	struct fuse_args *outargs);
+
+
+static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
+	struct fuse_file_info *fi);
+static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+	off_t off, struct fuse_file_info *fi);
+
+
+
+static fuse_ino_t sqfs_ll_ino_fuse(sqfs *fs, sqfs_inode_id i) {
+       return (i == fs->sb.root_inode) ? FUSE_ROOT_ID : i;
+}
+static sqfs_inode_id sqfs_ll_ino_sqfs(sqfs *fs, fuse_ino_t i) {
+       return (i == FUSE_ROOT_ID) ? fs->sb.root_inode : i;
+}
+
+
 static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	fuse_reply_err(req, ENOENT);
+	sqfs *fs = fuse_req_userdata(req);
+	sqfs_inode_id inode_id = sqfs_ll_ino_sqfs(fs, ino);
+	sqfs_inode inode;
+	if (sqfs_inode_get(fs, &inode, inode_id)) {
+		fuse_reply_err(req, ENOENT);
+		return;
+	}
+	
+	struct stat st;
+	memset(&st, 0, sizeof(st));
+	st.st_mode = inode.base.mode | sqfs_mode(inode.base.inode_type);
+	st.st_nlink = inode.nlink;
+	st.st_ino = ino;
+	// FIXME: uid, gid, rdev
+	st.st_mtimespec.tv_sec = st.st_ctimespec.tv_sec =
+		st.st_atimespec.tv_sec = inode.base.mtime;
+	if (S_ISREG(st.st_mode)) {
+		st.st_size = inode.xtra.reg.file_size; // symlink?
+		st.st_blocks = st.st_size / 512;
+	}
+	st.st_blksize = fs->sb.block_size; // seriously?
+	fuse_reply_attr(req, &st, SQFS_TIMEOUT);
 }
 
 static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
@@ -26,10 +81,6 @@ static struct fuse_lowlevel_ops sqfs_ll = {
 	.readdir	= sqfs_ll_readdir,
 };
 
-typedef struct {
-	const char *image;
-	int mountpoint;
-} sqfs_ll_opts;
 
 static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 		struct fuse_args *outargs) {
@@ -50,8 +101,9 @@ static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 
 int main(int argc, char *argv[]) {
 	// FIXME: 32-bit inodes?
-	if (sizeof(fuse_ino_t) < 6) {
-		fprintf(stderr, "Need at least 48-bit inodes!\n");
+	if (sizeof(fuse_ino_t) < SQFS_INODE_ID_BYTES) {
+		fprintf(stderr, "Need at least %d-bit inodes!\n",
+			SQFS_INODE_ID_BYTES * 8);
 		exit(-3);
 	}
 	
