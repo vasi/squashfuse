@@ -1,5 +1,5 @@
-Fuse interface
 MD block caches
+UID, GID
 More file types
 	readlink
 xattrs
@@ -12,7 +12,7 @@ Compression types + options
 Blocklist index
 
 Build system
-	libsquashfuse
+	libsquashfuse?
 README
 Docs, comments
 License

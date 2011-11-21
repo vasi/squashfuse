@@ -56,7 +56,7 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 }
 
 sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
-		char *name, sqfs_dir_entry *entry) {
+		const char *name, sqfs_dir_entry *entry) {
 	sqfs_err err = sqfs_opendir(fs, inode, dir);
 	if (err)
 		return err;

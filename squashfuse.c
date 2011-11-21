@@ -22,6 +22,7 @@ static sqfs_inode_id sqfs_ll_ino_sqfs(sqfs *fs, fuse_ino_t i);
 
 static sqfs_err sqfs_ll_inode(fuse_req_t req, sqfs **fs, sqfs_inode *inode,
 	fuse_ino_t ino);
+static sqfs_err sqfs_ll_stat(sqfs *fs, sqfs_inode_id id, struct stat *st);
 
 
 typedef struct {
@@ -41,7 +42,8 @@ static void sqfs_ll_releasedir(fuse_req_t req, fuse_ino_t ino,
 	struct fuse_file_info *fi);
 static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	off_t off, struct fuse_file_info *fi);
-
+static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
+	const char *name);
 
 
 static fuse_ino_t sqfs_ll_ino_fuse(sqfs *fs, sqfs_inode_id i) {
@@ -61,28 +63,37 @@ static sqfs_err sqfs_ll_inode(fuse_req_t req, sqfs **fs, sqfs_inode *inode,
 	return err;
 }
 
+static sqfs_err sqfs_ll_stat(sqfs *fs, sqfs_inode_id id, struct stat *st) {
+	sqfs_inode inode;
+	sqfs_err err = sqfs_inode_get(fs, &inode, id);
+	if (err)
+		return err;
+	
+	memset(st, 0, sizeof(*st));
+	st->st_mode = inode.base.mode | sqfs_mode(inode.base.inode_type);
+	st->st_nlink = inode.nlink;
+	st->st_ino = sqfs_ll_ino_fuse(fs, id);
+	// FIXME: uid, gid, rdev
+	st->st_mtimespec.tv_sec = st->st_ctimespec.tv_sec =
+		st->st_atimespec.tv_sec = inode.base.mtime;
+	if (S_ISREG(st->st_mode)) {
+		st->st_size = inode.xtra.reg.file_size; // symlink?
+		st->st_blocks = st->st_size / 512;
+	}
+	st->st_blksize = fs->sb.block_size; // seriously?
+	return SQFS_OK;
+}
+
 
 static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	sqfs *fs;
-	sqfs_inode inode;
-	if (sqfs_ll_inode(req, &fs, &inode, ino))
-		return;
-	
+	sqfs *fs = fuse_req_userdata(req);
 	struct stat st;
-	memset(&st, 0, sizeof(st));
-	st.st_mode = inode.base.mode | sqfs_mode(inode.base.inode_type);
-	st.st_nlink = inode.nlink;
-	st.st_ino = ino;
-	// FIXME: uid, gid, rdev
-	st.st_mtimespec.tv_sec = st.st_ctimespec.tv_sec =
-		st.st_atimespec.tv_sec = inode.base.mtime;
-	if (S_ISREG(st.st_mode)) {
-		st.st_size = inode.xtra.reg.file_size; // symlink?
-		st.st_blocks = st.st_size / 512;
+	if (sqfs_ll_stat(fs, sqfs_ll_ino_sqfs(fs, ino), &st)) {
+		fuse_reply_err(req, ENOENT);
+	} else {
+		fuse_reply_attr(req, &st, SQFS_TIMEOUT);
 	}
-	st.st_blksize = fs->sb.block_size; // seriously?
-	fuse_reply_attr(req, &st, SQFS_TIMEOUT);
 }
 
 static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
@@ -142,11 +153,42 @@ static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	}
 }
 
+static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
+		const char *name) {
+	sqfs *fs;
+	sqfs_inode inode;
+	if (sqfs_ll_inode(req, &fs, &inode, parent))
+		return;
+	
+	sqfs_dir dir;
+	if (sqfs_opendir(fs, &inode, &dir)) {
+		fuse_reply_err(req, ENOTDIR);
+		return;
+	}
+	sqfs_dir_entry entry;
+	if (sqfs_lookup_dir(fs, &inode, &dir, name, &entry)) {
+		fuse_reply_err(req, ENOENT);
+		return;
+	}
+	
+	struct fuse_entry_param fentry;
+	memset(&fentry, 0, sizeof(fentry));
+	fentry.ino = sqfs_ll_ino_fuse(fs, entry.inode);
+	fentry.attr_timeout = fentry.entry_timeout = SQFS_TIMEOUT;
+	if (sqfs_ll_stat(fs, entry.inode, &fentry.attr)) {
+		fuse_reply_err(req, EIO);
+	} else {
+		fuse_reply_entry(req, &fentry);
+	}
+}
+
+
 static struct fuse_lowlevel_ops sqfs_ll = {
 	.getattr	= sqfs_ll_getattr,
 	.opendir	= sqfs_ll_opendir,
 	.releasedir	= sqfs_ll_releasedir,
 	.readdir	= sqfs_ll_readdir,
+	.lookup		= sqfs_ll_lookup,
 };
 
 
