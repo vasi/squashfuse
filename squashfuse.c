@@ -102,8 +102,10 @@ static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
 	
 	sqfs *fs;
 	sqfs_inode inode;
-	if (sqfs_ll_inode(req, &fs, &inode, ino))
+	if (sqfs_ll_inode(req, &fs, &inode, ino)) {
+		fuse_reply_err(req, EIO);		
 		return;
+	}
 	
 	sqfs_dir *dir = malloc(sizeof(sqfs_dir));
 	if (!dir) {
@@ -157,8 +159,10 @@ static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
 		const char *name) {
 	sqfs *fs;
 	sqfs_inode inode;
-	if (sqfs_ll_inode(req, &fs, &inode, parent))
+	if (sqfs_ll_inode(req, &fs, &inode, parent)) {
+		fuse_reply_err(req, EIO);		
 		return;
+	}
 	
 	sqfs_dir dir;
 	if (sqfs_opendir(fs, &inode, &dir)) {
@@ -182,6 +186,66 @@ static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
 	}
 }
 
+static void sqfs_ll_open(fuse_req_t req, fuse_ino_t ino,
+		struct fuse_file_info *fi) {
+	if (fi->flags & (O_WRONLY | O_RDWR)) {
+		fuse_reply_err(req, EROFS);
+		return;
+	}
+	
+	sqfs *fs;
+	sqfs_inode inode;
+	if (sqfs_ll_inode(req, &fs, &inode, ino)) {
+		fuse_reply_err(req, EIO);		
+		return;
+	}
+	if (!S_ISREG(sqfs_mode(inode.base.inode_type))) {
+		fuse_reply_err(req, EISDIR);
+		return;
+	}
+	
+	sqfs_inode *fh = malloc(sizeof(sqfs_inode));
+	if (!fh) {
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
+	
+	memcpy(fh, &inode, sizeof(inode));
+	fi->fh = (intptr_t)fh;
+	fuse_reply_open(req, fi);
+}
+
+static void sqfs_ll_release(fuse_req_t req, fuse_ino_t ino,
+		struct fuse_file_info *fi) {
+	free((sqfs_inode*)fi->fh);
+	fi->fh = 0;
+	fuse_reply_err(req, 0);
+}
+
+static void sqfs_ll_read(fuse_req_t req, fuse_ino_t ino,
+		size_t size, off_t off, struct fuse_file_info *fi) {
+	sqfs *fs = fuse_req_userdata(req);
+	sqfs_inode *inode = (sqfs_inode*)fi->fh;
+	
+	char *buf = malloc(size);
+	if (!buf) {
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
+	
+	off_t osize = size;
+	sqfs_err err = sqfs_read_range(fs, inode, off, &osize, buf);
+	if (err) {
+		fuse_reply_err(req, EIO);
+	} else if (osize == 0) { // EOF
+		fuse_reply_buf(req, NULL, 0);
+	} else {
+		fuse_reply_buf(req, buf, osize);
+	}
+	fprintf(stderr, "read: %d\n", osize);
+	free(buf);
+}
+
 
 static struct fuse_lowlevel_ops sqfs_ll = {
 	.getattr	= sqfs_ll_getattr,
@@ -189,6 +253,9 @@ static struct fuse_lowlevel_ops sqfs_ll = {
 	.releasedir	= sqfs_ll_releasedir,
 	.readdir	= sqfs_ll_readdir,
 	.lookup		= sqfs_ll_lookup,
+	.open		= sqfs_ll_open,
+	.release	= sqfs_ll_release,
+	.read		= sqfs_ll_read,
 };
 
 
