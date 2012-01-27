@@ -47,10 +47,22 @@ static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
 
 
 static fuse_ino_t sqfs_ll_ino_fuse(sqfs *fs, sqfs_inode_id i) {
-       return (i == fs->sb.root_inode) ? FUSE_ROOT_ID : i;
+	if (i == fs->sb.root_inode) {
+		return FUSE_ROOT_ID; // always unused in squashfs
+	} else if (i == 0) {
+		return 2; // always unused
+	} else {
+		return i;
+	}
 }
 static sqfs_inode_id sqfs_ll_ino_sqfs(sqfs *fs, fuse_ino_t i) {
-       return (i == FUSE_ROOT_ID) ? fs->sb.root_inode : i;
+	if (i == FUSE_ROOT_ID) {
+		return fs->sb.root_inode;
+	} else if (i == 2) {
+		return 0;
+	} else {
+		return i;
+	}
 }
 
 static sqfs_err sqfs_ll_inode(fuse_req_t req, sqfs **fs, sqfs_inode *inode,
