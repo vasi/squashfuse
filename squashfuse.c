@@ -170,7 +170,7 @@ static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
 		return;
 	}
 	sqfs_dir_entry entry;
-	if (sqfs_lookup_dir(fs, &inode, &dir, name, &entry)) {
+	if (sqfs_lookup_dir(&dir, name, &entry)) {
 		fuse_reply_err(req, ENOENT);
 		return;
 	}
@@ -242,7 +242,6 @@ static void sqfs_ll_read(fuse_req_t req, fuse_ino_t ino,
 	} else {
 		fuse_reply_buf(req, buf, osize);
 	}
-	fprintf(stderr, "read: %d\n", osize);
 	free(buf);
 }
 

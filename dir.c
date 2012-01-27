@@ -26,15 +26,16 @@ sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir) {
 }
 
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
-	while (dir->remain && dir->header.count == 0) {
+	while (dir->header.count == 0) {
+		if (dir->remain <= 0) {
+			*err = SQFS_OK;
+			return NULL;
+		}
+		
 		if ((*err = sqfs_dir_md_read(dir, &dir->header, sizeof(dir->header))))
 			return NULL;
 		sqfs_swapin_dir_header(&dir->header);
 		++(dir->header.count);
-	}
-	if (!dir->remain) {
-		*err = SQFS_OK;
-		return NULL;
 	}
 	
 	struct squashfs_dir_entry entry;
@@ -55,12 +56,9 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	return &dir->entry;
 }
 
-sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
-		const char *name, sqfs_dir_entry *entry) {
-	sqfs_err err = sqfs_opendir(fs, inode, dir);
-	if (err)
-		return err;
-	
+sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
+		sqfs_dir_entry *entry) {
+	sqfs_err err;
 	sqfs_dir_entry *dentry;
 	while ((dentry = sqfs_readdir(dir, &err))) {
 		if (strcmp(dentry->name, name) == 0) {
@@ -74,10 +72,14 @@ sqfs_err sqfs_lookup_dir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
 	sqfs_dir dir;
+	sqfs_err err = sqfs_opendir(fs, inode, &dir);
+	if (err)
+		return err;
+
 	sqfs_dir_entry entry;
 	while (path && *path) {
 		char *name = strsep(&path, "/");
-		sqfs_err err = sqfs_lookup_dir(fs, inode, &dir, name, &entry);
+		err = sqfs_lookup_dir(&dir, name, &entry);
 		if (err)
 			return err;
 		
