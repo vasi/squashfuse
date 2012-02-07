@@ -14,8 +14,9 @@ Blocklist index
 
 Build system
 	libsquashfuse?
+	make dist - configure, manpage
 README
-Docs, comments
+Docs, manpage, comments
 License
 Cross-platform
 	Mac SDKs
@@ -29,3 +30,5 @@ Unsquashfs clone
 Error handling
 	Better error codes
 	Sanity checks
+
+mksquashfs broken?

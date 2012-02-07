@@ -136,14 +136,14 @@ static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	free((sqfs_dir*)fi->fh);
+	free((sqfs_dir*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); // yes, this is necessary
 }
 
 // TODO: More efficient to return multiple entries at a time?
 static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
-	sqfs_dir *dir = (sqfs_dir*)fi->fh;
+	sqfs_dir *dir = (sqfs_dir*)(intptr_t)fi->fh;
 	sqfs_err err;
 	sqfs_dir_entry *entry = sqfs_readdir(dir, &err);
 	if (err) {
@@ -229,7 +229,7 @@ static void sqfs_ll_open(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_release(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	free((sqfs_inode*)fi->fh);
+	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	fuse_reply_err(req, 0);
 }
@@ -237,7 +237,7 @@ static void sqfs_ll_release(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_read(fuse_req_t req, fuse_ino_t ino,
 		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs *fs = fuse_req_userdata(req);
-	sqfs_inode *inode = (sqfs_inode*)fi->fh;
+	sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
 	
 	char *buf = malloc(size);
 	if (!buf) {
