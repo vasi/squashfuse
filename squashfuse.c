@@ -8,11 +8,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#define FUSE_USE_VERSION 26
-#include <fuse/fuse_lowlevel.h>
-
+#include "ll.h"
 #include "squashfuse.h"
-
 
 static const double SQFS_TIMEOUT = DBL_MAX;
 
@@ -32,18 +29,6 @@ typedef struct {
 
 static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);
-
-
-static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
-	struct fuse_file_info *fi);
-static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
-	struct fuse_file_info *fi);
-static void sqfs_ll_releasedir(fuse_req_t req, fuse_ino_t ino,
-	struct fuse_file_info *fi);
-static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-	off_t off, struct fuse_file_info *fi);
-static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
-	const char *name);
 
 
 static fuse_ino_t sqfs_ll_ino_fuse(sqfs *fs, sqfs_inode_id i) {
@@ -97,7 +82,7 @@ static sqfs_err sqfs_ll_stat(sqfs *fs, sqfs_inode_id id, struct stat *st) {
 }
 
 
-static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs *fs = fuse_req_userdata(req);
 	struct stat st;
@@ -108,7 +93,7 @@ static void sqfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
 	}
 }
 
-static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	fi->fh = (intptr_t)NULL;
 	
@@ -134,14 +119,14 @@ static void sqfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
 	}
 }
 
-static void sqfs_ll_releasedir(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_dir*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); // yes, this is necessary
 }
 
 // TODO: More efficient to return multiple entries at a time?
-static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
 	sqfs_dir *dir = (sqfs_dir*)(intptr_t)fi->fh;
 	sqfs_err err;
@@ -167,7 +152,7 @@ static void sqfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	}
 }
 
-static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
+static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 		const char *name) {
 	sqfs *fs;
 	sqfs_inode inode;
@@ -198,7 +183,7 @@ static void sqfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
 	}
 }
 
-static void sqfs_ll_open(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	if (fi->flags & (O_WRONLY | O_RDWR)) {
 		fuse_reply_err(req, EROFS);
@@ -227,14 +212,14 @@ static void sqfs_ll_open(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_open(req, fi);
 }
 
-static void sqfs_ll_release(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	fuse_reply_err(req, 0);
 }
 
-static void sqfs_ll_read(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs *fs = fuse_req_userdata(req);
 	sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
@@ -258,15 +243,15 @@ static void sqfs_ll_read(fuse_req_t req, fuse_ino_t ino,
 }
 
 
-static struct fuse_lowlevel_ops sqfs_ll = {
-	.getattr	= sqfs_ll_getattr,
-	.opendir	= sqfs_ll_opendir,
-	.releasedir	= sqfs_ll_releasedir,
-	.readdir	= sqfs_ll_readdir,
-	.lookup		= sqfs_ll_lookup,
-	.open		= sqfs_ll_open,
-	.release	= sqfs_ll_release,
-	.read		= sqfs_ll_read,
+static struct fuse_lowlevel_ops sqfs_ll_ops = {
+	.getattr	= sqfs_ll_op_getattr,
+	.opendir	= sqfs_ll_op_opendir,
+	.releasedir	= sqfs_ll_op_releasedir,
+	.readdir	= sqfs_ll_op_readdir,
+	.lookup		= sqfs_ll_op_lookup,
+	.open		= sqfs_ll_op_open,
+	.release	= sqfs_ll_op_release,
+	.read		= sqfs_ll_op_read,
 };
 
 
@@ -333,7 +318,7 @@ int main(int argc, char *argv[]) {
 		struct fuse_chan *ch = fuse_mount(mountpoint, &args);
 		if (ch) {
 			struct fuse_session *se = fuse_lowlevel_new(&args,
-				&sqfs_ll, sizeof(sqfs_ll), &fs);	
+				&sqfs_ll_ops, sizeof(sqfs_ll_ops), &fs);	
 			if (se != NULL) {
 				if (fuse_daemonize(fg) != -1) {
 					if (fuse_set_signal_handlers(se) != -1) {
