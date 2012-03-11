@@ -30,7 +30,9 @@ static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 		return i;
 	}
 }
-
+static fuse_ino_t sqfs_ll_ino64_register(sqfs_ll *ll, sqfs_dir_entry *e) {
+	return sqfs_ll_ino64_fuse(ll, e->inode);
+}
 
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
@@ -42,6 +44,7 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
 	} else {
 		ll->ino_fuse = sqfs_ll_ino64_fuse;
 		ll->ino_sqfs = sqfs_ll_ino64_sqfs;
+		ll->ino_register = sqfs_ll_ino64_register;
 		ll->ino_data = NULL;
 	}
 	

@@ -13,6 +13,9 @@ struct sqfs_ll {
 	// Converting inodes between squashfs and fuse
 	fuse_ino_t (*ino_fuse)(sqfs_ll *ll, sqfs_inode_id i);
 	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
+	
+	// Register a new inode, returning the fuse ID for it
+	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
 	void *ino_data;
 };
 

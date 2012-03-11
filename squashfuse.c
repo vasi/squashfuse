@@ -72,7 +72,7 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		fuse_reply_buf(req, NULL, 0);
 	} else {
 		struct stat st = {
-			.st_ino = lli.ll->ino_fuse(lli.ll, entry->inode),
+			.st_ino = lli.ll->ino_register(lli.ll, entry),
 			.st_mode = sqfs_mode(entry->type),
 		};
 		size_t bsize = fuse_add_direntry(req, NULL, 0, entry->name, &st, 0);
@@ -114,7 +114,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 			fuse_reply_err(req, EIO);
 		} else {
 			fentry.attr_timeout = fentry.entry_timeout = SQFS_TIMEOUT;
-			fentry.ino = lli.ll->ino_fuse(lli.ll, entry.inode);
+			fentry.ino = lli.ll->ino_register(lli.ll, &entry);
 			fentry.attr.st_ino = fentry.ino;
 			fuse_reply_entry(req, &fentry);
 		}
