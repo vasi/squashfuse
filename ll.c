@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 /***** INODE CONVERSION FOR 64-BIT INODES ****
  *
  * sqfs(root) maps to FUSE_ROOT_ID == 1
@@ -21,6 +22,7 @@ static fuse_ino_t sqfs_ll_ino64_fuse(sqfs_ll *ll, sqfs_inode_id i) {
 		return i;
 	}
 }
+
 static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	if (i == FUSE_ROOT_ID) {
 		return ll->fs.sb.root_inode;
@@ -30,29 +32,114 @@ static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 		return i;
 	}
 }
+
 static fuse_ino_t sqfs_ll_ino64_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	return sqfs_ll_ino64_fuse(ll, e->inode);
 }
 
 
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
-	// FIXME: 32-bit inodes?
-	if (sizeof(fuse_ino_t) < SQFS_INODE_ID_BYTES) {
-		fprintf(stderr, "Need at least %d-bit inodes!\n",
-			SQFS_INODE_ID_BYTES * 8);
-		exit(-3);
+
+/***** INODE CONVERSION FOR 32-BIT INODES ****
+ *
+ * We maintain a table of sqfs_inode_num => sqfs_inode_id.
+ * We go the other direction by fetching inodes.
+ *
+ * Mapping: sqfs_inode_num <=> fuse_ino_t
+ *   Most num(N) maps to N + 1
+ *   num(root) maps to FUSE_ROOT_ID == 1
+ *   num(0) maps to num(root) + 1
+ *
+ * FIXME:
+ * - Theoretically this could overflow if a filesystem uses all 2 ** 32 inodes,
+ *   since fuse inode zero is unavailable.
+ * - We only strictly need 48 bits for each table entry, not 64.
+ * - If an export table is available, we can lookup inode_id's there, instead of
+ *   keeping a table. Or maybe keep just a small cache?
+ */
+#define FUSE_INODE_NONE 0
+#define SQFS_INODE_NONE 1
+
+typedef struct {
+	sqfs_inode_num root;
+	sqfs_inode_id table[0];
+} sqfs_ll_inode_map;
+
+static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	if (n == map->root) {
+		return FUSE_ROOT_ID;
+	} else if (n == 0) {
+		return map->root + 1;
 	} else {
+		return n + 1;
+	} 
+}
+
+static fuse_ino_t sqfs_ll_ino32_fuse(sqfs_ll *ll, sqfs_inode_id i) {
+	sqfs_inode inode;
+	if (sqfs_inode_get(&ll->fs, &inode, i))
+		return FUSE_INODE_NONE; // We shouldn't get here!
+	return sqfs_ll_ino32_num2fuse(ll, inode.base.inode_number);
+}
+
+static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	sqfs_inode_num n;
+	if (i == FUSE_ROOT_ID) {
+		n = map->root;
+	} else if (i == map->root + 1) {
+		n = 0;
+	} else {
+		n = i - 1;
+	}
+	
+	return map->table[n];
+}
+
+static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	map->table[e->inode_number] = e->inode;
+	return sqfs_ll_ino32_num2fuse(ll, e->inode_number);
+}
+
+
+
+sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
+	sqfs_err err = sqfs_init(&ll->fs, fd);
+	if (err)
+		return err;
+	
+	ll->ino_data = NULL;
+	if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
 		ll->ino_fuse = sqfs_ll_ino64_fuse;
 		ll->ino_sqfs = sqfs_ll_ino64_sqfs;
 		ll->ino_register = sqfs_ll_ino64_register;
-		ll->ino_data = NULL;
+	} else {
+		sqfs_inode inode;
+		err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
+		if (err)
+			return err;
+		
+		sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map) +
+			ll->fs.sb.inodes * sizeof(sqfs_inode_id));
+		for (uint32_t i = 0; i < ll->fs.sb.inodes; ++i)
+			map->table[i] = SQFS_INODE_NONE;
+		map->root = inode.base.inode_number;
+		map->table[map->root] = ll->fs.sb.root_inode;
+		
+		ll->ino_fuse = sqfs_ll_ino32_fuse;
+		ll->ino_sqfs = sqfs_ll_ino32_sqfs;
+		ll->ino_register = sqfs_ll_ino32_register;
+		ll->ino_data = map;
 	}
 	
-	return sqfs_init(&ll->fs, fd);
+	return err; 
 }
 
 void sqfs_ll_destroy(sqfs_ll *ll) {
 	sqfs_destroy(&ll->fs);
+	if (ll->ino_data)
+		free(ll->ino_data);
 }
 
 sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i) {

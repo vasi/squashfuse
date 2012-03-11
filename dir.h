@@ -6,9 +6,11 @@
 #include "common.h"
 #include "squashfs_fs.h"
 
+typedef uint32_t sqfs_inode_num;
+
 typedef struct {
 	sqfs_inode_id inode;
-	uint32_t inode_number;
+	sqfs_inode_num inode_number;
 	int type;
 	char *name;
 } sqfs_dir_entry;

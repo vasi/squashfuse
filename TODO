@@ -7,7 +7,6 @@ xattrs
 Data block cache
 32-bit inodes
 	Export table
-	Without table
 	Caching?
 Dir index
 Compression types + options
