@@ -203,6 +203,14 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 	return sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
 }
 
+// Turn the internal format of a device number to our system's dev_t
+// It looks like rdev is just what the Linux kernel uses: 20 bit minor,
+// split in two around a 12 bit major
+static dev_t sqfs_decode_dev(uint32_t rdev) {
+	return makedev((rdev >> 8) & 0xfff,
+		(rdev & 0xff) | ((rdev >> 12) & 0xfff00));
+}
+
 #define INODE_TYPE(_type) \
 	struct squashfs_##_type##_inode x; \
 	err = sqfs_md_read(fs, &inode->next, &x, sizeof(x)); \
@@ -282,6 +290,21 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 					return err;
 				inode->xattr = sqfs_swapin32(inode->xattr);
 			}
+			break;
+		}
+		case SQUASHFS_BLKDEV_TYPE:
+		case SQUASHFS_CHRDEV_TYPE: {
+			INODE_TYPE(dev);
+			inode->nlink = x.nlink;
+			inode->xtra.dev = sqfs_decode_dev(x.rdev);
+			break;
+		}
+		case SQUASHFS_LBLKDEV_TYPE:
+		case SQUASHFS_LCHRDEV_TYPE: {
+			INODE_TYPE(ldev);
+			inode->nlink = x.nlink;
+			inode->xtra.dev = sqfs_decode_dev(x.rdev);
+			inode->xattr = x.xattr;
 			break;
 		}
 		

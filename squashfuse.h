@@ -26,7 +26,7 @@ struct sqfs_inode {
 	sqfs_md_cursor next;
 	
 	union {
-		uint32_t dev;
+		dev_t dev;
 		size_t symlink_size;
 		struct {
 			uint64_t start_block;

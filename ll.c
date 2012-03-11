@@ -162,14 +162,16 @@ sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
 	memset(st, 0, sizeof(*st));
 	st->st_mode = inode->base.mode | sqfs_mode(inode->base.inode_type);
 	st->st_nlink = inode->nlink;
-	// FIXME: rdev
 	st->st_mtimespec.tv_sec = st->st_ctimespec.tv_sec =
 		st->st_atimespec.tv_sec = inode->base.mtime;
 	
 	if (S_ISREG(st->st_mode)) {
+		// FIXME: do symlinks, dirs, etc have a size?
 		st->st_size = inode->xtra.reg.file_size;
 		st->st_blocks = st->st_size / 512;
-	} // FIXME: do symlinks, dirs, etc have a size?
+	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
+		st->st_rdev = inode->xtra.dev;
+	}
 	
 	st->st_blksize = ll->fs.sb.block_size; // seriously?
 	
