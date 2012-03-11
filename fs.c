@@ -223,6 +223,16 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.reg.frag_off = x.offset;
 			break;
 		}
+		case SQUASHFS_LREG_TYPE: {
+			INODE_TYPE(lreg);
+			inode->nlink = x.nlink;
+			inode->xtra.reg.start_block = x.start_block;
+			inode->xtra.reg.file_size = x.file_size;
+			inode->xtra.reg.frag_idx = x.fragment;
+			inode->xtra.reg.frag_off = x.offset;
+			// FIXME: sparse ok?
+			break;
+		}
 		case SQUASHFS_DIR_TYPE: {
 			INODE_TYPE(dir);
 			inode->nlink = x.nlink;
@@ -245,9 +255,10 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			break;
 		}
 		
-		// FIXME
+		// FIXME: more types
 		default: return SQFS_ERR;
 	}
+	// FIXME: xattr
 	
 	return SQFS_OK;
 }
