@@ -1,4 +1,3 @@
-Fuse reading
 MD block caches
 UID, GID
 More file types
@@ -8,6 +7,8 @@ xattrs
 Data block cache
 32-bit inodes
 	Export table
+	Without table
+	Caching?
 Dir index
 Compression types + options
 Blocklist index
@@ -19,14 +20,18 @@ README
 Docs, manpage, comments
 License
 Cross-platform
+	Linux support
 	Mac SDKs
+
+Old versions of squashfs
+Cross-endian
 
 Threading?
 	Thread-safety
 Delegation of caching, threading?
 	Evented style?
 Speculative readahead?
-Unsquashfs clone
+Unsquashfs clone?
 Error handling
 	Better error codes
 	Sanity checks
