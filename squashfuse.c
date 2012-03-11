@@ -177,6 +177,26 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 	free(buf);
 }
 
+static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
+	sqfs_ll_i lli;
+	if (sqfs_ll_iget(req, &lli, ino))
+		return;
+	
+	char *dst;
+	if (sqfs_mode(lli.inode.base.inode_type) != S_IFLNK) {
+		fuse_reply_err(req, EINVAL);
+	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
+		fuse_reply_err(req, ENOMEM);
+	} else if (sqfs_readlink(&lli.ll->fs, &lli.inode, dst)) {
+		fuse_reply_err(req, EIO);
+		free(dst);
+	} else {
+		dst[lli.inode.xtra.symlink_size] = '\0';
+		fuse_reply_readlink(req, dst);
+		free(dst);
+	}
+}
+
 
 
 static struct fuse_lowlevel_ops sqfs_ll_ops = {
@@ -188,6 +208,7 @@ static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.open		= sqfs_ll_op_open,
 	.release	= sqfs_ll_op_release,
 	.read		= sqfs_ll_op_read,
+	.readlink	= sqfs_ll_op_readlink,
 };
 
 

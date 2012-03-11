@@ -135,10 +135,12 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		size_t take = block->size - cur->offset;
 		if (take > size)
 			take = size;		
-		memcpy(buf, (char*)block->data + cur->offset, take);
+		if (buf)
+			memcpy(buf, (char*)block->data + cur->offset, take);
 		sqfs_block_dispose(block);
 		
-		buf = (char*)buf + take;
+		if (buf)
+			buf = (char*)buf + take;
 		size -= take;
 		if (size) {
 			cur->block = pos;
@@ -193,6 +195,14 @@ mode_t sqfs_mode(int inode_type) {
 	return 0;
 }
 
+// buf must have enough space for link contents
+sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
+	if (sqfs_mode(inode->base.inode_type) != S_IFLNK)
+		return SQFS_ERR;
+	sqfs_md_cursor cur = inode->next;
+	return sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
+}
+
 #define INODE_TYPE(_type) \
 	struct squashfs_##_type##_inode x; \
 	err = sqfs_md_read(fs, &inode->next, &x, sizeof(x)); \
@@ -230,6 +240,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.reg.file_size = x.file_size;
 			inode->xtra.reg.frag_idx = x.fragment;
 			inode->xtra.reg.frag_off = x.offset;
+			inode->xattr = x.xattr;
 			// FIXME: sparse ok?
 			break;
 		}
@@ -252,6 +263,25 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.dir.idx_count = x.i_count;
 			inode->xtra.dir.parent_inode = x.parent_inode;
 			inode->xattr = x.xattr;
+			break;
+		}
+		case SQUASHFS_SYMLINK_TYPE:
+		case SQUASHFS_LSYMLINK_TYPE: {
+			INODE_TYPE(symlink);
+			inode->nlink = x.nlink;
+			inode->xtra.symlink_size = x.symlink_size;
+			
+			if (inode->base.inode_type == SQUASHFS_LSYMLINK_TYPE) {
+				// skip symlink target
+				cur = inode->next;
+				err = sqfs_md_read(fs, &cur, NULL, inode->xtra.symlink_size);
+				if (err)
+					return err;
+				err = sqfs_md_read(fs, &cur, &inode->xattr, sizeof(inode->xattr));
+				if (err)
+					return err;
+				inode->xattr = sqfs_swapin32(inode->xattr);
+			}
 			break;
 		}
 		
