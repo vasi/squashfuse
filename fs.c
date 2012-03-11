@@ -307,6 +307,19 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xattr = x.xattr;
 			break;
 		}
+		case SQUASHFS_SOCKET_TYPE:
+		case SQUASHFS_FIFO_TYPE: {
+			INODE_TYPE(ipc);
+			inode->nlink = x.nlink;
+			break;
+		}
+		case SQUASHFS_LSOCKET_TYPE:
+		case SQUASHFS_LFIFO_TYPE: {
+			INODE_TYPE(lipc);
+			inode->nlink = x.nlink;
+			inode->xattr = x.xattr;
+			break;
+		}
 		
 		// FIXME: more types
 		default: return SQFS_ERR;
