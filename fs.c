@@ -196,12 +196,13 @@ mode_t sqfs_mode(int inode_type) {
 	return 0;
 }
 
-// buf must have enough space for link contents
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 	if (sqfs_mode(inode->base.inode_type) != S_IFLNK)
 		return SQFS_ERR;
 	sqfs_md_cursor cur = inode->next;
-	return sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
+	sqfs_err err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
+	buf[inode->xtra.symlink_size] = '\0';
+	return err;
 }
 
 // Turn the internal format of a device number to our system's dev_t

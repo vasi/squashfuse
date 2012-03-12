@@ -184,7 +184,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 		return;
 	
 	char *dst;
-	if (S_ISLNK(sqfs_mode(lli.inode.base.inode_type))) {
+	if (!S_ISLNK(sqfs_mode(lli.inode.base.inode_type))) {
 		fuse_reply_err(req, EINVAL);
 	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
 		fuse_reply_err(req, ENOMEM);
@@ -192,7 +192,6 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 		fuse_reply_err(req, EIO);
 		free(dst);
 	} else {
-		dst[lli.inode.xtra.symlink_size] = '\0';
 		fuse_reply_readlink(req, dst);
 		free(dst);
 	}
@@ -267,7 +266,7 @@ int main(int argc, char *argv[]) {
 		err = 1;
 	}
 	
-if (1) {
+if (0) {
 	char path[] = "home/vasi/.mozilla/firefox/p5pyoux0.default/Cache/1/F0/C6C9Bd01";
 	sqfs_inode inode;
 	sqfs_inode_get(&ll.fs, &inode, ll.fs.sb.root_inode);
