@@ -9,12 +9,19 @@ clean:
 
 ARCH = 
 
-FUSE_FLAGS = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -D__DARWIN_64_BIT_INO_T=1
-CFLAGS = $(ARCH) -g -O0 -Wall
+LIBADD = -lz
+ifeq ($(shell uname -s),Darwin)
+	FUSE_FLAGS = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -D__DARWIN_64_BIT_INO_T=1
+	LIBADD += -lfuse_ino64
+else
+	FUSE_FLAGS = $(shell pkg-config --cflags fuse)
+	LIBADD += $(shell pkg-config --libs fuse)
+endif
+
+CFLAGS = $(ARCH) -std=c99 -g -O0 -Wall
 LDFLAGS = $(ARCH)
 
 LIBFILES = dir.o file.o fs.o swap.o table.o ll.o
-LIBADD = -lz -lfuse_ino64
 
 squashfuse: squashfuse.o $(LIBFILES)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBADD)

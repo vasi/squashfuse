@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -183,7 +184,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 		return;
 	
 	char *dst;
-	if (sqfs_mode(lli.inode.base.inode_type) != S_IFLNK) {
+	if (S_ISLNK(sqfs_mode(lli.inode.base.inode_type))) {
 		fuse_reply_err(req, EINVAL);
 	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
 		fuse_reply_err(req, ENOMEM);

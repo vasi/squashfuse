@@ -1,7 +1,7 @@
 #ifndef SQFS_DIR_H
 #define SQFS_DIR_H
 
-#include <limits.h>
+#include <sys/param.h>
 
 #include "common.h"
 #include "squashfs_fs.h"
@@ -22,7 +22,7 @@ typedef struct {
 	size_t remain;
 	struct squashfs_dir_header header;
 	
-	char name[PATH_MAX+1];
+	char name[MAXPATHLEN+1];
 	sqfs_dir_entry entry;
 } sqfs_dir;
 
