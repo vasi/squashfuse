@@ -1,9 +1,9 @@
 #ifndef SQFS_TABLE_H
 #define SQFS_TABLE_H
 
-#include <sys/types.h>
-
 #include "common.h"
+
+#include <sys/types.h>
 
 typedef struct {
 	size_t each;

@@ -1,9 +1,10 @@
 #ifndef SQFS_DIR_H
 #define SQFS_DIR_H
 
+#include "common.h"
+
 #include <sys/param.h>
 
-#include "common.h"
 #include "squashfs_fs.h"
 
 typedef uint32_t sqfs_inode_num;
