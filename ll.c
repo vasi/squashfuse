@@ -158,12 +158,20 @@ sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i) {
 	return err;
 }
 
+static void sqfs_ll_settimes(struct stat *st, time_t time) {
+	#ifdef __APPLE__
+		st->st_mtimespec.tv_sec = st->st_ctimespec.tv_sec =
+			st->st_atimespec.tv_sec = time;
+	#else
+		st->st_mtime = st->st_ctime = st->st_atime = time; 
+	#endif 
+}
+
 sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
 	memset(st, 0, sizeof(*st));
 	st->st_mode = inode->base.mode | sqfs_mode(inode->base.inode_type);
 	st->st_nlink = inode->nlink;
-	st->st_mtimespec.tv_sec = st->st_ctimespec.tv_sec =
-		st->st_atimespec.tv_sec = inode->base.mtime;
+	sqfs_ll_settimes(st, inode->base.mtime);
 	
 	if (S_ISREG(st->st_mode)) {
 		// FIXME: do symlinks, dirs, etc have a size?
