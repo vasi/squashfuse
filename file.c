@@ -63,7 +63,7 @@ sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl) {
 		sizeof(bl->header));
 	if (err)
 		return err;
-	bl->header = sqfs_swapin32(bl->header);
+	sqfs_swapin32(&bl->header);
 	
 	bl->block += bl->input_size;
 	bool compressed;

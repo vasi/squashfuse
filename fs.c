@@ -93,7 +93,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block) {
 	if (pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
 		return SQFS_ERR;
 	*pos += sizeof(hdr);
-	hdr = sqfs_swapin16(hdr);
+	sqfs_swapin16(&hdr);
 	
 	bool compressed;
 	uint16_t size;
@@ -164,7 +164,8 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
 	sqfs_err err = sqfs_table_get(&fs->id_table, fs, idx, &rid);
 	if (err)
 		return err;
-	*id = sqfs_swapin32(rid);
+	sqfs_swapin32(&rid);
+	*id = (uid_t)rid;
 	return SQFS_OK;
 }
 
@@ -288,7 +289,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 				err = sqfs_md_read(fs, &cur, &inode->xattr, sizeof(inode->xattr));
 				if (err)
 					return err;
-				inode->xattr = sqfs_swapin32(inode->xattr);
+				sqfs_swapin32(&inode->xattr);
 			}
 			break;
 		}

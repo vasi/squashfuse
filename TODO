@@ -1,6 +1,4 @@
 MD block caches
-More file types
-	readlink
 xattrs
 
 Data block cache
@@ -22,7 +20,6 @@ Cross-platform
 	Mac SDKs
 
 Old versions of squashfs
-Cross-endian
 
 Threading?
 	Thread-safety
@@ -33,5 +30,6 @@ Unsquashfs clone?
 Error handling
 	Better error codes
 	Sanity checks
+Fast bit swapping (platform specific)
 
 mksquashfs broken?

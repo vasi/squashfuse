@@ -19,7 +19,7 @@ sqfs_err sqfs_table_init(sqfs_table *table, int fd, off_t start, size_t each,
 	
 	int i;
 	for (i = 0; i < nblocks; ++i)
-		table->blocks[i] = sqfs_swapin64(table->blocks[i]);
+		sqfs_swapin64(&table->blocks[i]);
 	
 	return SQFS_OK;
 	

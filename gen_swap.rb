@@ -18,6 +18,6 @@ hdr.each do |line|
 		func = nil
 	elsif md = line.match(/^\s*__le(\d+)\s+(\w+)\s*;\s*$/)
 		# ignore unknown fields
-		genc.puts "s->#$2 = sqfs_swapin#$1(s->#$2);"
+		genc.puts "sqfs_swapin#$1(&s->#$2);"
 	end
 end

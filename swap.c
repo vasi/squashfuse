@@ -1,18 +1,20 @@
 #include "swap.h"
 
-#include <libkern/OSByteOrder.h>
+#define SWAP(BITS) \
+	void sqfs_swapin##BITS(uint##BITS##_t *v) { \
+		uint8_t *c = (uint8_t*)v; \
+		uint##BITS##_t r = 0; \
+		for (int i = sizeof(*v) - 1; i >= 0; --i) { \
+			r <<= 8; \
+			r += c[i]; \
+		} \
+		*v = r; \
+	}
 
-uint16_t sqfs_swapin16(uint16_t v) {
-	return OSSwapLittleToHostInt16(v);
-}
-
-uint32_t sqfs_swapin32(uint32_t v) {
-	return OSSwapLittleToHostInt32(v);
-}
-
-uint64_t sqfs_swapin64(uint64_t v) {
-	return OSSwapLittleToHostInt64(v);
-}
+SWAP(16)
+SWAP(32)
+SWAP(64)
+#undef SWAP
 
 #include "squashfs_fs.h"
 #include "swap.c.inc"
