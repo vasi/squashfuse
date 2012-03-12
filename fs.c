@@ -197,7 +197,7 @@ mode_t sqfs_mode(int inode_type) {
 }
 
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
-	if (sqfs_mode(inode->base.inode_type) != S_IFLNK)
+	if (!S_ISLNK(sqfs_mode(inode->base.inode_type)))
 		return SQFS_ERR;
 	sqfs_md_cursor cur = inode->next;
 	sqfs_err err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
