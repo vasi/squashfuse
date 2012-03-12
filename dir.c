@@ -1,6 +1,7 @@
 #include "dir.h"
 
 #include <string.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include "squashfuse.h"
@@ -71,14 +72,24 @@ sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 }
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
+	char buf[MAXPATHLEN + 1];
+	strncpy(buf, path, sizeof(buf) - 1);
+	path = buf;
+	
 	sqfs_dir dir;
 	sqfs_dir_entry entry;
-	while (path && *path) {
+	while (*path) {
 		sqfs_err err = sqfs_opendir(fs, inode, &dir);
 		if (err)
 			return err;
 		
-		char *name = strsep(&path, "/");
+		// Find next path component
+		char *name = path;
+		while (*path && *path != '/')
+			++path;
+		if (*path == '/')
+			*path++ = '\0';
+		
 		err = sqfs_lookup_dir(&dir, name, &entry);
 		if (err)
 			return err;
