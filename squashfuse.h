@@ -1,9 +1,10 @@
 #ifndef SQFS_SWAPFUSE_H
 #define SQFS_SWAPFUSE_H
 
+#include "common.h"
+
 #include <stdbool.h>
 
-#include "common.h"
 #include "dir.h"
 #include "file.h"
 #include "squashfs_fs.h"
