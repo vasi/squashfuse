@@ -267,6 +267,14 @@ int main(int argc, char *argv[]) {
 		err = 1;
 	}
 	
+if (1) {
+	char path[] = "home/vasi/.mozilla/firefox/p5pyoux0.default/Cache/1/F0/C6C9Bd01";
+	sqfs_inode inode;
+	sqfs_inode_get(&ll.fs, &inode, ll.fs.sb.root_inode);
+	sqfs_lookup_path(&ll.fs, &inode, path);
+	fprintf(stderr, "%llu\n", inode.xtra.reg.file_size);
+	exit(0);
+}
 	
 	// STARTUP FUSE
 	if (!err) {

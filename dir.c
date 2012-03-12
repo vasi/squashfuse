@@ -72,12 +72,12 @@ sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
 	sqfs_dir dir;
-	sqfs_err err = sqfs_opendir(fs, inode, &dir);
-	if (err)
-		return err;
-
 	sqfs_dir_entry entry;
 	while (path && *path) {
+		sqfs_err err = sqfs_opendir(fs, inode, &dir);
+		if (err)
+			return err;
+		
 		char *name = strsep(&path, "/");
 		err = sqfs_lookup_dir(&dir, name, &entry);
 		if (err)

@@ -75,6 +75,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 mode_t sqfs_mode(int inode_type);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 
+// Does NOT null-terminate. Get size from symlink_size field.
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf);
 
 #endif
