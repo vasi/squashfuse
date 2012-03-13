@@ -1,7 +1,6 @@
 MD block caches
 xattrs
 Do holes work?
-Trouble with large dirs? (check frameworks.squashfs)
 
 Data block cache
 32-bit inodes
