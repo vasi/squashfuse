@@ -67,7 +67,8 @@ sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
 		if (!decomp)
 			goto err;
 
-		int zerr = uncompress((Bytef*)decomp, &outsize,
+		uLongf zout = outsize;
+		int zerr = uncompress((Bytef*)decomp, &zout,
 			(Bytef*)(*block)->data, size);
 		if (zerr != Z_OK) {
 			free(decomp);
@@ -75,7 +76,7 @@ sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
 		}
 		free((*block)->data);
 		(*block)->data = decomp;
-		(*block)->size = outsize;
+		(*block)->size = zout;
 	} else {
 		(*block)->size = size;
 	}
