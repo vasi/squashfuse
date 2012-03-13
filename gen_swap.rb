@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 hdr = open('squashfs_fs.h')
 genh = open('swap.h.inc', 'w')
