@@ -50,7 +50,8 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	
 	dir->entry.inode = ((uint64_t)dir->header.start_block << 16) +
 		entry.offset;
-	dir->entry.inode_number = dir->header.inode_number + entry.inode_number;
+	// entry.inode_number is signed
+	dir->entry.inode_number = dir->header.inode_number + (int16_t)entry.inode_number;
 	dir->entry.type = entry.type;
 	
 	*err = SQFS_OK;
