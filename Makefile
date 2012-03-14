@@ -34,5 +34,5 @@ squashfuse: squashfuse.o $(LIBFILES)
 %.o: %.c $(wildcard *.h) swap.h.inc
 	$(CC) $(CFLAGS) $(FUSE_FLAGS) -c -o $@ $<
 
-swap.h.inc: squashfs_fs.h gen_swap.rb
-	./gen_swap.rb
+swap.h.inc: squashfs_fs.h gen_swap.sh
+	./gen_swap.sh

@@ -7,7 +7,7 @@ Dir index
 Compression types + options
 Blocklist index
 
-Remove Ruby dependency
+Support BSD make?
 Build system
 	libsquashfuse?
 	make dist - configure, manpage
