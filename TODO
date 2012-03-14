@@ -7,6 +7,7 @@ Dir index
 Compression types + options
 Blocklist index
 
+Remove Ruby dependency
 Build system
 	libsquashfuse?
 	make dist - configure, manpage

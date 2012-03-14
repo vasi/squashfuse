@@ -1,9 +1,7 @@
 #ifndef SQFS_COMMON_H
 #define SQFS_COMMON_H
 
-// We need pread(), makedev()
-#define _GNU_SOURCE
-#include <unistd.h>
+#define _POSIX_C_SOURCE 200112L
 
 #include <stdint.h>
 #include <sys/types.h>

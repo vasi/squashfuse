@@ -26,7 +26,7 @@ endif
 CFLAGS = $(ARCH) -std=c99 -g -O0 -Wall
 LDFLAGS = $(ARCH)
 
-LIBFILES = dir.o file.o fs.o swap.o table.o ll.o cache.o
+LIBFILES = dir.o file.o fs.o swap.o table.o ll.o cache.o std.o
 
 squashfuse: squashfuse.o $(LIBFILES)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBADD)

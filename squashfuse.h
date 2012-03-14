@@ -3,14 +3,15 @@
 
 #include "common.h"
 
-#include <stdbool.h>
-
 #include "cache.h"
 #include "dir.h"
 #include "file.h"
 #include "squashfs_fs.h"
+#include "std.h"
 #include "swap.h"
 #include "table.h"
+
+#include <stdbool.h>
 
 struct sqfs {
 	int fd;
