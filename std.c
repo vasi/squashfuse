@@ -1,9 +1,10 @@
-// Linux
-#define _XOPEN_SOURCE 500 // pread
-#define _BSD_SOURCE
-
-// Mac
-#define _DARWIN_C_SOURCE
+#ifdef __linux__
+	#define _XOPEN_SOURCE 500 // pread
+	#define _BSD_SOURCE // makedev
+#elif defined(__APPLE__)
+	#define _DARWIN_C_SOURCE
+#endif
+// FreeBSD wants no defines
 
 #include <sys/stat.h>
 #include <sys/types.h>
