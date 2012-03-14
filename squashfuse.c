@@ -21,9 +21,9 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 	
 	struct stat st;
 	if (sqfs_ll_stat(lli.ll, &lli.inode, &st)) {
-		st.st_ino = ino;
 		fuse_reply_err(req, ENOENT);
 	} else {
+		st.st_ino = ino;
 		fuse_reply_attr(req, &st, SQFS_TIMEOUT);
 	}
 }
