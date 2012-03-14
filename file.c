@@ -26,7 +26,8 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 	if (err)
 		return err;
 	
-	err = sqfs_data_block_read(fs, frag.start_block, frag.size, block);
+	err = sqfs_data_cache(fs, &fs->frag_cache, frag.start_block,
+		frag.size, block);
 	if (err)
 		return SQFS_ERR;
 	
@@ -120,7 +121,8 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
 				if (data_size > block_size)
 					data_size = block_size;
 			} else {
-				err = sqfs_data_block_read(fs, bl.block, bl.header, &block);
+				err = sqfs_data_cache(fs, &fs->data_cache, bl.block,
+					bl.header, &block);
 				if (err)
 					return err;
 				data_size = block->size;
@@ -132,7 +134,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
 			take = *size;
 		if (block) {
 			memcpy(buf, block->data + data_off + read_off, take);
-			sqfs_block_dispose(block);
+			// BLOCK CACHED, DON'T DISPOSE
 		} else {
 			memset(buf, 0, take);
 		}

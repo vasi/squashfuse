@@ -98,20 +98,24 @@ err:
 	return SQFS_ERR;
 }
 
-sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block) {
+sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
+		sqfs_block **block) {
+	*data_size = 0;
+	
 	uint16_t hdr;
-	if (pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
+	if (pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
 		return SQFS_ERR;
-	*pos += sizeof(hdr);
+	pos += sizeof(hdr);
+	*data_size += sizeof(hdr);
 	sqfs_swapin16(&hdr);
 	
 	bool compressed;
 	uint16_t size;
 	sqfs_md_header(hdr, &compressed, &size);
 	
-	sqfs_err err = sqfs_block_read(fs, *pos, compressed, size,
+	sqfs_err err = sqfs_block_read(fs, pos, compressed, size,
 		SQUASHFS_METADATA_SIZE, block);
-	*pos += size;
+	*data_size += size;
 	return err;
 }
 
@@ -128,7 +132,7 @@ sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
 	size_t data_size;
 	*block = sqfs_cache_get(&fs->md_cache, *pos, &data_size);
 	if (!*block) {
-		sqfs_err err = SQFS_ERR;//sqfs_md_block_read(fs, *pos, block, &data_size);
+		sqfs_err err = sqfs_md_block_read(fs, *pos, &data_size, block);
 		if (err)
 			return err;
 		sqfs_cache_set(&fs->md_cache, *pos, *block, data_size);
@@ -163,7 +167,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 	off_t pos = cur->block;
 	while (size > 0) {
 		sqfs_block *block;
-		sqfs_err err = sqfs_md_block_read(fs, &pos, &block);
+		sqfs_err err = sqfs_md_cache(fs, &pos, &block);
 		if (err)
 			return err;
 		
@@ -172,7 +176,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 			take = size;		
 		if (buf)
 			memcpy(buf, (char*)block->data + cur->offset, take);
-		sqfs_block_dispose(block);
+		// BLOCK CACHED, DON'T DISPOSE
 		
 		if (buf)
 			buf = (char*)buf + take;

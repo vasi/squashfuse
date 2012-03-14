@@ -65,7 +65,8 @@ sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed, uint32_t size,
 	size_t outsize, sqfs_block **block);
 void sqfs_block_dispose(sqfs_block *block);
 
-sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
+sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
+	sqfs_block **block);
 sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 	sqfs_block **block);
 

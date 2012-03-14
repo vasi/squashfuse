@@ -41,10 +41,10 @@ sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
 	
 	off_t bpos = table->blocks[bnum];
 	sqfs_block *block;
-	if (sqfs_md_block_read(fs, &bpos, &block))
+	if (sqfs_md_cache(fs, &bpos, &block))
 		return SQFS_ERR;
 	
 	memcpy(buf, (char*)(block->data) + off, table->each);
-	sqfs_block_dispose(block);
+	// BLOCK CACHED, DON'T DISPOSE
 	return SQFS_OK;
 }
