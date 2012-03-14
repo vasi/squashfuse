@@ -5,18 +5,12 @@ squashfuse
 
 Makefile
 Makefile.in
-
+.deps
 aclocal.m4
-
+autom4te.cache
+config.*
+configure
 depcomp
 install-sh
 missing
 stamp-h1
-.deps
-autom4te.cache
-
-configure
-config.h
-config.h.in
-config.log
-config.status
