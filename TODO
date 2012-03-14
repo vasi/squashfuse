@@ -1,6 +1,7 @@
 MD block caches
 xattrs
 Do holes work?
+'find' doesn't work?
 
 Data block cache
 32-bit inodes
