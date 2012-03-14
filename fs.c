@@ -8,6 +8,9 @@
 
 #include <zlib.h>
 
+#define DATA_CACHED_BLKS 1
+#define FRAG_CACHED_BLKS 3
+
 sqfs_err sqfs_init(sqfs *fs, int fd) {
 	memset(fs, 0, sizeof(*fs));
 	
@@ -25,19 +28,25 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	
 	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
 		sizeof(uint32_t), fs->sb.no_ids);
-	if (err)
-		return err;
-	
-	err = sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
+	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
-	if (err)
-		return err;
+	err |= sqfs_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
+	err |= sqfs_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
+	err |= sqfs_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
+	if (err) {
+		sqfs_destroy(fs);
+		return SQFS_ERR;
+	}
 	
 	return SQFS_OK;
 }
 
 void sqfs_destroy(sqfs *fs) {
 	sqfs_table_destroy(&fs->id_table);
+	sqfs_table_destroy(&fs->frag_table);
+	sqfs_cache_destroy(&fs->md_cache);
+	sqfs_cache_destroy(&fs->data_cache);
+	sqfs_cache_destroy(&fs->frag_cache);
 }
 
 void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size) {
@@ -113,6 +122,31 @@ sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 	sqfs_data_header(hdr, &compressed, &size);
 	return sqfs_block_read(fs, pos, compressed, size,
 		fs->sb.block_size, block);
+}
+
+sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
+	size_t data_size;
+	*block = sqfs_cache_get(&fs->md_cache, *pos, &data_size);
+	if (!*block) {
+		sqfs_err err = SQFS_ERR;//sqfs_md_block_read(fs, *pos, block, &data_size);
+		if (err)
+			return err;
+		sqfs_cache_set(&fs->md_cache, *pos, *block, data_size);
+	}
+	*pos += data_size;
+	return SQFS_OK;
+}
+
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_block_cache *cache, off_t pos,
+		uint32_t hdr, sqfs_block **block) {
+	*block = sqfs_cache_get(cache, pos, NULL);
+	if (!*block) {
+		sqfs_err err = sqfs_data_block_read(fs, pos, hdr, block);
+		if (err)
+			return err;
+		sqfs_cache_set(cache, pos, *block, 0);
+	}
+	return SQFS_OK;
 }
 
 void sqfs_block_dispose(sqfs_block *block) {

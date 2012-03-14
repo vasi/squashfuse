@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 
+#include "cache.h"
 #include "dir.h"
 #include "file.h"
 #include "squashfs_fs.h"
@@ -16,6 +17,9 @@ struct sqfs {
 	struct squashfs_super_block sb;
 	sqfs_table id_table;
 	sqfs_table frag_table;
+	sqfs_block_cache md_cache;
+	sqfs_block_cache data_cache;
+	sqfs_block_cache frag_cache;
 };
 
 typedef uint32_t sqfs_xattr_idx;
@@ -65,6 +69,10 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t *pos, sqfs_block **block);
 sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 	sqfs_block **block);
 
+// Don't dispose after getting block, it's in the cache
+sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block);
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_block_cache *cache, off_t pos,
+	uint32_t hdr, sqfs_block **block);
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base);
 
