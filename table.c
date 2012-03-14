@@ -14,7 +14,7 @@ sqfs_err sqfs_table_init(sqfs_table *table, int fd, off_t start, size_t each,
 	table->each = each;
 	if (!(table->blocks = malloc(read)))
 		goto err;
-	if (xpread(fd, table->blocks, read, start) != read)
+	if (sqfs_xpread(fd, table->blocks, read, start) != read)
 		goto err;
 	
 	int i;

@@ -15,7 +15,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
-	if (xpread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
+	if (sqfs_xpread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
 		return SQFS_ERR;
 	sqfs_swapin_super_block(&fs->sb);
 	
@@ -68,7 +68,7 @@ sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
 	if (!((*block)->data = malloc(size)))
 		goto err;
 	
-	if (xpread(fs->fd, (*block)->data, size, pos) != size)
+	if (sqfs_xpread(fs->fd, (*block)->data, size, pos) != size)
 		goto err;
 
 	if (compressed) {
@@ -103,7 +103,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
 	*data_size = 0;
 	
 	uint16_t hdr;
-	if (xpread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
+	if (sqfs_xpread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
 		return SQFS_ERR;
 	pos += sizeof(hdr);
 	*data_size += sizeof(hdr);
@@ -208,33 +208,6 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
 	return SQFS_OK;
 }
 
-mode_t sqfs_mode(int inode_type) {
-	switch (inode_type) {
-		case SQUASHFS_DIR_TYPE:
-		case SQUASHFS_LDIR_TYPE:
-			return S_IFDIR;
-		case SQUASHFS_REG_TYPE:
-		case SQUASHFS_LREG_TYPE:
-			return S_IFREG;
-		case SQUASHFS_SYMLINK_TYPE:
-		case SQUASHFS_LSYMLINK_TYPE:
-			return S_IFLNK;
-		case SQUASHFS_BLKDEV_TYPE:
-		case SQUASHFS_LBLKDEV_TYPE:
-			return S_IFBLK;
-		case SQUASHFS_CHRDEV_TYPE:
-		case SQUASHFS_LCHRDEV_TYPE:
-			return S_IFCHR;
-		case SQUASHFS_FIFO_TYPE:
-		case SQUASHFS_LFIFO_TYPE:
-			return S_IFIFO;
-		case SQUASHFS_SOCKET_TYPE:
-		case SQUASHFS_LSOCKET_TYPE:
-			return S_IFSOCK;
-	}
-	return 0;
-}
-
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 	if (!S_ISLNK(sqfs_mode(inode->base.inode_type)))
 		return SQFS_ERR;
@@ -248,7 +221,7 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 // It looks like rdev is just what the Linux kernel uses: 20 bit minor,
 // split in two around a 12 bit major
 static dev_t sqfs_decode_dev(uint32_t rdev) {
-	return xmakedev((rdev >> 8) & 0xfff,
+	return sqfs_xmakedev((rdev >> 8) & 0xfff,
 		(rdev & 0xff) | ((rdev >> 12) & 0xfff00));
 }
 
