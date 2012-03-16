@@ -1,7 +1,7 @@
 #ifndef SQFS_COMMON_H
 #define SQFS_COMMON_H
 
-#define _POSIX_C_SOURCE 200112L
+#include "config.h"
 
 #include <stdint.h>
 #include <sys/types.h>

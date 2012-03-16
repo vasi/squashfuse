@@ -1,10 +1,20 @@
-#ifdef __linux__
-	#define _XOPEN_SOURCE 500 // pread
-	#define _BSD_SOURCE // makedev
-#elif defined(__APPLE__)
+#include "config.h"
+
+#ifdef NONSTD__DARWIN_C_SOURCE
 	#define _DARWIN_C_SOURCE
 #endif
-// FreeBSD wants no defines
+#ifdef NONSTD__XOPEN_SOURCE
+	#define _XOPEN_SOURCE 500
+#endif
+#ifdef NONSTD__BSD_SOURCE
+	#define _BSD_SOURCE
+#endif
+#ifdef NONSTD__GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+#ifdef NONSTD__POSIX_C_SOURCE
+	#undef _POSIX_C_SOURCE
+#endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
