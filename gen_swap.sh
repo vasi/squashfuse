@@ -9,4 +9,4 @@ sed -n '
 d
 :decl
 s/{/;/w swap.h.inc
-' < squashfs_fs.h > swap.c.inc
+' < "$1" > swap.c.inc
