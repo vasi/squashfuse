@@ -1,5 +1,7 @@
 #include "squashfuse.h"
 
+#include "nonstd.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +17,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
-	if (sqfs_xpread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
+	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
 		return SQFS_ERR;
 	sqfs_swapin_super_block(&fs->sb);
 	
@@ -68,7 +70,7 @@ sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
 	if (!((*block)->data = malloc(size)))
 		goto err;
 	
-	if (sqfs_xpread(fs->fd, (*block)->data, size, pos) != size)
+	if (sqfs_pread(fs->fd, (*block)->data, size, pos) != size)
 		goto err;
 
 	if (compressed) {
@@ -103,7 +105,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
 	*data_size = 0;
 	
 	uint16_t hdr;
-	if (sqfs_xpread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
+	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
 		return SQFS_ERR;
 	pos += sizeof(hdr);
 	*data_size += sizeof(hdr);
@@ -221,7 +223,7 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 // It looks like rdev is just what the Linux kernel uses: 20 bit minor,
 // split in two around a 12 bit major
 static dev_t sqfs_decode_dev(uint32_t rdev) {
-	return sqfs_xmakedev((rdev >> 8) & 0xfff,
+	return sqfs_makedev((rdev >> 8) & 0xfff,
 		(rdev & 0xff) | ((rdev >> 12) & 0xfff00));
 }
 

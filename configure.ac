@@ -12,16 +12,14 @@ AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 
 # SQ_NONSTD_DEFINE(NAME,PROLOG,SOURCE)
 # Check what #define we need for non-POSIX declarations
-# FIXME: We're checking each feature separately, but compiling them all at once
 AC_DEFUN([SQ_NONSTD_DEFINE],[
-	m4_define([SQ_HEADERS],[_DARWIN_C_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE])
-	m4_foreach_w([hdr],SQ_HEADERS,[AH_TEMPLATE([NONSTD_]hdr,
-		[Non-POSIX declarations require changes to ]hdr)])
+	AH_TEMPLATE([AS_TR_CPP([NONSTD_]$1[_DEF])],
+		[Change needed by non-POSIX ]$1)
 	
 	AS_VAR_PUSHDEF([sq_cache],[sq_cv_decl_nonstd_$1])
 	AC_CACHE_VAL([sq_cache],[
-		sq_cv_decl_nonstd_$1=no
-		for def in none SQ_HEADERS
+		AS_VAR_SET([sq_cache],[no])
+		for def in none _DARWIN_C_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
 		do
 			AS_IF([test "x$def" = "x_POSIX_C_SOURCE"],[op=undef],[op=define])
 			AS_IF([test "x$def" = "x_XOPEN_SOURCE"],[val=500],[val=1])
@@ -46,15 +44,15 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_IF([sq_cache],[no],
 		[AC_MSG_FAILURE([can't figure out how to use $1])],
 		[AS_VAR_IF([sq_cache],[none],[],[
-			AC_DEFINE_UNQUOTED([NONSTD_$sq_cache],1,[])]
+			AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$def],[])]
 		)]
 	)
 	AS_VAR_POPDEF([sq_cache])
 ])
 
 SQ_NONSTD_DEFINE(makedev,[#include <sys/types.h>],[makedev(0,0)])
-SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[pread(1,NULL,1,1)])
-SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR])
+SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
+SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
 
 
 ##### zlib #####

@@ -3,6 +3,8 @@ squashfuse
 *.dSYM
 *.o
 
+*.tar.gz
+
 Makefile
 Makefile.in
 .deps

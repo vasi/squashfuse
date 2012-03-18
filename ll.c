@@ -1,3 +1,4 @@
+#include "config.h"
 #include "ll.h"
 
 #include <errno.h>

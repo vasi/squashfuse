@@ -4,10 +4,10 @@ export COPYFILE_DISABLE = 1
 endif
 
 bin_PROGRAMS = squashfuse
-squashfuse_SOURCES = std.c swap.c cache.c table.c dir.c file.c fs.c \
-	ll.c squashfuse.c \
-	squashfs_fs.h common.h std.h swap.h cache.h table.h dir.h file.h \
-	squashfuse.h ll.h
+squashfuse_SOURCES = swap.c cache.c table.c dir.c file.c fs.c ll.c squashfuse.c \
+	nonstd-pread.c nonstd-makedev.c nonstd-stat.c \
+	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
+	dir.h file.h squashfuse.h ll.h
 
 BUILT_SOURCES = swap.h.inc swap.c.inc
 CLEANFILES = swap.h.inc swap.c.inc

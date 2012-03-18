@@ -7,7 +7,6 @@
 #include "dir.h"
 #include "file.h"
 #include "squashfs_fs.h"
-#include "std.h"
 #include "swap.h"
 #include "table.h"
 

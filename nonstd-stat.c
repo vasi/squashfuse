@@ -1,34 +1,11 @@
 #include "config.h"
 
-#ifdef NONSTD__DARWIN_C_SOURCE
-	#define _DARWIN_C_SOURCE
-#endif
-#ifdef NONSTD__XOPEN_SOURCE
-	#define _XOPEN_SOURCE 500
-#endif
-#ifdef NONSTD__BSD_SOURCE
-	#define _BSD_SOURCE
-#endif
-#ifdef NONSTD__GNU_SOURCE
-	#define _GNU_SOURCE
-#endif
-#ifdef NONSTD__POSIX_C_SOURCE
-	#undef _POSIX_C_SOURCE
-#endif
+#define SQFEATURE NONSTD_S_IFDIR_DEF
+#include "nonstd-internal.h"
 
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "squashfs_fs.h"
-
-dev_t sqfs_xmakedev(int maj, int min) {
-	return makedev(maj, min);
-}
-
-ssize_t sqfs_xpread(int fd, void *buf, size_t count, off_t off) {
-	return pread(fd, buf, count, off);
-}
 
 // S_IF* are not standard
 mode_t sqfs_mode(int inode_type) {
