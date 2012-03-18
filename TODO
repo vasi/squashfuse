@@ -7,9 +7,8 @@ Dir index
 Compression types + options
 Blocklist index
 
-Test old dists
-Support BSD make?
 Build system
+	autoconf 2.68, automake 1.11: Test older?
 	libsquashfuse?
 	make dist - configure, manpage
 README
@@ -32,3 +31,19 @@ Error handling
 Fast bit swapping (platform specific)
 
 mksquashfs race condition?
+
+Testing
+	Known good
+		Mac 10.7 amd64
+		Mac 10.4 i386
+		Mac 10.5 ppc
+		Debian squeeze ppc
+		Debian squeeze i386
+		Ubuntu Lucid amd64
+		FreeBSD 9.0 amd64
+	Todo
+		NetBSD 6 with libperfuse
+		Solaris?
+		Other Linux
+			Non-debian
+			Older
