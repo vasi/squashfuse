@@ -95,5 +95,18 @@ PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.6],[
 ])
 
 
+###### Can we suppress AppleDouble files? #####
+
+AC_MSG_CHECKING([if ${MAKE-make} supports export])
+cat > confmak <<'END'
+export FOO=1
+all:
+END
+AS_IF([${MAKE-make} -f confmak >/dev/null 2>/dev/null],[gnu_make=yes],[gnu_make=no])
+rm -f confmak
+AC_MSG_RESULT([$gnu_make])
+AM_CONDITIONAL([GNU_MAKE],[test "x$gnu_make" == xyes])
+
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

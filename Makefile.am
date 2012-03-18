@@ -1,3 +1,8 @@
+# Suppress AppleDouble
+if GNU_MAKE
+export COPYFILE_DISABLE = 1
+endif
+
 bin_PROGRAMS = squashfuse
 squashfuse_SOURCES = std.c swap.c cache.c table.c dir.c file.c fs.c \
 	ll.c squashfuse.c \
