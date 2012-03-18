@@ -12,6 +12,7 @@ AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 
 # SQ_NONSTD_DEFINE(NAME,PROLOG,SOURCE)
 # Check what #define we need for non-POSIX declarations
+# FIXME: We're checking each feature separately, but compiling them all at once
 AC_DEFUN([SQ_NONSTD_DEFINE],[
 	m4_define([SQ_HEADERS],[_DARWIN_C_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE])
 	m4_foreach_w([hdr],SQ_HEADERS,[AH_TEMPLATE([NONSTD_]hdr,
