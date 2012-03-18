@@ -1,36 +1,37 @@
-xattrs
+Missing features
+	IMPORTANT xattrs
+	IMPORTANT Compression types
+	Dir index
+	Blocklist ('metablock') index
+	Compression options: Are these even used for anything?
 
-32-bit inodes
-	Export table
-	Caching?
-Dir index
-Compression types + options
-Blocklist index
+Building
+	README, LICENSE, manpage
+	Currently on autoconf 2.68, automake 1.11: Test older versions?
+	Create a separate libsquashfuse, for eg: File Roller
 
-Build system
-	autoconf 2.68, automake 1.11: Test older?
-	libsquashfuse?
-	make dist - configure, manpage
-README
-Docs, manpage, comments
-License
-Cross-platform
-	Mac SDKs
+Features
+	Support old versions of squashfs?
+	Unsquashfs clone?
+	Better error codes, sanity checks
 
-Old versions of squashfs
+Performance
+	Fast bit swapping (platform specific)
+	32-bit inode memory
+		Currently we store a complete inode_num => inode_id table
+		If export table exists, we could just use that
+			Lookups could be expensive. Maybe cache as well? 
+	Threading
+		Parcel out blocks
+		Caches are not currently thread safe
+	Delegation of caching and threading strategies
+		eg: For unsquashfs, cache inodes
+	Speculative readahead?
 
-Threading?
-	Thread-safety
-Delegation of caching, threading?
-	Evented style?
-Speculative readahead?
-Unsquashfs clone?
-Error handling
-	Better error codes
-	Sanity checks
-Fast bit swapping (platform specific)
-
-mksquashfs race condition?
+squashfs-tools
+	Submit OS X patches
+	mksquashfs has a race condition on OS X
+		Something to do with duplicate files?
 
 Testing
 	Known good
