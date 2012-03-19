@@ -252,6 +252,37 @@ static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 	return 1; // Keep
 }
 
+
+// Helpers to abstract out FUSE 2.5 vs 2.6+ differences
+
+typedef struct {
+	int fd;
+	struct fuse_chan *ch;
+} sqfs_ll_chan;
+
+static sqfs_err sqfs_ll_mount(sqfs_ll_chan *ch, const char *mountpoint,
+		struct fuse_args *args) {
+	#ifdef HAVE_NEW_FUSE_UNMOUNT
+		ch->ch = fuse_mount(mountpoint, args);
+	#else
+		ch->fd = fuse_mount(mountpoint, args);
+		if (ch->fd == -1)
+			return SQFS_ERR;
+		ch->ch = fuse_kern_chan_new(ch->fd);
+	#endif
+	return ch->ch ? SQFS_OK : SQFS_ERR;
+}
+
+static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
+	#ifdef HAVE_NEW_FUSE_UNMOUNT
+		fuse_unmount(mountpoint, ch->ch);
+	#else
+		close(ch->fd);
+		fuse_unmount(mountpoint);
+	#endif
+}
+
+
 int main(int argc, char *argv[]) {
 	// PARSE ARGS
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
@@ -287,24 +318,26 @@ int main(int argc, char *argv[]) {
 	// STARTUP FUSE
 	if (!err) {
 		err = -1;
-		struct fuse_chan *ch = fuse_mount(mountpoint, &args);
-		if (ch) {
+		sqfs_ll_chan ch;
+		if (sqfs_ll_mount(&ch, mountpoint, &args) == SQFS_OK) {
 			struct fuse_session *se = fuse_lowlevel_new(&args,
 				&sqfs_ll_ops, sizeof(sqfs_ll_ops), &ll);	
 			if (se != NULL) {
-				if (fuse_daemonize(fg) != -1) {
+				if (sqfs_ll_daemonize(fg) != -1) {
 					if (fuse_set_signal_handlers(se) != -1) {
-						fuse_session_add_chan(se, ch);
+						fuse_session_add_chan(se, ch.ch);
 						// FIXME: multithreading
 						err = fuse_session_loop(se);
 						fuse_remove_signal_handlers(se);
-						fuse_session_remove_chan(ch);
+						#if HAVE_DECL_FUSE_SESSION_REMOVE_CHAN
+							fuse_session_remove_chan(ch.ch);
+						#endif
 					}
 				}
 				fuse_session_destroy(se);
 			}
 			sqfs_ll_destroy(&ll);
-			fuse_unmount(mountpoint, ch);
+			sqfs_ll_unmount(&ch, mountpoint);
 		}
 	}
 	fuse_opt_free_args(&args);

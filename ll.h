@@ -38,4 +38,6 @@ sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
 // Fill in a stat structure. Does not set st_ino
 sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st);
 
+int sqfs_ll_daemonize(int fg);
+
 #endif

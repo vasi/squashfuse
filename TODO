@@ -42,12 +42,10 @@ Testing
 		Debian squeeze ppc
 		Debian squeeze i386
 		Ubuntu Lucid amd64
+		CentOS 3.9 i386 (FUSE 2.5)
 		FreeBSD 9.0 amd64
 	Todo
 		NetBSD 6 with libperfuse
 		Solaris 11?
 		Windows (Dokan?)
 		Minix, Hurd?
-		Other Linux
-			Non-debian
-			Older

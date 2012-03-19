@@ -14,7 +14,7 @@ AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 # Check what #define we need for non-POSIX declarations
 AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AH_TEMPLATE([AS_TR_CPP([NONSTD_]$1[_DEF])],
-		[Change needed by non-POSIX ]$1)
+		[Extra definition needed by non-POSIX ]$1)
 	
 	AS_VAR_PUSHDEF([sq_cache],[sq_cv_decl_nonstd_$1])
 	AC_CACHE_VAL([sq_cache],[
@@ -94,6 +94,19 @@ AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
 	[#include <fuse_lowlevel.h>])
 AS_IF([test "x$found_dirent" = xyes],,
 	[AC_MSG_FAILURE([No way to add directory entries])])
+
+AC_CHECK_DECLS([fuse_daemonize],,
+	[SQ_NONSTD_DEFINE(daemon,[#include <unistd.h>],[(void)daemon;])],
+	[#include <fuse_lowlevel.h>])
+
+AC_CHECK_DECLS([fuse_session_remove_chan],,,[#include <fuse_lowlevel.h>])
+
+AC_MSG_CHECKING([for two-argument fuse_unmount])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[fuse_unmount(0,0)])],[
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([HAVE_NEW_FUSE_UNMOUNT],1,
+		[Define if we have two-argument fuse_unmount])
+],[AC_MSG_RESULT(no)])
 
 
 ###### Can we suppress AppleDouble files? #####
