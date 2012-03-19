@@ -31,8 +31,6 @@ Performance
 
 squashfs-tools
 	Submit OS X patches
-	mksquashfs has a race condition on OS X
-		Something to do with duplicate files?
 
 Testing
 	Known good
