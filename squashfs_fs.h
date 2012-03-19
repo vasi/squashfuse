@@ -273,19 +273,6 @@ struct squashfs_ldir_inode {
 	struct squashfs_dir_index	index[0];
 };
 
-union squashfs_inode {
-	struct squashfs_base_inode		base;
-	struct squashfs_dev_inode		dev;
-	struct squashfs_ldev_inode		ldev;
-	struct squashfs_symlink_inode		symlink;
-	struct squashfs_reg_inode		reg;
-	struct squashfs_lreg_inode		lreg;
-	struct squashfs_dir_inode		dir;
-	struct squashfs_ldir_inode		ldir;
-	struct squashfs_ipc_inode		ipc;
-	struct squashfs_lipc_inode		lipc;
-};
-
 struct squashfs_dir_entry {
 	__le16			offset;
 	__le16			inode_number;
