@@ -6,7 +6,7 @@ Missing features
 	Compression options: Are these even used for anything?
 
 Building
-	README, manpage
+	README
 	Licensing: Make sure squashfs_fs.h use is ok
 	Currently on autoconf 2.68, automake 1.11: Test older versions?
 	Create a separate libsquashfuse, for eg: File Roller

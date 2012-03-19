@@ -9,6 +9,8 @@ squashfuse_SOURCES = swap.c cache.c table.c dir.c file.c fs.c ll.c squashfuse.c 
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
 	dir.h file.h squashfuse.h ll.h
 
+dist_man_MANS = squashfuse.1
+
 BUILT_SOURCES = swap.h.inc swap.c.inc
 CLEANFILES = swap.h.inc swap.c.inc
 EXTRA_DIST = gen_swap.sh
