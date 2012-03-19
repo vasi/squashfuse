@@ -24,8 +24,9 @@ Performance
 	Threading
 		Parcel out blocks
 		Caches are not currently thread safe
+		Read metadata (eg: UIDs) in parallel?
 	Delegation of caching and threading strategies
-		eg: For unsquashfs, cache inodes
+		eg: For unsquashfs, cache all inodes
 	Speculative readahead?
 
 squashfs-tools
@@ -44,7 +45,9 @@ Testing
 		FreeBSD 9.0 amd64
 	Todo
 		NetBSD 6 with libperfuse
-		Solaris?
+		Solaris 11?
+		Windows (Dokan?)
+		Minix, Hurd?
 		Other Linux
 			Non-debian
 			Older

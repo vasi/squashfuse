@@ -1,5 +1,5 @@
 AC_INIT([squashfuse], [0.1], [dave@vasilevsky.ca])
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CC_C99
@@ -64,7 +64,7 @@ AC_CHECK_HEADER([zlib.h],, AC_MSG_FAILURE([zlib.h not found]))
 ##### FUSE #####
 
 PKG_CHECK_EXISTS(fuse)
-PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.6],[
+PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.5],[
 	LIBS="$LIBS $PKGCONFIG_FUSE_LIBS"
 	CFLAGS="$CFLAGS $PKGCONFIG_FUSE_CFLAGS"
 ],[
@@ -83,14 +83,17 @@ PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.6],[
 	AC_CHECK_HEADER([fuse_lowlevel.h],,[
 		# Try harder by adding some #defines, on OS X this may be required
 		
-		save_cppflags="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10"
-		CPPFLAGS="$save_cppflags -DFUSE_USE_VERSION=26"
+		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -DFUSE_USE_VERSION=26"
 		AS_UNSET(ac_cv_header_fuse_lowlevel_h) # don't re-use cache
-		AC_CHECK_HEADER([fuse_lowlevel.h],
-			[CPPFLAGS="$save_cppflags"],
+		AC_CHECK_HEADER([fuse_lowlevel.h],,
 			[AC_MSG_FAILURE([fuse_lowlevel.h not found])])
 	])
 ])
+
+AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
+	[#include <fuse_lowlevel.h>])
+AS_IF([test "x$found_dirent" = xyes],,
+	[AC_MSG_FAILURE([No way to add directory entries])])
 
 
 ###### Can we suppress AppleDouble files? #####

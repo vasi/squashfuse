@@ -59,6 +59,29 @@ static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_err(req, 0); // yes, this is necessary
 }
 
+static void sqfs_ll_add_direntry(fuse_req_t req, const char *name,
+		const struct stat *st, off_t off) {
+	size_t bsize;
+	#if HAVE_DECL_FUSE_ADD_DIRENTRY
+		bsize = fuse_add_direntry(req, NULL, 0, name, st, 0);
+	#else
+		bsize = fuse_dirent_size(strlen(name));
+	#endif
+	
+	char *buf = malloc(bsize);
+	if (!buf) {
+		fuse_reply_err(req, ENOMEM);
+	} else {
+		#if HAVE_DECL_FUSE_ADD_DIRENTRY
+			fuse_add_direntry(req, buf, bsize, name, st, off + bsize);
+		#else
+			fuse_add_dirent(buf, name, st, off + bsize);
+		#endif
+		fuse_reply_buf(req, buf, bsize);
+		free(buf);
+	}
+}
+
 // TODO: More efficient to return multiple entries at a time?
 static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
@@ -78,15 +101,8 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 			.st_ino = lli.ll->ino_register(lli.ll, entry),
 			.st_mode = sqfs_mode(entry->type),
 		};
-		size_t bsize = fuse_add_direntry(req, NULL, 0, entry->name, &st, 0);
-		char *buf = malloc(bsize);
-		if (!buf) {
-			fuse_reply_err(req, ENOMEM);
-		} else {
-			fuse_add_direntry(req, buf, bsize, entry->name, &st, off + bsize);
-			fuse_reply_buf(req, buf, bsize);
-			free(buf);
-		}
+		
+		sqfs_ll_add_direntry(req, entry->name, &st, off);
 	}
 }
 
