@@ -6,7 +6,7 @@ AC_PROG_CC_C99
 CFLAGS="$CFLAGS -Wall"
 
 AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
-
+AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
 
 ##### Non-POSIX declarations #####
 
@@ -83,7 +83,7 @@ PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.5],[
 	AC_CHECK_HEADER([fuse_lowlevel.h],,[
 		# Try harder by adding some #defines, on OS X this may be required
 		
-		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -DFUSE_USE_VERSION=26"
+		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10"
 		AS_UNSET(ac_cv_header_fuse_lowlevel_h) # don't re-use cache
 		AC_CHECK_HEADER([fuse_lowlevel.h],,
 			[AC_MSG_FAILURE([fuse_lowlevel.h not found])])

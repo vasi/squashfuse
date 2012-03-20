@@ -35,7 +35,7 @@ squashfs-tools
 
 Testing
 	Known good
-		Mac 10.7 amd64
+		Mac 10.7 amd64 (MacFUSE)
 		Mac 10.4 i386
 		Mac 10.5 ppc
 		Debian squeeze ppc
@@ -48,3 +48,4 @@ Testing
 		Solaris 11?
 		Windows (Dokan?)
 		Minix, Hurd?
+		fuse4x, osxfuse
