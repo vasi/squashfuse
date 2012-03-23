@@ -42,9 +42,27 @@ static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
 #endif
 
 
+#ifdef HAVE_LZMA_H
+#include <lzma.h>
+
+static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
+		void *out, size_t *outsz) {
+	uint64_t memlimit = UINT64_MAX;
+	size_t inpos = 0, outpos = 0;
+	lzma_ret err = lzma_stream_buffer_decode(&memlimit, 0, NULL, in, &inpos, insz,
+		out, &outpos, *outsz);
+	if (err != LZMA_OK)
+		return SQFS_ERR;
+	*outsz = outpos;
+	return SQFS_OK;
+}
+#endif
+
+
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 	switch (type) {
 		case ZLIB_COMPRESSION: return &sqfs_decompressor_zlib;
+		case XZ_COMPRESSION: return &sqfs_decompressor_xz;
 		default: return NULL;
 	}
 }
