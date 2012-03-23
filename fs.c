@@ -55,6 +55,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 		sizeof(uint32_t), fs->sb.no_ids);
 	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
+	err |= sqfs_xattr_init(fs);
 	err |= sqfs_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
 	err |= sqfs_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
 	err |= sqfs_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);

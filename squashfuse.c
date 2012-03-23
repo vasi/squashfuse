@@ -239,6 +239,16 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	}
 }
 
+static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
+	sqfs_ll_i lli;
+	if (sqfs_ll_iget(req, &lli, ino))
+		return;
+	
+	sqfs_xattr_test(&lli.ll->fs, &lli.inode);
+	
+	// FIXME
+	fuse_reply_err(req, EIO);
+}
 
 
 static struct fuse_lowlevel_ops sqfs_ll_ops = {
@@ -251,6 +261,7 @@ static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.release	= sqfs_ll_op_release,
 	.read		= sqfs_ll_op_read,
 	.readlink	= sqfs_ll_op_readlink,
+	.listxattr	= sqfs_ll_op_listxattr,
 };
 
 

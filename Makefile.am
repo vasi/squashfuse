@@ -5,10 +5,10 @@ endif
 
 bin_PROGRAMS = squashfuse
 squashfuse_SOURCES = swap.c cache.c table.c dir.c file.c fs.c ll.c squashfuse.c \
-	decompress.c \
+	decompress.c xattr.c \
 	nonstd-pread.c nonstd-makedev.c nonstd-stat.c nonstd-daemon.c \
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
-	dir.h file.h decompress.h squashfuse.h ll.h
+	dir.h file.h decompress.h xattr.h squashfuse.h ll.h
 
 dist_man_MANS = squashfuse.1
 

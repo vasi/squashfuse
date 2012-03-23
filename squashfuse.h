@@ -34,6 +34,7 @@
 #include "squashfs_fs.h"
 #include "swap.h"
 #include "table.h"
+#include "xattr.h"
 
 #include <stdbool.h>
 
@@ -46,6 +47,9 @@ struct sqfs {
 	sqfs_block_cache data_cache;
 	sqfs_block_cache frag_cache;
 	sqfs_decompressor decompressor;
+	
+	struct squashfs_xattr_id_table xattr_info;
+	sqfs_table xattr_table;
 };
 
 typedef uint32_t sqfs_xattr_idx;
