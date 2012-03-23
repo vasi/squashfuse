@@ -287,7 +287,6 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.reg.frag_idx = x.fragment;
 			inode->xtra.reg.frag_off = x.offset;
 			inode->xattr = x.xattr;
-			// FIXME: sparse ok?
 			break;
 		}
 		case SQUASHFS_DIR_TYPE: {
@@ -359,7 +358,6 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			break;
 		}
 		
-		// FIXME: more types
 		default: return SQFS_ERR;
 	}
 	// FIXME: xattr
