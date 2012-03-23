@@ -33,6 +33,9 @@
 
 sqfs_err sqfs_table_init(sqfs_table *table, int fd, off_t start, size_t each,
 		size_t count) {
+	if (count == 0)
+		return SQFS_OK;
+	
 	size_t nblocks = sqfs_divceil(each * count, SQUASHFS_METADATA_SIZE);
 	size_t read = nblocks * sizeof(uint64_t);
 	
