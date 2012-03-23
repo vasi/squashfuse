@@ -77,9 +77,15 @@ static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
 
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 	switch (type) {
+#ifdef HAVE_ZLIB_H
 		case ZLIB_COMPRESSION: return &sqfs_decompressor_zlib;
+#endif
+#ifdef HAVE_LZMA_H
 		case XZ_COMPRESSION: return &sqfs_decompressor_xz;
+#endif
+#ifdef HAVE_LZO_LZO1X_H
 		case LZO_COMPRESSION: return &sqfs_decompressor_lzo;
+#endif
 		default: return NULL;
 	}
 }
