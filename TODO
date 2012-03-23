@@ -16,6 +16,7 @@ Building
 
 Features
 	Support old versions of squashfs?
+	Support LZMA1?
 	Unsquashfs clone?
 	Better error codes, sanity checks
 

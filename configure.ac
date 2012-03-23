@@ -56,10 +56,34 @@ SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
 SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
 
 
-##### zlib #####
+##### Compression #####
 
-AC_CHECK_LIB(z, [uncompress],, AC_MSG_FAILURE([zlib not found]))
-AC_CHECK_HEADER([zlib.h],, AC_MSG_FAILURE([zlib.h not found]))
+# SQ_CHECK_DECOMPRESS(NAME,LIBRARY,FUNCTION,HEADER)
+# Check for a decompression library
+AC_DEFUN([SQ_CHECK_DECOMPRESS],[
+	sq_check=yes
+	AC_ARG_WITH($1,
+		AS_HELP_STRING([--with-]$1[=DIR],$1[ prefix directory]),[
+		AS_IF([test "x$withval" = xno],[
+			sq_check=no
+		],[
+			CPPFLAGS="$CPPFLAGS -I$withval/include"
+			LIBS="$LIBS -L$withval/lib"
+		])
+	])
+	
+	AS_IF([test "x$sq_check" = xyes],[
+		AC_SEARCH_LIBS($3,$2,[
+			AC_CHECK_HEADERS($4,[decomp_found=yes])
+		])
+	])
+])
+
+SQ_CHECK_DECOMPRESS([zlib],[z],[uncompress],[zlib.h])
+SQ_CHECK_DECOMPRESS([xz],[lzma],[lzma_stream_buffer_decode],[lzma.h])
+SQ_CHECK_DECOMPRESS([lzo],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
+AS_IF([test "x$decomp_found" = xyes],,
+	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
 
 ##### FUSE #####

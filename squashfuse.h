@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include "cache.h"
+#include "decompress.h"
 #include "dir.h"
 #include "file.h"
 #include "squashfs_fs.h"
@@ -44,6 +45,7 @@ struct sqfs {
 	sqfs_block_cache md_cache;
 	sqfs_block_cache data_cache;
 	sqfs_block_cache frag_cache;
+	sqfs_decompressor decompressor;
 };
 
 typedef uint32_t sqfs_xattr_idx;

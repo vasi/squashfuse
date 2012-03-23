@@ -32,8 +32,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <zlib.h>
-
 #define DATA_CACHED_BLKS 1
 #define FRAG_CACHED_BLKS 3
 
@@ -49,7 +47,8 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 		return SQFS_FORMAT;
 	if (fs->sb.s_major != SQUASHFS_MAJOR || fs->sb.s_minor > SQUASHFS_MINOR)
 		return SQFS_ERR;
-	if (fs->sb.compression != ZLIB_COMPRESSION) // FIXME
+	
+	if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
 		return SQFS_ERR;
 	
 	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
@@ -89,39 +88,38 @@ void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
 
 sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
 		uint32_t size, size_t outsize, sqfs_block **block) {
+	sqfs_err err = SQFS_ERR;
 	if (!(*block = malloc(sizeof(**block))))
 		return SQFS_ERR;
 	if (!((*block)->data = malloc(size)))
-		goto err;
+		goto error;
 	
 	if (sqfs_pread(fs->fd, (*block)->data, size, pos) != size)
-		goto err;
+		goto error;
 
 	if (compressed) {
 		char *decomp = malloc(outsize);
 		if (!decomp)
-			goto err;
-
-		uLongf zout = outsize;
-		int zerr = uncompress((Bytef*)decomp, &zout,
-			(Bytef*)(*block)->data, size);
-		if (zerr != Z_OK) {
+			goto error;
+		
+		err = fs->decompressor((*block)->data, size, decomp, &outsize);
+		if (err) {
 			free(decomp);
-			goto err;
+			goto error;
 		}
 		free((*block)->data);
 		(*block)->data = decomp;
-		(*block)->size = zout;
+		(*block)->size = outsize;
 	} else {
 		(*block)->size = size;
 	}
 
 	return SQFS_OK;
 
-err:
+error:
 	sqfs_block_dispose(*block);
 	*block = NULL;
-	return SQFS_ERR;
+	return err;
 }
 
 sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
