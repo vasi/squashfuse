@@ -1,4 +1,5 @@
 AC_INIT([squashfuse], [0.1], [dave@vasilevsky.ca])
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_HEADERS([config.h])
 
@@ -63,32 +64,70 @@ AC_CHECK_HEADER([zlib.h],, AC_MSG_FAILURE([zlib.h not found]))
 
 ##### FUSE #####
 
-PKG_CHECK_EXISTS(fuse)
-PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.5],[
-	LIBS="$LIBS $PKGCONFIG_FUSE_LIBS"
-	CFLAGS="$CFLAGS $PKGCONFIG_FUSE_CFLAGS"
-],[
-	# If we don't have pkg-config, try --with-fuse, default to /usr/local
+AC_ARG_WITH(fuse,
+	AS_HELP_STRING([--with-fuse=DIR], [FUSE prefix directory]),
+	[fuse_dir=$withval])
+AC_ARG_WITH(fuse-include,
+	AS_HELP_STRING([--with-fuse-include=DIR], [FUSE header directory]),
+	[fuse_include=$withval])
+AC_ARG_WITH(fuse-lib,
+	AS_HELP_STRING([--with-fuse-lib=DIR], [FUSE library directory]),
+	[fuse_lib=$withval])
 
-	AC_ARG_WITH(fuse,
-		AS_HELP_STRING([--with-fuse=DIR], [FUSE prefix directory]),
-		[fuse_dir=$withval], [fuse_dir=/usr/local])
-	
-	LIBS="$LIBS -L$fuse_dir/lib"
-	CPPFLAGS="$CPPFLAGS -I$fuse_dir/include/fuse"
-	
-	AC_SEARCH_LIBS(fuse_lowlevel_new,[fuse_ino64 fuse],
-		[LIBS="$LIBS $ac_cv_search_fuse_lowlevel_new"],
-		AC_MSG_FAILURE([FUSE not found]))
-	AC_CHECK_HEADER([fuse_lowlevel.h],,[
-		# Try harder by adding some #defines, on OS X this may be required
-		
-		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10"
-		AS_UNSET(ac_cv_header_fuse_lowlevel_h) # don't re-use cache
-		AC_CHECK_HEADER([fuse_lowlevel.h],,
-			[AC_MSG_FAILURE([fuse_lowlevel.h not found])])
-	])
+AS_IF([test "x$fuse_dir$fuse_include$fuse_lib" = x],[
+	PKG_CHECK_EXISTS(fuse)
+	PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.5],[
+		LIBS="$LIBS $PKGCONFIG_FUSE_LIBS"
+		CFLAGS="$CFLAGS $PKGCONFIG_FUSE_CFLAGS"
+		fuse_found=yes
+	],[ignore=xxx])
 ])
+
+save_CPPFLAGS=$CPPFLAGS
+save_LIBS=$LIBS
+for dir in user default local osxfuse
+do
+	for plat in default off64
+	do
+		AS_IF([test "x$fuse_found" = xyes],[continue])
+		CPPFLAGS="$save_CPPFLAGS"
+		LIBS="$save_LIBS"
+		
+		AS_IF([test "x$dir" = xuser],[
+			AS_IF([test "x$fuse_dir$fuse_include$fuse_lib" = x],[continue])
+			AS_IF([test "x$fuse_dir" = x],,[
+				iinc="$fuse_dir/include/fuse"
+				ilib="$fuse_dir/lib"])
+			AS_IF([test "x$fuse_include" = x],,[iinc=$fuse_include])
+			AS_IF([test "x$fuse_lib" = x],,[ilib=$fuse_lib])
+		])
+		AS_IF([test "x$dir" = xlocal || test "x$dir" = xosxfuse],[
+			AS_CASE([$target_os],[darwin*],,[continue])
+			ilib=/usr/local/lib
+			iinc=/usr/local/include/fuse
+			AS_IF([test "x$dir" = xosxfuse],[iinc=/usr/local/include/osxfuse/fuse])
+		])
+		AS_IF([test "x$iinc" = x],,[CPPFLAGS="$CPPFLAGS -I$iinc"])
+		AS_IF([test "x$ilib" = x],,[LIBS="$LIBS -L$ilib"])
+		
+		AS_IF([test "x$plat" = xdefault],,[
+			CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64"
+			AS_CASE([$target_os],[darwin*],[
+				CPPFLAGS="$CPPFLAGS -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
+			])
+		])
+		
+		AS_UNSET([ac_cv_header_fuse_lowlevel_h]) # don't re-use cache
+		AS_UNSET([ac_cv_search_fuse_lowlevel_new])
+		
+		AC_MSG_NOTICE([checking $plat flags in $dir directories])
+		AC_SEARCH_LIBS([fuse_lowlevel_new],[osxfuse fuse_ino64 fuse],[
+			AC_CHECK_HEADER([fuse_lowlevel.h],[fuse_found=yes])
+		])
+	done
+done
+AS_IF([test "x$fuse_found" = xyes],,[AC_MSG_FAILURE([FUSE not found])])
+
 
 AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
 	[#include <fuse_lowlevel.h>])
