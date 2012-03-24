@@ -45,7 +45,7 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_IF([sq_cache],[no],
 		[AC_MSG_FAILURE([can't figure out how to use $1])],
 		[AS_VAR_IF([sq_cache],[none],[],[
-			AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$def],[])]
+			AC_DEFINE_UNQUOTED([AS_TR_CPP([NONSTD_$1_DEF])],[CHANGE$def],[])]
 		)]
 	)
 	AS_VAR_POPDEF([sq_cache])
