@@ -27,8 +27,34 @@
 
 #include "common.h"
 
+#include "squashfs_fs.h"
+
 sqfs_err sqfs_xattr_init(sqfs *fs);
 
-sqfs_err sqfs_xattr_test(sqfs *fs, sqfs_inode *inode);
+typedef enum {
+	SQFS_XATTR_READ, SQFS_XATTR_NAME, SQFS_XATTR_VAL
+} sqfs_xattr_state;
+
+typedef struct {
+	sqfs *fs;
+	sqfs_md_cursor cur;
+	sqfs_xattr_state state;
+	
+	size_t remain;
+	struct squashfs_xattr_id info;
+	struct squashfs_xattr_entry entry;
+} sqfs_xattr;
+
+sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *xattr);
+
+// Call once per xattr, while xattr->remain > 0
+sqfs_err sqfs_xattr_read(sqfs_xattr *xattr);
+
+// May call one or both of these after sqfs_xattr_read
+// Out pointers may be NULL to just skip the data instead of reading it.
+// Caller is responsible for ensuring enough room in buffers.
+// Name is not null terminated, can use xattr->entry.size for length.
+sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name);
+sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, size_t *size, void *buf);
 
 #endif

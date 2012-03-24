@@ -45,50 +45,100 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
 		fs->xattr_info.xattr_ids);
 }
 
-sqfs_err sqfs_xattr_test(sqfs *fs, sqfs_inode *inode) {
-	if (fs->xattr_info.xattr_ids == 0) {
-		fprintf(stderr, "xattr: Not supported\n");
+sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *xattr) {
+	xattr->remain = 0; // assume none exist	
+	if (fs->xattr_info.xattr_ids == 0 || inode->xattr == SQUASHFS_INVALID_XATTR)
 		return SQFS_OK;
-	}
 	
-	if (inode->xattr == SQUASHFS_INVALID_XATTR) {
-		fprintf(stderr, "xattr: None found\n");
-		return SQFS_OK;
-	}
-	
-	struct squashfs_xattr_id xattr_id;
-	fprintf(stderr, "xattr: inode idx %d\n", inode->xattr);
 	sqfs_err err = sqfs_table_get(&fs->xattr_table, fs, inode->xattr,
-		&xattr_id);
+		&xattr->info);
 	if (err)
 		return SQFS_ERR;
-	sqfs_swapin_xattr_id(&xattr_id);
-	fprintf(stderr, "xattr: count %d, size %d\n", xattr_id.count,
-		xattr_id.size);
+	sqfs_swapin_xattr_id(&xattr->info);
 	
-	char name[256]; // FIXME
-	sqfs_md_cursor cur;
-	sqfs_md_cursor_inode(&cur, xattr_id.xattr,
+	sqfs_md_cursor_inode(&xattr->cur, xattr->info.xattr,
 		fs->xattr_info.xattr_table_start);
-	while (xattr_id.count--) {
-		struct squashfs_xattr_entry entry;
-		if ((err = sqfs_md_read(fs, &cur, &entry, sizeof(entry))))
-			return err;
-		sqfs_swapin_xattr_entry(&entry);
-		
-		if ((err = sqfs_md_read(fs, &cur, name, entry.size)))
-			return err;
-		name[entry.size] = '\0';
-		fprintf(stderr, "xattr: type %d, name %s\n",
-			entry.type & SQUASHFS_XATTR_PREFIX_MASK, name);
-		
-		uint32_t valsize;
-		if ((err = sqfs_md_read(fs, &cur, &valsize, sizeof(valsize))))
-			return err;
-		sqfs_swapin32(&valsize);
-		if ((err = sqfs_md_read(fs, &cur, NULL, valsize)))
+	
+	xattr->fs = fs;
+	xattr->remain = xattr->info.count;
+	xattr->state = SQFS_XATTR_READ;
+	return SQFS_OK;
+}
+
+static sqfs_err sqfs_xattr_forward(sqfs_xattr *xattr, sqfs_xattr_state want) {
+	sqfs_err err = SQFS_OK;
+	while (xattr->state != want) {
+		switch (xattr->state) {
+			case SQFS_XATTR_READ: err = sqfs_xattr_read(xattr); break;
+			case SQFS_XATTR_NAME: err = sqfs_xattr_name(xattr, NULL); break;
+			case SQFS_XATTR_VAL: err = sqfs_xattr_val(xattr, NULL, NULL); break;
+		}
+		if (err)
 			return err;
 	}
+	return err;
+}
+
+sqfs_err sqfs_xattr_read(sqfs_xattr *xattr) {
+	sqfs_err err;
+	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_READ)))
+		return err;
+	if (xattr->remain == 0)
+		return SQFS_ERR;
 	
-	return SQFS_OK;
+	if ((err = sqfs_md_read(xattr->fs, &xattr->cur, &xattr->entry,
+			sizeof(xattr->entry))))
+		return err;
+	sqfs_swapin_xattr_entry(&xattr->entry);
+	
+	--(xattr->remain);
+	xattr->state = SQFS_XATTR_NAME;
+	return err;
+}
+
+sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name) {
+	sqfs_err err;
+	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_NAME)))
+		return err;
+	
+	if ((err = sqfs_md_read(xattr->fs, &xattr->cur, name, xattr->entry.size)))
+		return err;
+	xattr->state = SQFS_XATTR_VAL;
+	return err;
+}
+
+sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, size_t *size, void *buf) {
+	sqfs_err err;
+	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL)))
+		return err;
+	
+	bool ool = xattr->entry.type & SQUASHFS_XATTR_VALUE_OOL;
+	sqfs *fs = xattr->fs;
+	sqfs_md_cursor ool_cur, *cur = &xattr->cur;
+	
+	struct squashfs_xattr_val val;
+	if ((err = sqfs_md_read(fs, cur, &val, sizeof(val))))
+		return err;
+	sqfs_swapin_xattr_val(&val);
+	
+	if (ool && (size || buf)) {
+		uint64_t pos;
+		if ((err = sqfs_md_read(fs, cur, &pos, sizeof(pos))))
+			return err;
+		sqfs_swapin64(&pos);
+		
+		cur = &ool_cur;
+		sqfs_md_cursor_inode(cur, pos, fs->xattr_info.xattr_table_start);
+		if ((err = sqfs_md_read(fs, cur, &val, sizeof(val))))
+			return err;
+		sqfs_swapin_xattr_val(&val);
+	}
+	
+	if (size)
+		*size = val.vsize;
+	if ((err = sqfs_md_read(fs, cur, buf, val.vsize)))
+		return err;	
+	
+	xattr->state = SQFS_XATTR_READ;
+	return err;
 }

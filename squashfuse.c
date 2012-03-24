@@ -239,15 +239,65 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	}
 }
 
+static void sqfs_ll_listxattr_count(fuse_req_t req, sqfs_xattr *xattr) {
+	size_t count = 0;
+	while (xattr->remain) {
+		sqfs_err err = sqfs_xattr_read(xattr);
+		if (err) {
+			fuse_reply_err(req, EIO);
+			return;
+		}
+		count += xattr->entry.size + 1;
+	}
+	fuse_reply_xattr(req, count);
+}
+
 static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	sqfs_ll_i lli;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	sqfs_xattr_test(&lli.ll->fs, &lli.inode);
+	sqfs_xattr xattr;
+	sqfs_err err;
+	if ((err = sqfs_xattr_open(&lli.ll->fs, &lli.inode, &xattr))) {
+		fuse_reply_err(req, EIO);
+		return;
+	}
+	if (size == 0) {
+		sqfs_ll_listxattr_count(req, &xattr);
+		return;
+	}
+	char *buf = malloc(size);
+	if (!buf) {
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
 	
-	// FIXME
-	fuse_reply_err(req, EIO);
+	int ferr = 0;
+	size_t p = 0;
+	while (xattr.remain) {
+		if ((err = sqfs_xattr_read(&xattr))) {
+			ferr = EIO;
+		} else {
+			size_t nsz = xattr.entry.size;
+			if (size < p + nsz + 1) {
+				ferr = ERANGE;
+			} else if ((err = sqfs_xattr_name(&xattr, buf + p))) {
+				ferr = EIO;
+			} else {
+				p += nsz;
+				buf[p++] = '\0';
+				continue;
+			}
+		}
+		break;
+	}
+	
+	if (ferr)
+		fuse_reply_err(req, ferr);
+	else
+		fuse_reply_buf(req, buf, p);
+	free(buf);
 }
 
 
