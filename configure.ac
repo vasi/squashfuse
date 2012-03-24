@@ -171,6 +171,16 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[fuse_unmount(0,0)]
 		[Define if we have two-argument fuse_unmount])
 ],[AC_MSG_RESULT(no)])
 
+AC_MSG_CHECKING([for position argument to FUSE xattr operations])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
+		struct fuse_lowlevel_ops ops;
+		ops.getxattr(0, 0, 0, 0, 0);
+	])],[
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([FUSE_XATTR_POSITION],1,
+		[Define if FUSE xattr operations take a position argument])
+],[AC_MSG_RESULT(no)])
+
 
 ###### Can we suppress AppleDouble files? #####
 
