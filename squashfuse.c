@@ -300,6 +300,75 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	free(buf);
 }
 
+static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
+		const char *name, size_t size
+#ifdef FUSE_XATTR_POSITION
+		, uint32_t position
+#endif
+		) {
+	if (position != 0) { // FIXME?
+		fuse_reply_err(req, EINVAL);
+		return;
+	}
+	
+	sqfs_ll_i lli;
+	if (sqfs_ll_iget(req, &lli, ino))
+		return;
+	
+	sqfs_xattr xattr;
+	sqfs_err err;
+	if ((err = sqfs_xattr_open(&lli.ll->fs, &lli.inode, &xattr))) {
+		fuse_reply_err(req, EIO);
+		return;
+	}
+	size_t nsz = strlen(name);
+	char *cmp = malloc(strlen(name));
+	if (!cmp) {
+		fuse_reply_err(req, ENOMEM);
+		return;
+	}
+	
+	char *buf = NULL;
+	bool found = false;
+	int ferr = 0;
+	size_t vsize;
+	while (xattr.remain) {
+		if ((err = sqfs_xattr_read(&xattr))) {
+			ferr = EIO;
+		} else if (sqfs_xattr_name_size(&xattr) != nsz) {
+			continue;
+		} else if ((err = sqfs_xattr_name(&xattr, cmp))) {
+			ferr = EIO;
+		} else if (memcmp(cmp, name, nsz) != 0) {
+			continue;
+		} else if ((err = sqfs_xattr_val_size(&xattr, &vsize))) {
+			ferr = EIO;
+		} else {
+			found = true;
+			if (size) {
+				buf = malloc(vsize);
+				if (!buf) {
+					ferr = ENOMEM;
+				} else if ((err = sqfs_xattr_val(&xattr, buf))) {
+					ferr = EIO;
+				}
+			}
+		}
+		break;
+	}
+	if (!found)
+		ferr = EINVAL; // FIXME: ENOATTR
+	
+	if (ferr) {
+		fuse_reply_err(req, ferr);
+	} else if (size) {
+		fuse_reply_buf(req, buf, vsize);
+	} else {
+		fuse_reply_xattr(req, vsize);
+	}
+	free(cmp);
+	free(buf);
+}
 
 static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.getattr	= sqfs_ll_op_getattr,
@@ -312,6 +381,7 @@ static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.read		= sqfs_ll_op_read,
 	.readlink	= sqfs_ll_op_readlink,
 	.listxattr	= sqfs_ll_op_listxattr,
+	.getxattr	= sqfs_ll_op_getxattr,
 };
 
 

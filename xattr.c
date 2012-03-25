@@ -77,7 +77,9 @@ static sqfs_err sqfs_xattr_forward(sqfs_xattr *xattr, sqfs_xattr_state want) {
 		switch (xattr->state) {
 			case SQFS_XATTR_READ: err = sqfs_xattr_read(xattr); break;
 			case SQFS_XATTR_NAME: err = sqfs_xattr_name(xattr, NULL); break;
-			case SQFS_XATTR_VAL: err = sqfs_xattr_val(xattr, NULL, NULL); break;
+			case SQFS_XATTR_VAL_SIZE: err = sqfs_xattr_val_size(xattr, NULL);
+				break;
+			case SQFS_XATTR_VAL: err = sqfs_xattr_val(xattr, NULL); break;
 		}
 		if (err)
 			return err;
@@ -127,41 +129,51 @@ sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name) {
 		name ? name + len + 1 : NULL, xattr->entry.size);
 	if (err)
 		return err;
-	xattr->state = SQFS_XATTR_VAL;
+	xattr->state = SQFS_XATTR_VAL_SIZE;
 	return err;
 }
 
-sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, size_t *size, void *buf) {
+sqfs_err sqfs_xattr_val_size(sqfs_xattr *xattr, size_t *size) {
 	sqfs_err err;
-	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL)))
+	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL_SIZE)))
 		return err;
 	
 	bool ool = xattr->entry.type & SQUASHFS_XATTR_VALUE_OOL;
 	sqfs *fs = xattr->fs;
-	sqfs_md_cursor ool_cur, *cur = &xattr->cur;
-	
-	struct squashfs_xattr_val val;
-	if ((err = sqfs_md_read(fs, cur, &val, sizeof(val))))
+	sqfs_md_cursor *cur = &xattr->cur;
+	if ((err = sqfs_md_read(fs, cur, &xattr->val, sizeof(xattr->val))))
 		return err;
-	sqfs_swapin_xattr_val(&val);
+	sqfs_swapin_xattr_val(&xattr->val);
 	
-	if (ool && (size || buf)) {
+	if (ool && size) {
 		uint64_t pos;
 		if ((err = sqfs_md_read(fs, cur, &pos, sizeof(pos))))
 			return err;
 		sqfs_swapin64(&pos);
 		
-		cur = &ool_cur;
+		cur = &xattr->oolcur;
 		sqfs_md_cursor_inode(cur, pos, fs->xattr_info.xattr_table_start);
-		if ((err = sqfs_md_read(fs, cur, &val, sizeof(val))))
+		if ((err = sqfs_md_read(fs, cur, &xattr->val, sizeof(xattr->val))))
 			return err;
-		sqfs_swapin_xattr_val(&val);
+		sqfs_swapin_xattr_val(&xattr->val);
 	}
+	xattr->vcur = cur;
 	
 	if (size)
-		*size = val.vsize;
-	if ((err = sqfs_md_read(fs, cur, buf, val.vsize)))
-		return err;	
+		*size = xattr->val.vsize;	
+	xattr->state = SQFS_XATTR_VAL;
+	return err;
+}
+
+sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, void *buf) {
+	sqfs_err err;
+	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL)))
+		return err;
+	
+	if (buf || xattr->vcur == &xattr->cur) {
+		if ((err = sqfs_md_read(xattr->fs, xattr->vcur, buf, xattr->val.vsize)))
+			return err;
+	}
 	
 	xattr->state = SQFS_XATTR_READ;
 	return err;
