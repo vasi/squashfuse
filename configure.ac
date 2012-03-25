@@ -14,7 +14,7 @@ AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
 # SQ_NONSTD_DEFINE(NAME,PROLOG,SOURCE)
 # Check what #define we need for non-POSIX declarations
 AC_DEFUN([SQ_NONSTD_DEFINE],[
-	AH_TEMPLATE([AS_TR_CPP([NONSTD_]$1[_DEF])],
+	AH_TEMPLATE(AS_TR_CPP([NONSTD_]$1[_DEF]),
 		[Extra definition needed by non-POSIX ]$1)
 	
 	AS_VAR_PUSHDEF([sq_cache],[sq_cv_decl_nonstd_$1])
@@ -45,8 +45,8 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_IF([sq_cache],[no],
 		[AC_MSG_FAILURE([can't figure out how to use $1])],
 		[AS_VAR_IF([sq_cache],[none],[],[
-			AC_DEFINE_UNQUOTED([AS_TR_CPP([NONSTD_$1_DEF])],[CHANGE$def],[])]
-		)]
+			AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$def],[])
+		])]
 	)
 	AS_VAR_POPDEF([sq_cache])
 ])
