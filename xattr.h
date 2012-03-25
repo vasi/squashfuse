@@ -50,7 +50,9 @@ sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *xattr);
 // Call once per xattr, while xattr->remain > 0
 sqfs_err sqfs_xattr_read(sqfs_xattr *xattr);
 
-// May call one or both of these after sqfs_xattr_read
+size_t sqfs_xattr_name_size(sqfs_xattr *xattr);
+
+// May call one or more of these after sqfs_xattr_read, in order
 // Out pointers may be NULL to just skip the data instead of reading it.
 // Caller is responsible for ensuring enough room in buffers.
 // Name is not null terminated, can use xattr->entry.size for length.

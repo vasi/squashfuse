@@ -247,7 +247,7 @@ static void sqfs_ll_listxattr_count(fuse_req_t req, sqfs_xattr *xattr) {
 			fuse_reply_err(req, EIO);
 			return;
 		}
-		count += xattr->entry.size + 1;
+		count += sqfs_xattr_name_size(xattr) + 1;
 	}
 	fuse_reply_xattr(req, count);
 }
@@ -279,7 +279,7 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 		if ((err = sqfs_xattr_read(&xattr))) {
 			ferr = EIO;
 		} else {
-			size_t nsz = xattr.entry.size;
+			size_t nsz = sqfs_xattr_name_size(&xattr);
 			if (size < p + nsz + 1) {
 				ferr = ERANGE;
 			} else if ((err = sqfs_xattr_name(&xattr, buf + p))) {

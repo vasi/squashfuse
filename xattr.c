@@ -28,6 +28,12 @@
 #include "nonstd.h"
 
 #include <stdio.h>
+#include <string.h>
+
+#define SQFS_XATTR_MAX SQUASHFS_XATTR_SECURITY
+
+static const char *const sqfs_xattr_prefices[] =
+	 { "user", "security", "trusted" };
 
 sqfs_err sqfs_xattr_init(sqfs *fs) {
 	off_t start = fs->sb.xattr_id_table_start;
@@ -90,10 +96,17 @@ sqfs_err sqfs_xattr_read(sqfs_xattr *xattr) {
 			sizeof(xattr->entry))))
 		return err;
 	sqfs_swapin_xattr_entry(&xattr->entry);
+	if ((xattr->entry.type & SQUASHFS_XATTR_PREFIX_MASK) > SQFS_XATTR_MAX)
+		return SQFS_ERR;
 	
 	--(xattr->remain);
 	xattr->state = SQFS_XATTR_NAME;
 	return err;
+}
+
+size_t sqfs_xattr_name_size(sqfs_xattr *xattr) {
+	int type = xattr->entry.type & SQUASHFS_XATTR_PREFIX_MASK;
+	return xattr->entry.size + 1 + strlen(sqfs_xattr_prefices[type]);
 }
 
 sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name) {
@@ -101,7 +114,18 @@ sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name) {
 	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_NAME)))
 		return err;
 	
-	if ((err = sqfs_md_read(xattr->fs, &xattr->cur, name, xattr->entry.size)))
+	size_t len;
+	if (name) {
+		const char *pref = sqfs_xattr_prefices[xattr->entry.type &
+			SQUASHFS_XATTR_PREFIX_MASK];
+		len = strlen(pref);
+		memcpy(name, pref, len);
+		name[len] = '.';
+	}
+	
+	err = sqfs_md_read(xattr->fs, &xattr->cur,
+		name ? name + len + 1 : NULL, xattr->entry.size);
+	if (err)
 		return err;
 	xattr->state = SQFS_XATTR_VAL;
 	return err;
