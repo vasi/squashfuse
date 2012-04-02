@@ -31,40 +31,46 @@
 
 #include <stdbool.h>
 
+
+// Initialize xattr handling for this fs
 sqfs_err sqfs_xattr_init(sqfs *fs);
 
-typedef enum {
-	SQFS_XATTR_READ, SQFS_XATTR_NAME, SQFS_XATTR_VAL_SIZE, SQFS_XATTR_VAL
-} sqfs_xattr_state;
 
+
+#define SQFS_XATTR_PREFIX_MAX SQUASHFS_XATTR_SECURITY
+
+extern const char *const sqfs_xattr_prefices[];
+sqfs_err sqfs_xattr_find_prefix(const char *name, int *prefix, size_t *size);
+
+
+// xattr iterator
 typedef struct {
-	sqfs *fs;
-	sqfs_xattr_state state;
-	sqfs_md_cursor cur, oolcur, *vcur;
-	struct squashfs_xattr_val val;
+	sqfs *fs;	
+	int cursors;
+	sqfs_md_cursor c_name, c_vsize, c_val, c_next;
 	
 	size_t remain;
 	struct squashfs_xattr_id info;
+	
+	uint16_t type;
+	bool ool;
 	struct squashfs_xattr_entry entry;
+	struct squashfs_xattr_val val;
 } sqfs_xattr;
 
-sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *xattr);
+// Get xattr iterator for this inode
+sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *x);
 
-// Call once per xattr, while xattr->remain > 0
-sqfs_err sqfs_xattr_read(sqfs_xattr *xattr);
+// Get new xattr entry. Call while x->remain > 0
+sqfs_err sqfs_xattr_read(sqfs_xattr *x);
 
-size_t sqfs_xattr_name_size(sqfs_xattr *xattr);
+// Accessors on xattr entry. No null-termination!
+size_t sqfs_xattr_name_size(sqfs_xattr *x);
+sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix);
+sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size);
+sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf);
 
-/* May call one or more of these after sqfs_xattr_read, in order
- * Out pointers may be NULL to just skip the data instead of reading it.
- * Caller is responsible for ensuring enough room in buffers.
- *
- * Name is not null terminated, get length with sqfs_xattr_name_size().
- * Can only call sqfs_xattr_val() after sqfs_xattr_val_size() with non-NULL
- * size.
- */
-sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name);
-sqfs_err sqfs_xattr_val_size(sqfs_xattr *xattr, size_t *size);
-sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, void *buf);
+// Find an xattr entry
+sqfs_err sqfs_xattr_find(sqfs_xattr *x, char *needle, bool *found);
 
 #endif

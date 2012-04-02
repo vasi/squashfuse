@@ -30,10 +30,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#define SQFS_XATTR_MAX SQUASHFS_XATTR_SECURITY
+const char *const sqfs_xattr_prefices[] =
+	 { "user.", "security.", "trusted." };
 
-static const char *const sqfs_xattr_prefices[] =
-	 { "user", "security", "trusted" };
+typedef enum {
+	CURS_VSIZE = 1,
+	CURS_VAL = 2,
+	CURS_NEXT = 4,
+} sqfs_xattr_curs;
 
 sqfs_err sqfs_xattr_init(sqfs *fs) {
 	off_t start = fs->sb.xattr_id_table_start;
@@ -51,130 +55,118 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
 		fs->xattr_info.xattr_ids);
 }
 
-sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *xattr) {
-	xattr->remain = 0; // assume none exist	
+sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *x) {
+	x->remain = 0; // assume none exist	
 	if (fs->xattr_info.xattr_ids == 0 || inode->xattr == SQUASHFS_INVALID_XATTR)
 		return SQFS_OK;
 	
 	sqfs_err err = sqfs_table_get(&fs->xattr_table, fs, inode->xattr,
-		&xattr->info);
+		&x->info);
 	if (err)
 		return SQFS_ERR;
-	sqfs_swapin_xattr_id(&xattr->info);
+	sqfs_swapin_xattr_id(&x->info);
 	
-	sqfs_md_cursor_inode(&xattr->cur, xattr->info.xattr,
+	sqfs_md_cursor_inode(&x->c_next, x->info.xattr,
 		fs->xattr_info.xattr_table_start);
 	
-	xattr->fs = fs;
-	xattr->remain = xattr->info.count;
-	xattr->state = SQFS_XATTR_READ;
+	x->fs = fs;
+	x->remain = x->info.count;
+	x->cursors = CURS_NEXT;
 	return SQFS_OK;
 }
 
-static sqfs_err sqfs_xattr_forward(sqfs_xattr *xattr, sqfs_xattr_state want) {
-	sqfs_err err = SQFS_OK;
-	while (xattr->state != want) {
-		switch (xattr->state) {
-			case SQFS_XATTR_READ: err = sqfs_xattr_read(xattr); break;
-			case SQFS_XATTR_NAME: err = sqfs_xattr_name(xattr, NULL); break;
-			case SQFS_XATTR_VAL_SIZE: err = sqfs_xattr_val_size(xattr, NULL);
-				break;
-			case SQFS_XATTR_VAL: err = sqfs_xattr_val(xattr, NULL); break;
-		}
-		if (err)
+sqfs_err sqfs_xattr_read(sqfs_xattr *x) {
+	if (x->remain == 0)
+		return SQFS_ERR;
+	
+	sqfs_err err;
+	if (!(x->cursors & CURS_NEXT)) {
+		x->ool = false; // force inline
+		if ((err = sqfs_xattr_value(x, NULL)))
 			return err;
 	}
+	
+	x->c_name = x->c_next;
+	if ((err = sqfs_md_read(x->fs, &x->c_name, &x->entry, sizeof(x->entry))))
+		return err;
+	sqfs_swapin_xattr_entry(&x->entry);
+	
+	x->type = x->entry.type & SQUASHFS_XATTR_PREFIX_MASK;
+	x->ool = x->entry.type & SQUASHFS_XATTR_VALUE_OOL;
+	if (x->type > SQFS_XATTR_PREFIX_MAX)
+		return SQFS_ERR;
+	
+	--(x->remain);
+	x->cursors = 0;
 	return err;
 }
 
-sqfs_err sqfs_xattr_read(sqfs_xattr *xattr) {
-	sqfs_err err;
-	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_READ)))
-		return err;
-	if (xattr->remain == 0)
-		return SQFS_ERR;
-	
-	if ((err = sqfs_md_read(xattr->fs, &xattr->cur, &xattr->entry,
-			sizeof(xattr->entry))))
-		return err;
-	sqfs_swapin_xattr_entry(&xattr->entry);
-	if ((xattr->entry.type & SQUASHFS_XATTR_PREFIX_MASK) > SQFS_XATTR_MAX)
-		return SQFS_ERR;
-	
-	--(xattr->remain);
-	xattr->state = SQFS_XATTR_NAME;
-	return err;
+size_t sqfs_xattr_name_size(sqfs_xattr *x) {
+	return x->entry.size + strlen(sqfs_xattr_prefices[x->type]);
 }
 
-size_t sqfs_xattr_name_size(sqfs_xattr *xattr) {
-	int type = xattr->entry.type & SQUASHFS_XATTR_PREFIX_MASK;
-	return xattr->entry.size + 1 + strlen(sqfs_xattr_prefices[type]);
-}
-
-sqfs_err sqfs_xattr_name(sqfs_xattr *xattr, char *name) {
-	sqfs_err err;
-	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_NAME)))
-		return err;
-	
-	size_t len;
-	if (name) {
-		const char *pref = sqfs_xattr_prefices[xattr->entry.type &
-			SQUASHFS_XATTR_PREFIX_MASK];
+sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix) {
+	size_t len = 0;
+	if (name && prefix) {
+		const char *pref = sqfs_xattr_prefices[x->type];
 		len = strlen(pref);
 		memcpy(name, pref, len);
-		name[len] = '.';
 	}
 	
-	err = sqfs_md_read(xattr->fs, &xattr->cur,
-		name ? name + len + 1 : NULL, xattr->entry.size);
+	x->c_vsize = x->c_name;
+	sqfs_err err = sqfs_md_read(x->fs, &x->c_vsize, name + len, x->entry.size);
 	if (err)
 		return err;
-	xattr->state = SQFS_XATTR_VAL_SIZE;
+	
+	x->cursors |= CURS_VSIZE;
 	return err;
 }
 
-sqfs_err sqfs_xattr_val_size(sqfs_xattr *xattr, size_t *size) {
+sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size) {
 	sqfs_err err;
-	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL_SIZE)))
-		return err;
+	if (!(x->cursors & CURS_VSIZE))
+		if ((err = sqfs_xattr_name(x, NULL, false)))
+			return err;
 	
-	bool ool = xattr->entry.type & SQUASHFS_XATTR_VALUE_OOL;
-	sqfs *fs = xattr->fs;
-	sqfs_md_cursor *cur = &xattr->cur;
-	if ((err = sqfs_md_read(fs, cur, &xattr->val, sizeof(xattr->val))))
+	x->c_val = x->c_vsize;
+	if ((err = sqfs_md_read(x->fs, &x->c_val, &x->val, sizeof(x->val))))
 		return err;
-	sqfs_swapin_xattr_val(&xattr->val);
+	sqfs_swapin_xattr_val(&x->val);
 	
-	if (ool && size) {
+	if (x->ool) {
 		uint64_t pos;
-		if ((err = sqfs_md_read(fs, cur, &pos, sizeof(pos))))
+		x->c_next = x->c_val;
+		if ((err = sqfs_md_read(x->fs, &x->c_next, &pos, sizeof(pos))))
 			return err;
 		sqfs_swapin64(&pos);
+		x->cursors |= CURS_NEXT;
 		
-		cur = &xattr->oolcur;
-		sqfs_md_cursor_inode(cur, pos, fs->xattr_info.xattr_table_start);
-		if ((err = sqfs_md_read(fs, cur, &xattr->val, sizeof(xattr->val))))
+		sqfs_md_cursor_inode(&x->c_val, pos,
+			x->fs->xattr_info.xattr_table_start);
+		if ((err = sqfs_md_read(x->fs, &x->c_val, &x->val, sizeof(x->val))))
 			return err;
-		sqfs_swapin_xattr_val(&xattr->val);
+		sqfs_swapin_xattr_val(&x->val);
 	}
-	xattr->vcur = cur;
 	
 	if (size)
-		*size = xattr->val.vsize;	
-	xattr->state = SQFS_XATTR_VAL;
+		*size = x->val.vsize;	
+	x->cursors |= CURS_VAL;
 	return err;
 }
 
-sqfs_err sqfs_xattr_val(sqfs_xattr *xattr, void *buf) {
+sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf) {
 	sqfs_err err;
-	if ((err = sqfs_xattr_forward(xattr, SQFS_XATTR_VAL)))
+	if (!(x->cursors & CURS_VAL))
+		if ((err = sqfs_xattr_value_size(x, NULL)))
+			return err;
+	
+	sqfs_md_cursor c = x->c_val;
+	if ((err = sqfs_md_read(x->fs, &c, buf, x->val.vsize)))
 		return err;
 	
-	if (buf || xattr->vcur == &xattr->cur) {
-		if ((err = sqfs_md_read(xattr->fs, xattr->vcur, buf, xattr->val.vsize)))
-			return err;
+	if (!x->ool) {
+		x->c_next = c;
+		x->cursors |= CURS_NEXT;
 	}
-	
-	xattr->state = SQFS_XATTR_READ;
 	return err;
 }
