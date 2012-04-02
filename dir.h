@@ -47,7 +47,7 @@ typedef struct {
 	size_t remain;
 	struct squashfs_dir_header header;
 	
-	char name[MAXPATHLEN+1];
+	char name[SQUASHFS_NAME_LEN+1];
 	sqfs_dir_entry entry;
 } sqfs_dir;
 
