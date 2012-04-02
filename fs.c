@@ -153,10 +153,13 @@ sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 		fs->sb.block_size, block);
 }
 
+#include <stdio.h>
+
 sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
 	size_t data_size;
 	*block = sqfs_cache_get(&fs->md_cache, *pos, &data_size);
 	if (!*block) {
+		fprintf(stderr, "Read block %10lld\n", *pos);
 		sqfs_err err = sqfs_md_block_read(fs, *pos, &data_size, block);
 		if (err)
 			return err;
