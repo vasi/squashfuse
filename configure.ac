@@ -11,7 +11,7 @@ AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
 
 ##### Non-POSIX declarations #####
 
-# SQ_NONSTD_DEFINE(NAME,PROLOG,SOURCE)
+# SQ_NONSTD_DEFINE(NAME, PROLOG, SOURCE, [IF_NOT_FOUND])
 # Check what #define we need for non-POSIX declarations
 AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AH_TEMPLATE(AS_TR_CPP([NONSTD_]$1[_DEF]),
@@ -43,7 +43,7 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 		done
 	])
 	AS_VAR_IF([sq_cache],[no],
-		[AC_MSG_FAILURE([can't figure out how to use $1])],
+		m4_default($4,[AC_MSG_FAILURE([can't figure out how to use $1])]),
 		[AS_VAR_IF([sq_cache],[none],[],[
 			AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$def],[])
 		])]
@@ -54,7 +54,7 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 SQ_NONSTD_DEFINE(makedev,[#include <sys/types.h>],[makedev(0,0)])
 SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
 SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
-
+SQ_NONSTD_DEFINE(ENOATTR,[#include <errno.h>],[int e = ENOATTR;],[:])
 
 ##### Compression #####
 

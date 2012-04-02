@@ -361,7 +361,6 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 		
 		default: return SQFS_ERR;
 	}
-	// FIXME: xattr
 	
 	return SQFS_OK;
 }

@@ -36,6 +36,7 @@
 
 #include "ll.h"
 #include "squashfuse.h"
+#include "nonstd.h"
 
 static const double SQFS_TIMEOUT = DBL_MAX;
 
@@ -313,7 +314,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 	} else if (sqfs_xattr_find(&x, name, &found)) {
 		fuse_reply_err(req, EIO);
 	} else if (!found) {
-		fuse_reply_err(req, EIO); // FIXME: ENOATTR
+		fuse_reply_err(req, sqfs_enoattr());
 	} else if (sqfs_xattr_value_size(&x, &vsize)) {
 		fuse_reply_err(req, EIO);
 	} else if (!size) {
