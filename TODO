@@ -1,5 +1,4 @@
 Missing features
-	IMPORTANT xattrs
 	Dir index
 	Blocklist ('metablock') index
 
@@ -19,6 +18,7 @@ Features
 	Unsquashfs clone?
 	High-level FUSE API?
 	Better error codes, sanity checks
+	Support/emualte non-prefixed xattrs?
 
 Performance
 	Fast bit swapping (platform specific)
