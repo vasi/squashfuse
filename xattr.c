@@ -27,11 +27,23 @@
 #include "squashfuse.h"
 #include "nonstd.h"
 
-#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-const char *const sqfs_xattr_prefices[] =
-	 { "user.", "security.", "trusted." };
+
+#define SQFS_XATTR_PREFIX_MAX SQUASHFS_XATTR_SECURITY
+
+typedef struct {
+	const char *pref;
+	size_t len;
+} sqfs_prefix;
+ 
+sqfs_prefix sqfs_xattr_prefixes[] = {
+	{"user.", 5},
+	{"security.", 9},
+	{"trusted.", 8},
+};
+
 
 typedef enum {
 	CURS_VSIZE = 1,
@@ -102,19 +114,18 @@ sqfs_err sqfs_xattr_read(sqfs_xattr *x) {
 }
 
 size_t sqfs_xattr_name_size(sqfs_xattr *x) {
-	return x->entry.size + strlen(sqfs_xattr_prefices[x->type]);
+	return x->entry.size + sqfs_xattr_prefixes[x->type].len;
 }
 
 sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix) {
-	size_t len = 0;
 	if (name && prefix) {
-		const char *pref = sqfs_xattr_prefices[x->type];
-		len = strlen(pref);
-		memcpy(name, pref, len);
+		sqfs_prefix *p = &sqfs_xattr_prefixes[x->type];
+		memcpy(name, p->pref, p->len);
+		name += p->len;
 	}
 	
 	x->c_vsize = x->c_name;
-	sqfs_err err = sqfs_md_read(x->fs, &x->c_vsize, name + len, x->entry.size);
+	sqfs_err err = sqfs_md_read(x->fs, &x->c_vsize, name, x->entry.size);
 	if (err)
 		return err;
 	
@@ -168,5 +179,50 @@ sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf) {
 		x->c_next = c;
 		x->cursors |= CURS_NEXT;
 	}
+	return err;
+}
+
+static sqfs_err sqfs_xattr_find_prefix(const char *name, uint16_t *type) {
+	for (int i = 0; i <= SQFS_XATTR_PREFIX_MAX; ++i) {
+		sqfs_prefix *p = &sqfs_xattr_prefixes[i];
+		if (strncmp(name, p->pref, p->len) == 0) {
+			*type = i;
+			return SQFS_OK;
+		}
+	}
+	return SQFS_ERR;
+}
+
+// FIXME: Indicate EINVAL, ENOMEM?
+sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
+	sqfs_err err;
+	
+	uint16_t type;
+	if ((err = sqfs_xattr_find_prefix(name, &type)))
+		return err;
+	name += sqfs_xattr_prefixes[type].len;
+	size_t len = strlen(name);
+	char *cmp = malloc(len);
+	if (!cmp)
+		return SQFS_ERR;
+	
+	while (x->remain) {
+		if ((err = sqfs_xattr_read(x)))
+			goto done;
+		if (x->type != type && x->entry.size != len)
+			continue;
+		if ((err = sqfs_xattr_name(x, cmp, false)))
+			goto done;
+		if (strncmp(name, cmp, len) == 0) {
+			*found = true;
+			goto done;
+		}
+	}
+	
+	*found = false;
+	return SQFS_OK;
+
+done:
+	free(cmp);
 	return err;
 }

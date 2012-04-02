@@ -297,70 +297,38 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 		, uint32_t position
 #endif
 		) {
-	fuse_reply_err(req, EIO);
-/*	if (position != 0) { // FIXME?
-		fuse_reply_err(req, EINVAL);
-		return;
-	}
-	
 	sqfs_ll_i lli;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	sqfs_xattr xattr;
-	sqfs_err err;
-	if ((err = sqfs_xattr_open(&lli.ll->fs, &lli.inode, &xattr))) {
-		fuse_reply_err(req, EIO);
-		return;
-	}
-	size_t nsz = strlen(name);
-	char *cmp = malloc(strlen(name));
-	if (!cmp) {
-		fuse_reply_err(req, ENOMEM);
-		return;
-	}
-	
-	char *buf = NULL;
-	bool found = false;
-	int ferr = 0;
+	sqfs_xattr x;
+	bool found;
 	size_t vsize;
-	while (xattr.remain) {
-		if ((err = sqfs_xattr_read(&xattr))) {
-			ferr = EIO;
-		} else if (sqfs_xattr_name_size(&xattr) != nsz) {
-			continue;
-		} else if ((err = sqfs_xattr_name(&xattr, cmp))) {
-			ferr = EIO;
-		} else if (memcmp(cmp, name, nsz) != 0) {
-			continue;
-		} else if ((err = sqfs_xattr_val_size(&xattr, &vsize))) {
-			ferr = EIO;
-		} else {
-			found = true;
-			if (size) {
-				buf = malloc(vsize);
-				if (!buf) {
-					ferr = ENOMEM;
-				} else if ((err = sqfs_xattr_val(&xattr, buf))) {
-					ferr = EIO;
-				}
-			}
-		}
-		break;
-	}
-	if (!found)
-		ferr = EINVAL; // FIXME: ENOATTR
+	char *buf = NULL;
 	
-	if (ferr) {
-		fuse_reply_err(req, ferr);
-	} else if (size) {
-		fuse_reply_buf(req, buf, vsize);
-	} else {
+	if (position != 0) { // We don't support resource forks
+		fuse_reply_err(req, EINVAL);
+	} else if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
+		fuse_reply_err(req, EIO);
+	} else if (sqfs_xattr_find(&x, name, &found)) {
+		fuse_reply_err(req, EIO);
+	} else if (!found) {
+		fuse_reply_err(req, EIO); // FIXME: ENOATTR
+	} else if (sqfs_xattr_value_size(&x, &vsize)) {
+		fuse_reply_err(req, EIO);
+	} else if (!size) {
 		fuse_reply_xattr(req, vsize);
+	} else if (vsize > size) {
+		fuse_reply_err(req, ERANGE);
+	} else if (!(buf = malloc(vsize))) {
+		fuse_reply_err(req, ENOMEM);
+	} else if (sqfs_xattr_value(&x, buf)) {
+		fuse_reply_err(req, EIO);
+	} else {
+		fuse_reply_buf(req, buf, vsize);
 	}
-	free(cmp);
 	free(buf);
-*/}
+}
 
 static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.getattr	= sqfs_ll_op_getattr,

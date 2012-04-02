@@ -36,13 +36,6 @@
 sqfs_err sqfs_xattr_init(sqfs *fs);
 
 
-
-#define SQFS_XATTR_PREFIX_MAX SQUASHFS_XATTR_SECURITY
-
-extern const char *const sqfs_xattr_prefices[];
-sqfs_err sqfs_xattr_find_prefix(const char *name, int *prefix, size_t *size);
-
-
 // xattr iterator
 typedef struct {
 	sqfs *fs;	
@@ -71,6 +64,6 @@ sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size);
 sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf);
 
 // Find an xattr entry
-sqfs_err sqfs_xattr_find(sqfs_xattr *x, char *needle, bool *found);
+sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found);
 
 #endif
