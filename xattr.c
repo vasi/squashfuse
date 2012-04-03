@@ -196,14 +196,19 @@ static sqfs_err sqfs_xattr_find_prefix(const char *name, uint16_t *type) {
 // FIXME: Indicate EINVAL, ENOMEM?
 sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
 	sqfs_err err;
+	char *cmp = NULL;
 	
 	uint16_t type;
-	if ((err = sqfs_xattr_find_prefix(name, &type)))
-		return err;
+	if ((err = sqfs_xattr_find_prefix(name, &type))) {
+		// Consider an invalid prefix to just be not found, or OS X
+		// Finder complains.
+		*found = false;
+		return SQFS_OK;
+	}
+	
 	name += sqfs_xattr_prefixes[type].len;
 	size_t len = strlen(name);
-	char *cmp = malloc(len);
-	if (!cmp)
+	if (!(cmp = malloc(len)))
 		return SQFS_ERR;
 	
 	while (x->remain) {
@@ -220,8 +225,7 @@ sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
 	}
 	
 	*found = false;
-	return SQFS_OK;
-
+	
 done:
 	free(cmp);
 	return err;
