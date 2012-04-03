@@ -17,6 +17,7 @@ Features
 	Unsquashfs clone?
 	High-level FUSE API?
 	Code cleanup
+		API design
 		Better error codes, sanity checks
 	Support/emulate non-prefixed xattrs?
 
