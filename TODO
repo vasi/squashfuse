@@ -22,8 +22,9 @@ Features
 	Support/emulate non-prefixed xattrs?
 
 Performance
+	Profile performance
 	Fast bit swapping (platform specific)
-	32-bit inode memory
+	32-bit inode memory optimizations
 		Currently we store a complete inode_num => inode_id table
 		If export table exists, we could just use that
 			Lookups could be expensive. Maybe cache as well? 
@@ -51,5 +52,5 @@ Testing
 	Todo
 		NetBSD 6 with libperfuse
 		Solaris 11?
-		Windows (Dokan?)
+		Windows (Dokan? fuse4win?)
 		Minix, Hurd?

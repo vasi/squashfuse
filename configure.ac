@@ -75,24 +75,20 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 		AS_IF([test "x$withval" = xno],[
 			sq_check=no
 		],[
+			sq_pkg=no
 			CPPFLAGS="$CPPFLAGS -I$withval/include"
 			LIBS="$LIBS -L$withval/lib"
 		])
 	])
 	
 	AS_IF([test "x$sq_check" = xyes],[
-		sq_found=no
-		m4_ifval($5,[
+		m4_ifval($5,[AS_IF([test "x$sq_pkg" = xno],,[
 			PKG_CHECK_MODULES($5,$5,[
-				sq_found=yes
 				LIBS="$LIBS $]$5[_LIBS"
 				CPPFLAGS="$CPPFLAGS $]$5[_CFLAGS"
 			],[:])
-		])
-		AS_IF([test "x$sq_found" = xyes],,[
-			AC_SEARCH_LIBS($3,$2,[AC_CHECK_HEADERS($4,[sq_found=yes])])
-		])
-		AS_IF([test "x$sq_found" = xyes],[decomp_found=yes])
+		])])
+		AC_SEARCH_LIBS($3,$2,[AC_CHECK_HEADERS($4,[decomp_found=yes])])
 	])
 ])
 
