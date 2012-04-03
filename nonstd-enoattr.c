@@ -27,10 +27,14 @@
 #define SQFEATURE NONSTD_ENOATTR_DEF
 #include "nonstd-internal.h"
 
+#ifdef HAVE_ATTR_XATTR_H
+	#include <sys/types.h>
+	#include <attr/xattr.h>
+#endif
 #include <errno.h>
 
 #ifndef ENOATTR
-#define ENOATTR EIO
+	 #define ENOATTR ENODATA
 #endif
 
 int sqfs_enoattr() {

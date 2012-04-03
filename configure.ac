@@ -51,10 +51,18 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_POPDEF([sq_cache])
 ])
 
+AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])
+
 SQ_NONSTD_DEFINE(makedev,[#include <sys/types.h>],[makedev(0,0)])
 SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
 SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
-SQ_NONSTD_DEFINE(ENOATTR,[#include <errno.h>],[int e = ENOATTR;],[:])
+SQ_NONSTD_DEFINE(ENOATTR,[
+	#ifdef HAVE_ATTR_XATTR_H
+		#include <sys/types.h>
+		#include <attr/xattr.h>
+	#endif
+	#include <errno.h>
+],[int e = ENOATTR;],[:])
 
 ##### Compression #####
 

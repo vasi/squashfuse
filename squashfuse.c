@@ -307,10 +307,12 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 	size_t vsize;
 	char *buf = NULL;
 	
-	if (position != 0) { // We don't support resource forks
-		fuse_reply_err(req, EINVAL);
-	} else if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
+	if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
 		fuse_reply_err(req, EIO);
+#ifdef FUSE_XATTR_POSITION
+	} else if (position != 0) { // We don't support resource forks
+		fuse_reply_err(req, EINVAL);
+#endif
 	} else if (sqfs_xattr_find(&x, name, &found)) {
 		fuse_reply_err(req, EIO);
 	} else if (!found) {
