@@ -143,7 +143,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 		return;
 	}
 	sqfs_dir_entry entry;
-	if (sqfs_lookup_dir(&dir, name, &entry)) {
+	if (sqfs_lookup_dir_fast(&dir, &lli.inode, name, &entry)) {
 		fuse_reply_err(req, ENOENT);
 		return;
 	}

@@ -82,6 +82,38 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	return &dir->entry;
 }
 
+sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
+	size_t count = inode->xtra.dir.idx_count;
+	if (count == 0)
+		return SQFS_OK;
+	
+	sqfs_err err;
+	char cmp[SQUASHFS_NAME_LEN + 1];	
+	size_t skipped = 0;
+	
+	sqfs_md_cursor cur = inode->next;
+	while (count--) {
+		struct squashfs_dir_index idx;
+		if ((err = sqfs_md_read(dir->fs, &cur, &idx, sizeof(idx))))
+			return err;
+		sqfs_swapin_dir_index(&idx);
+		
+		if ((err = sqfs_md_read(dir->fs, &cur, cmp, idx.size + 1)))
+			return err;
+		cmp[idx.size + 1] = '\0';
+		
+		if (strcmp(cmp, name) > 0)
+			break;
+		
+		skipped = idx.index;
+		dir->cur.block = idx.start_block + dir->fs->sb.directory_table_start;
+	}
+	
+	dir->remain -= skipped;
+	dir->cur.offset = (dir->cur.offset + skipped) % SQUASHFS_METADATA_SIZE;
+	return SQFS_OK;
+}
+
 sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 		sqfs_dir_entry *entry) {
 	sqfs_err err;
@@ -94,6 +126,14 @@ sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 		}
 	}
 	return SQFS_ERR;
+}
+
+sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
+		const char *name, sqfs_dir_entry *entry) {
+	sqfs_err err;
+	if ((err = sqfs_dir_ff(dir, inode, name)))
+		return err;
+	return sqfs_lookup_dir(dir, name, entry);
 }
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {

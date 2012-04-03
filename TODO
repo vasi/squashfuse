@@ -1,5 +1,4 @@
 Missing features
-	Dir index
 	Blocklist ('metablock') index
 
 Building
@@ -17,7 +16,8 @@ Features
 	Support LZMA1?
 	Unsquashfs clone?
 	High-level FUSE API?
-	Better error codes, sanity checks
+	Code cleanup
+		Better error codes, sanity checks
 	Support/emualte non-prefixed xattrs?
 
 Performance
