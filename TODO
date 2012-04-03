@@ -18,7 +18,7 @@ Features
 	High-level FUSE API?
 	Code cleanup
 		Better error codes, sanity checks
-	Support/emualte non-prefixed xattrs?
+	Support/emulate non-prefixed xattrs?
 
 Performance
 	Fast bit swapping (platform specific)
