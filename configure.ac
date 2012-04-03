@@ -66,7 +66,7 @@ SQ_NONSTD_DEFINE(ENOATTR,[
 
 ##### Compression #####
 
-# SQ_CHECK_DECOMPRESS(NAME,LIBRARY,FUNCTION,HEADER)
+# SQ_CHECK_DECOMPRESS(NAME, LIBRARY, FUNCTION, HEADER, PKGCONFIG)
 # Check for a decompression library
 AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 	sq_check=yes
@@ -81,14 +81,23 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 	])
 	
 	AS_IF([test "x$sq_check" = xyes],[
-		AC_SEARCH_LIBS($3,$2,[
-			AC_CHECK_HEADERS($4,[decomp_found=yes])
+		sq_found=no
+		m4_ifval($5,[
+			PKG_CHECK_MODULES($5,$5,[
+				sq_found=yes
+				LIBS="$LIBS $]$5[_LIBS"
+				CPPFLAGS="$CPPFLAGS $]$5[_CFLAGS"
+			],[:])
 		])
+		AS_IF([test "x$sq_found" = xyes],,[
+			AC_SEARCH_LIBS($3,$2,[AC_CHECK_HEADERS($4,[sq_found=yes])])
+		])
+		AS_IF([test "x$sq_found" = xyes],[decomp_found=yes])
 	])
 ])
 
 SQ_CHECK_DECOMPRESS([zlib],[z],[uncompress],[zlib.h])
-SQ_CHECK_DECOMPRESS([xz],[lzma],[lzma_stream_buffer_decode],[lzma.h])
+SQ_CHECK_DECOMPRESS([xz],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
 SQ_CHECK_DECOMPRESS([lzo],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
 AS_IF([test "x$decomp_found" = xyes],,
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
@@ -107,10 +116,9 @@ AC_ARG_WITH(fuse-lib,
 	[fuse_lib=$withval])
 
 AS_IF([test "x$fuse_dir$fuse_include$fuse_lib" = x],[
-	PKG_CHECK_EXISTS(fuse)
-	PKG_CHECK_MODULES([PKGCONFIG_FUSE],[fuse >= 2.5],[
-		LIBS="$LIBS $PKGCONFIG_FUSE_LIBS"
-		CFLAGS="$CFLAGS $PKGCONFIG_FUSE_CFLAGS"
+	PKG_CHECK_MODULES([fuse],[fuse >= 2.5],[
+		LIBS="$LIBS $fuse_LIBS"
+		CPPFLAGS="$CPPFLAGS $fuse_CFLAGS"
 		fuse_found=yes
 	],[ignore=xxx])
 ])

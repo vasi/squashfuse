@@ -2,7 +2,6 @@ Missing features
 	Blocklist ('metablock') index
 
 Building
-	xz pkgconfig
 	README
 	Licensing: Make sure squashfs_fs.h use is ok
 	Currently on autoconf 2.68, automake 1.11
