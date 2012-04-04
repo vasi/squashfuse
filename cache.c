@@ -28,47 +28,62 @@
 
 #include <stdlib.h>
 
-sqfs_err sqfs_cache_init(sqfs_block_cache *cache, size_t size) {
+sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t size, size_t count,
+		sqfs_cache_dispose dispose) {
 	cache->size = size;
+	cache->count = count;
+	cache->dispose = dispose;
 	cache->next = 0;
-	cache->entries = calloc(size, sizeof(sqfs_block_cache_entry));
-	if (!cache->entries)
-		return SQFS_ERR;
-	return SQFS_OK;
+	
+	cache->idxs = calloc(count, sizeof(sqfs_cache_idx));
+	cache->buf = calloc(count, size);
+	if (cache->idxs && cache->buf)
+		return SQFS_OK;
+	
+	sqfs_cache_destroy(cache);
+	return SQFS_ERR;
 }
 
-void sqfs_cache_destroy(sqfs_block_cache *cache) {
-	for (int i = 0; i < cache->size; ++i) {
-		sqfs_block *block = cache->entries[i].block;
-		if (block)
-			sqfs_block_dispose(block);
-	}
-	free(cache->entries);
+static void *sqfs_cache_entry(sqfs_cache *cache, size_t i) {
+	return cache->buf + i * cache->size;
 }
 
-sqfs_block *sqfs_cache_get(sqfs_block_cache *cache, off_t pos,
-		size_t *data_size) {
-	for (int i = 0; i < cache->size; ++i) {
-		sqfs_block_cache_entry *entry = &cache->entries[i];
-		if (entry->pos == pos && entry->block) {
-			if (data_size)
-				*data_size = entry->data_size;
-			return entry->block;
+void sqfs_cache_destroy(sqfs_cache *cache) {
+	if (cache->buf && cache->idxs) {
+		for (size_t i = 0; i < cache->count; ++i) {
+			if (cache->idxs[i] != SQFS_CACHE_IDX_INVALID)
+				cache->dispose(sqfs_cache_entry(cache, i));
 		}
+	}
+	free(cache->buf);
+	free(cache->idxs);
+}
+
+void *sqfs_cache_get(sqfs_cache *cache, sqfs_cache_idx idx) {
+	for (size_t i = 0; i < cache->count; ++i) {
+		if (cache->idxs[i] == idx)
+			return sqfs_cache_entry(cache, i);
 	}
 	return NULL;
 }
 
-void sqfs_cache_set(sqfs_block_cache *cache, off_t pos, sqfs_block *block,
-		size_t data_size) {
-	sqfs_block_cache_entry *entry = &cache->entries[cache->next];
-	if (entry->block)
-		sqfs_block_dispose(entry->block);
+void *sqfs_cache_add(sqfs_cache *cache, sqfs_cache_idx idx) {
+	size_t i = (cache->next++);
+	cache->next %= cache->count;
 	
-	cache->next += 1;
-	cache->next %= cache->size;
+	if (cache->idxs[i] != SQFS_CACHE_IDX_INVALID)
+		cache->dispose(sqfs_cache_entry(cache, i));
 	
-	entry->pos = pos;
-	entry->data_size = data_size;
-	entry->block = block;
+	cache->idxs[i] = idx;
+	return sqfs_cache_entry(cache, i);
+}
+
+static void sqfs_block_cache_dispose(void *data) {
+	sqfs_block_cache_entry *entry = (sqfs_block_cache_entry*)data;
+	sqfs_block_dispose(entry->block);
+}
+
+sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count) {
+	return sqfs_cache_init(cache, sizeof(sqfs_block_cache_entry), count,
+		&sqfs_block_cache_dispose);
 }
