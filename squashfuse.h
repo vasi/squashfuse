@@ -43,9 +43,10 @@ struct sqfs {
 	struct squashfs_super_block sb;
 	sqfs_table id_table;
 	sqfs_table frag_table;
-	sqfs_block_cache md_cache;
-	sqfs_block_cache data_cache;
-	sqfs_block_cache frag_cache;
+	sqfs_cache md_cache;
+	sqfs_cache data_cache;
+	sqfs_cache frag_cache;
+	sqfs_cache blockidx;
 	sqfs_decompressor decompressor;
 	
 	struct squashfs_xattr_id_table xattr_info;
@@ -102,7 +103,7 @@ sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 
 // Don't dispose after getting block, it's in the cache
 sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block);
-sqfs_err sqfs_data_cache(sqfs *fs, sqfs_block_cache *cache, off_t pos,
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, off_t pos,
 	uint32_t hdr, sqfs_block **block);
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base);

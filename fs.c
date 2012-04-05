@@ -57,9 +57,10 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
 	err |= sqfs_xattr_init(fs);
-	err |= sqfs_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
-	err |= sqfs_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
-	err |= sqfs_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
+	err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
+	err |= sqfs_block_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
+	err |= sqfs_block_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
+	err |= sqfs_blockidx_init(&fs->blockidx);
 	if (err) {
 		sqfs_destroy(fs);
 		return SQFS_ERR;
@@ -155,28 +156,32 @@ sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 }
 
 sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
-	size_t data_size;
-	*block = sqfs_cache_get(&fs->md_cache, *pos, &data_size);
-	if (!*block) {
-		//fprintf(stderr, "MD BLOCK: %12llx\n", *pos);
-		sqfs_err err = sqfs_md_block_read(fs, *pos, &data_size, block);
+	sqfs_block_cache_entry *entry = sqfs_cache_get(
+		&fs->md_cache, *pos);
+	if (!entry) {
+		entry = sqfs_cache_add(&fs->md_cache, *pos);
+		//fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos);
+		sqfs_err err = sqfs_md_block_read(fs, *pos,
+			&entry->data_size, &entry->block);
 		if (err)
 			return err;
-		sqfs_cache_set(&fs->md_cache, *pos, *block, data_size);
 	}
-	*pos += data_size;
+	*block = entry->block;
+	*pos += entry->data_size;
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_data_cache(sqfs *fs, sqfs_block_cache *cache, off_t pos,
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, off_t pos,
 		uint32_t hdr, sqfs_block **block) {
-	*block = sqfs_cache_get(cache, pos, NULL);
-	if (!*block) {
-		sqfs_err err = sqfs_data_block_read(fs, pos, hdr, block);
+	sqfs_block_cache_entry *entry = sqfs_cache_get(cache, pos);
+	if (!entry) {
+		entry = sqfs_cache_add(cache, pos);
+		sqfs_err err = sqfs_data_block_read(fs, pos, hdr,
+			&entry->block);
 		if (err)
 			return err;
-		sqfs_cache_set(cache, pos, *block, 0);
 	}
+	*block = entry->block;
 	return SQFS_OK;
 }
 
@@ -208,12 +213,11 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		if (buf)
 			buf = (char*)buf + take;
 		size -= take;
-		if (size) {
+		cur->offset += take;
+		if (cur->offset == block->size) {
 			cur->block = pos;
 			cur->offset = 0;
-		} else {
-			cur->offset += take;
-		}		
+		}
 	}
 	return SQFS_OK;
 }

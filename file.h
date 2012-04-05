@@ -29,6 +29,7 @@
 
 #include <stdbool.h>
 
+#include "cache.h"
 #include "squashfs_fs.h"
 
 sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
@@ -37,7 +38,7 @@ sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
 sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 	size_t *offset, size_t *size, sqfs_block **block);
 
-
+typedef uint32_t sqfs_blocklist_entry;
 typedef struct {
 	sqfs *fs;
 	size_t remain;
@@ -47,7 +48,7 @@ typedef struct {
 	uint64_t pos;
 	
 	uint64_t block;
-	uint32_t header;
+	sqfs_blocklist_entry header;
 	uint32_t input_size;
 } sqfs_blocklist;
 
@@ -59,5 +60,20 @@ sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl);
 
 sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
 	off_t *size, void *buf);
+
+
+typedef struct {
+	uint64_t data_block;
+	uint32_t md_block;
+} sqfs_blockidx_entry;
+
+sqfs_err sqfs_blockidx_init(sqfs_cache *cache);
+
+sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
+	sqfs_blockidx_entry **out);
+
+// Get a blocklist fast-forwarded to the correct location
+sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
+	sqfs_blocklist *bl, off_t start);
 
 #endif
