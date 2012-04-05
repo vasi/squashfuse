@@ -45,7 +45,7 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_PUSHDEF([sq_cache],[sq_cv_decl_nonstd_$1])
 	AC_CACHE_VAL([sq_cache],[
 		AS_VAR_SET([sq_cache],[no])
-		for def in none _DARWIN_C_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
+		for def in none _DARWIN_C_SOURCE _NETBSD_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
 		do
 			AS_IF([test "x$def" = "x_POSIX_C_SOURCE"],[op=undef],[op=define])
 			AS_IF([test "x$def" = "x_XOPEN_SOURCE"],[val=500],[val=1])
@@ -90,7 +90,7 @@ SQ_NONSTD_DEFINE(makedev,[
 	#endif
 ],[makedev(0,0)])
 SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
-SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
+SQ_NONSTD_DEFINE(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])
 SQ_NONSTD_DEFINE(ENOATTR,[
 	#ifdef HAVE_ATTR_XATTR_H
 		#include <sys/types.h>

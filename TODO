@@ -52,6 +52,8 @@ Testing
 		Ubuntu Lucid amd64
 		CentOS 3.9 i386 (FUSE 2.5)
 		FreeBSD 9.0 amd64
+	Known bad
+		Solaris 11 - No fuse_lowlevel
 	Todo
 		NetBSD 6 with libperfuse
 		Solaris 11? OpenIndiana?

@@ -24,7 +24,7 @@
  */
 #include "config.h"
 
-#define SQFEATURE NONSTD_S_IFDIR_DEF
+#define SQFEATURE NONSTD_S_IFSOCK_DEF
 #include "nonstd-internal.h"
 
 #include <sys/stat.h>
