@@ -1,6 +1,7 @@
 Building
 	README
 		Build requirements: Linux: libattr, pkgconfig
+		Good for/not good for
 	Licensing: Make sure squashfs_fs.h use is ok
 	Currently on autoconf 2.68, automake 1.11
 		Test older versions?
@@ -39,9 +40,9 @@ Performance
 
 squashfs-tools
 	Submit OS X patches
+	Make sure they work on all supported platforms
 
 Testing
-	Try different block sizes?
 	Known good
 		Mac 10.7 amd64 (MacFUSE, OSXFUSE, fuse4x)
 		Mac 10.4 i386 (MacFUSE)
