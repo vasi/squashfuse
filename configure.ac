@@ -1,6 +1,7 @@
 AC_INIT([squashfuse], [0.1], [dave@vasilevsky.ca])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall])
+LT_INIT
 AC_CONFIG_HEADERS([config.h])
 
 
