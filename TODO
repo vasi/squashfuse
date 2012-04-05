@@ -10,6 +10,7 @@ Building
 	Create a separate libsquashfuse, for eg: File Roller
 	Test suite?
 	Support specifying Mac OS X SDK and arch
+		Why don't builds from 10.7 -> 10.4 work?
 
 Features
 	Support old versions of squashfs?
