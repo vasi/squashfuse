@@ -54,6 +54,6 @@ Testing
 		FreeBSD 9.0 amd64
 	Todo
 		NetBSD 6 with libperfuse
-		Solaris 11?
+		Solaris 11? OpenIndiana?
 		Windows (Dokan? fuse4win?)
-		Minix, Hurd?
+		Minix, Hurd, QNX, Haiku?

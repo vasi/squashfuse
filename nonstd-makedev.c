@@ -28,6 +28,12 @@
 #include "nonstd-internal.h"
 
 #include <sys/types.h>
+#ifdef HAVE_SYS_MKDEV_H
+	#include <sys/mkdev.h>
+#endif
+#ifdef HAVE_SYS_SYSMACROS_H
+	#include <sys/sysmacros.h>
+#endif
 
 dev_t sqfs_makedev(int maj, int min) {
 	return makedev(maj, min);

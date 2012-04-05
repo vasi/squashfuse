@@ -3,11 +3,36 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_HEADERS([config.h])
 
+
+##### Compiler #####
+
+AC_PROG_CPP
 AC_PROG_CC_C99
-CFLAGS="$CFLAGS -Wall"
+
+AC_MSG_CHECKING([for Solaris C99])
+AC_DEFUN([SQ_SOLARIS_C99],[AC_LANG_PROGRAM([
+	#define _POSIX_C_SOURCE 200112L
+	#include <sys/types.h>
+])])
+AC_PREPROC_IFELSE([SQ_SOLARIS_C99],[AC_MSG_RESULT([no])],[
+	CPPFLAGS="$CPPFLAGS -xc99=all"
+	AC_PREPROC_IFELSE([SQ_SOLARIS_C99],
+		[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+])
 
 AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
+
+AC_MSG_CHECKING([whether ${CC-cc} accepts -Wall])
+save_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS -Wall"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,)],
+	[AC_MSG_RESULT([yes])],
+[
+	AC_MSG_RESULT([no])
+	CFLAGS="$save_CFLAGS"
+])
+
 
 ##### Non-POSIX declarations #####
 
@@ -52,8 +77,18 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 ])
 
 AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])
+AC_CHECK_HEADERS([sys/mkdev.h],,,[#include <sys/types.h>])
+AC_CHECK_HEADERS([sys/sysmacros.h],,,[#include <sys/types.h>])
 
-SQ_NONSTD_DEFINE(makedev,[#include <sys/types.h>],[makedev(0,0)])
+SQ_NONSTD_DEFINE(makedev,[
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_MKDEV_H
+		#include <sys/mkdev.h>
+	#endif
+	#ifdef HAVE_SYS_SYSMACROS_H
+		#include <sys/sysmacros.h>
+	#endif
+],[makedev(0,0)])
 SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
 SQ_NONSTD_DEFINE(S_IFDIR,[#include <sys/stat.h>],[mode_t m = S_IFDIR;])
 SQ_NONSTD_DEFINE(ENOATTR,[
