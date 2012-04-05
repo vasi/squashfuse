@@ -46,6 +46,7 @@ struct sqfs {
 	sqfs_cache md_cache;
 	sqfs_cache data_cache;
 	sqfs_cache frag_cache;
+	sqfs_cache blockidx;
 	sqfs_decompressor decompressor;
 	
 	struct squashfs_xattr_id_table xattr_info;

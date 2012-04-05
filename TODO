@@ -1,6 +1,3 @@
-Missing features
-	Blocklist ('metablock') index
-
 Building
 	README
 	Licensing: Make sure squashfs_fs.h use is ok

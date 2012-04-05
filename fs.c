@@ -60,6 +60,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
 	err |= sqfs_block_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
 	err |= sqfs_block_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
+	err |= sqfs_blockidx_init(&fs->blockidx);
 	if (err) {
 		sqfs_destroy(fs);
 		return SQFS_ERR;
@@ -159,7 +160,7 @@ sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
 		&fs->md_cache, *pos);
 	if (!entry) {
 		entry = sqfs_cache_add(&fs->md_cache, *pos);
-		fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos);
+		//fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos);
 		sqfs_err err = sqfs_md_block_read(fs, *pos,
 			&entry->data_size, &entry->block);
 		if (err)
@@ -212,12 +213,11 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		if (buf)
 			buf = (char*)buf + take;
 		size -= take;
-		if (size) {
+		cur->offset += take;
+		if (cur->offset == block->size) {
 			cur->block = pos;
 			cur->offset = 0;
-		} else {
-			cur->offset += take;
-		}		
+		}
 	}
 	return SQFS_OK;
 }

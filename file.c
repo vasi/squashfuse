@@ -27,6 +27,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "squashfuse.h"
 
@@ -117,13 +119,14 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
 	}
 	
 	sqfs_blocklist bl;
-	sqfs_blocklist_init(fs, inode, &bl);
+	sqfs_err err = sqfs_blockidx_blocklist(fs, inode, &bl, start);
+	if (err)
+		return err;
 	
 	size_t read_off = start % block_size;
 	char *buf_orig = buf;
 	while (*size > 0) {
 		sqfs_block *block = NULL;
-		sqfs_err err;
 		size_t data_off, data_size;
 		
 		bool fragment = (bl.remain == 0);
@@ -173,3 +176,91 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
 	*size = (char*)buf - buf_orig;
 	return *size ? SQFS_OK : SQFS_ERR;
 }
+
+
+static void sqfs_blockidx_dispose(void *data) {
+	free(*(sqfs_blockidx_entry**)data);
+}
+
+sqfs_err sqfs_blockidx_init(sqfs_cache *cache) {
+	return sqfs_cache_init(cache, sizeof(sqfs_blockidx_entry*),
+		SQUASHFS_META_SLOTS, &sqfs_blockidx_dispose);
+}
+
+sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
+		sqfs_blockidx_entry **out) {
+	*out = NULL;
+	size_t blocks = sqfs_blocklist_count(fs, inode);
+	size_t md_size = blocks * sizeof(sqfs_blocklist_entry);
+	if (md_size < SQUASHFS_METADATA_SIZE)
+		return SQFS_OK; // not worth indexing
+	
+	size_t count = (inode->next.offset + md_size - 1)
+		/ SQUASHFS_METADATA_SIZE;
+	sqfs_blockidx_entry *blockidx = malloc(count * sizeof(sqfs_blockidx_entry));
+	if (!blockidx)
+		return SQFS_ERR;
+	
+	sqfs_blocklist bl;
+	sqfs_blocklist_init(fs, inode, &bl);
+	size_t i = 0;
+	bool first = true;
+	while (bl.remain && i < count) {
+		if (bl.cur.offset < sizeof(sqfs_blocklist_entry) && !first) {
+			blockidx[i].data_block = bl.block + bl.input_size;
+			blockidx[i++].md_block = bl.cur.block - fs->sb.inode_table_start;
+		}
+		first = false;
+		
+		sqfs_err err = sqfs_blocklist_next(&bl);
+		if (err) {
+			free(blockidx);
+			return SQFS_ERR;
+		}
+	}
+
+	sqfs_cache_idx idx = inode->base.inode_number + 1;
+	sqfs_blockidx_entry **cachep = sqfs_cache_add(&fs->blockidx, idx);
+	*out = *cachep = blockidx;
+	return SQFS_OK;
+}
+
+sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
+		sqfs_blocklist *bl, off_t start) {
+	sqfs_blocklist_init(fs, inode, bl);
+	size_t block = start / fs->sb.block_size;
+	if (block > bl->remain) { // fragment
+		bl->remain = 0;
+		return SQFS_OK;
+	}
+	
+	size_t metablock = (bl->cur.offset + block * sizeof(sqfs_blocklist_entry))
+		/ SQUASHFS_METADATA_SIZE;
+	if (metablock == 0)
+		return SQFS_OK; // don't want an index
+	
+	// Get the index, creating it if necessary
+	sqfs_blockidx_entry *blockidx, **bp;
+	sqfs_cache_idx idx = inode->base.inode_number + 1;
+	if ((bp = sqfs_cache_get(&fs->blockidx, idx))) {
+		blockidx = *bp;
+	} else {
+		sqfs_err err = sqfs_blockidx_add(fs, inode, &blockidx);
+		if (err)
+			return err;
+	}
+	if (!blockidx)
+		return SQFS_OK; // not indexable
+	
+	size_t skipped = (metablock * SQUASHFS_META_INDEXES)
+		- (bl->cur.offset / sizeof(sqfs_blocklist_entry));
+	
+	blockidx += metablock - 1;
+	bl->cur.block = blockidx->md_block + fs->sb.inode_table_start;
+	bl->cur.offset %= sizeof(sqfs_blocklist_entry);
+	bl->remain -= skipped;
+	bl->pos = skipped * fs->sb.block_size;
+	bl->block = blockidx->data_block;
+	return SQFS_OK;
+}
+
