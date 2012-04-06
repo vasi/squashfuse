@@ -24,17 +24,26 @@
  */
 #include "config.h"
 
-#define SQFEATURE NONSTD_MAKEDEV_DEF
-#include "nonstd-internal.h"
-
-#include <sys/types.h>
-#ifdef HAVE_SYS_MKDEV_H
-	#include <sys/mkdev.h>
-#endif
-#ifdef HAVE_SYS_SYSMACROS_H
+#ifdef QNX_MAKEDEV
+	#include <sys/types.h>
 	#include <sys/sysmacros.h>
-#endif
+	#include <sys/netmgr.h>
+	dev_t sqfs_makedev(int maj, int min) {
+		return makedev(ND_LOCAL_NODE, maj, min);
+	}
+#else
+	#define SQFEATURE NONSTD_MAKEDEV_DEF
+	#include "nonstd-internal.h"
 
-dev_t sqfs_makedev(int maj, int min) {
-	return makedev(maj, min);
-}
+	#include <sys/types.h>
+	#ifdef HAVE_SYS_MKDEV_H
+		#include <sys/mkdev.h>
+	#endif
+	#ifdef HAVE_SYS_SYSMACROS_H
+		#include <sys/sysmacros.h>
+	#endif
+
+	dev_t sqfs_makedev(int maj, int min) {
+		return makedev(maj, min);
+	}
+#endif

@@ -57,6 +57,7 @@ Testing
 		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
 	Known bad
 		Solaris 11 - No fuse_lowlevel. Try high-level or uvfs?
+		QNX 6.5 - qfuse is crufty!
 	Todo
 		Windows (Dokan? fuse4win?)
-		Minix, Hurd, QNX, Haiku?
+		Minix, Hurd, Haiku?

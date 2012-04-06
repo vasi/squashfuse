@@ -88,21 +88,34 @@ AC_DEFUN([SQ_NONSTD_DEFINE],[
 	AS_VAR_POPDEF([sq_cache])
 ])
 
-AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])
-AC_CHECK_HEADERS([sys/mkdev.h],,,[#include <sys/types.h>])
-AC_CHECK_HEADERS([sys/sysmacros.h],,,[#include <sys/types.h>])
-
-SQ_NONSTD_DEFINE(makedev,[
+AC_MSG_CHECKING([for QNX makedev])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([
 	#include <sys/types.h>
-	#ifdef HAVE_SYS_MKDEV_H
-		#include <sys/mkdev.h>
-	#endif
-	#ifdef HAVE_SYS_SYSMACROS_H
-		#include <sys/sysmacros.h>
-	#endif
-],[makedev(0,0)])
+	#include <sys/sysmacros.h>
+	#include <sys/netmgr.h>
+	],[makedev(ND_LOCAL_NODE,0,0)])
+],[
+	AC_MSG_RESULT([yes])
+	AC_DEFINE([QNX_MAKEDEV],[1],[define if makedev() is QNX-style])
+],[
+	AC_MSG_RESULT([no])
+	AC_CHECK_HEADERS([sys/mkdev.h],,,[#include <sys/types.h>])
+	AC_CHECK_HEADERS([sys/sysmacros.h],,,[#include <sys/types.h>])
+	SQ_NONSTD_DEFINE(makedev,[
+		#include <sys/types.h>
+		#ifdef HAVE_SYS_MKDEV_H
+			#include <sys/mkdev.h>
+		#endif
+		#ifdef HAVE_SYS_SYSMACROS_H
+			#include <sys/sysmacros.h>
+		#endif
+	],[makedev(0,0)])
+])
+
 SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
 SQ_NONSTD_DEFINE(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])
+
+AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])
 SQ_NONSTD_DEFINE(ENOATTR,[
 	#ifdef HAVE_ATTR_XATTR_H
 		#include <sys/types.h>
