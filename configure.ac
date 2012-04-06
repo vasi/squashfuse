@@ -10,16 +10,27 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CPP
 AC_PROG_CC_C99
 
-AC_MSG_CHECKING([for Solaris C99])
-AC_DEFUN([SQ_SOLARIS_C99],[AC_LANG_PROGRAM([
-	#define _POSIX_C_SOURCE 200112L
-	#include <sys/types.h>
-])])
-AC_PREPROC_IFELSE([SQ_SOLARIS_C99],[AC_MSG_RESULT([no])],[
-	CPPFLAGS="$CPPFLAGS -xc99=all"
-	AC_PREPROC_IFELSE([SQ_SOLARIS_C99],
-		[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+# Solaris headers reject POSIX-2001 without special C99 flags
+AC_DEFUN([SQ_PREPROC_2001],[
+	AC_MSG_CHECKING([for option for POSIX-2001 preprocessor])
+	save_CPPFLAGS=$CPPFLAGS
+	sq_preproc=no
+	for p2001 in none -std=gnu99 -xc99=all
+	do
+		AS_IF([test "x$p2001" = xnone],,[CPPFLAGS="$save_CPPFLAGS $p2001"])
+		AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
+			#define _POSIX_C_SOURCE 200112L
+			#include <sys/types.h>
+		])],[
+			sq_preproc=$p2001
+			break
+		])
+	done
+	AS_IF([test "x$sq_preproc" = xno],
+		[AC_MSG_FAILURE([can't preprocess for POSIX-2001])],
+		[AC_MSG_RESULT([$sq_preproc])])
 ])
+SQ_PREPROC_2001
 
 AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
@@ -157,7 +168,7 @@ AS_IF([test "x$fuse_dir$fuse_include$fuse_lib" = x],[
 
 save_CPPFLAGS=$CPPFLAGS
 save_LIBS=$LIBS
-for dir in user default local osxfuse
+for dir in specified usr default local osxfuse
 do
 	for plat in default off64
 	do
@@ -165,7 +176,7 @@ do
 		CPPFLAGS="$save_CPPFLAGS"
 		LIBS="$save_LIBS"
 		
-		AS_IF([test "x$dir" = xuser],[
+		AS_IF([test "x$dir" = xspecified],[
 			AS_IF([test "x$fuse_dir$fuse_include$fuse_lib" = x],[continue])
 			AS_IF([test "x$fuse_dir" = x],,[
 				iinc="$fuse_dir/include/fuse"
@@ -173,11 +184,16 @@ do
 			AS_IF([test "x$fuse_include" = x],,[iinc=$fuse_include])
 			AS_IF([test "x$fuse_lib" = x],,[ilib=$fuse_lib])
 		])
+		AS_IF([test "x$dir" = xusr],[
+			ilib=/usr/lib
+			iinc=/usr/include/fuse
+		])
 		AS_IF([test "x$dir" = xlocal || test "x$dir" = xosxfuse],[
 			AS_CASE([$target_os],[darwin*],,[continue])
 			ilib=/usr/local/lib
 			iinc=/usr/local/include/fuse
-			AS_IF([test "x$dir" = xosxfuse],[iinc=/usr/local/include/osxfuse/fuse])
+			AS_IF([test "x$dir" = xosxfuse],
+				[iinc=/usr/local/include/osxfuse/fuse])
 		])
 		AS_IF([test "x$iinc" = x],,[CPPFLAGS="$CPPFLAGS -I$iinc"])
 		AS_IF([test "x$ilib" = x],,[LIBS="$LIBS -L$ilib"])

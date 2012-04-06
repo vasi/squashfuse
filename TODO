@@ -26,6 +26,7 @@ Performance
 	Profile performance
 	Stack space: readdir uses too much!
 	Fast bit swapping (platform specific)
+	blockidx: Create incrementally, as needed?
 	32-bit inode memory optimizations
 		Currently we store a complete inode_num => inode_id table
 		If export table exists, we could just use that
@@ -53,9 +54,9 @@ Testing
 		CentOS 3.9 i386 (FUSE 2.5)
 		FreeBSD 9.0 amd64
 		NetBSD 6.0 BETA i386 (perfuse)
+		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
 	Known bad
-		Solaris 11 - No fuse_lowlevel
+		Solaris 11 - No fuse_lowlevel. Try high-level or uvfs?
 	Todo
-		Solaris 11? OpenIndiana?
 		Windows (Dokan? fuse4win?)
 		Minix, Hurd, QNX, Haiku?
