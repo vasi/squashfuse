@@ -53,11 +53,33 @@ Testing
 		Ubuntu Lucid amd64
 		CentOS 3.9 i386 (FUSE 2.5)
 		FreeBSD 9.0 amd64
-		NetBSD 6.0 BETA i386 (perfuse)
+		NetBSD 6.0 BETA i386 (puffs/perfuse)
 		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
 	Known bad
-		Solaris 11 - No fuse_lowlevel. Try high-level or uvfs?
-		QNX 6.5 - qfuse is crufty!
+		Solaris 11 (fuse/uvfs)
+			No fuse_lowlevel
+			High-level at least sort-of-works
+		QNX 6.5 (qfuse)
+			Calling fuse_session_add_chan() always crashes?
+			High-level core dumps
+		Minix 3.2 (refuse/puffs)
+			No fuse_lowelevel, perfuse doesn't compile
+			Can't get high-level to work
+				"kernel: SYSTEM: denied request 44 from 8152518"
+		Haiku (fuse/userlandfs)
+			No fuse_lowlevel
+			Can't get high-level to work
+			fuse & userlandfs aren't included by default, hard to build
+	No FUSE available
+		DragonFly BSD - puffs is in git
+		OpenBSD
+		Commercial UNIX: AIX, HP-UX, etc
+		iOS
 	Todo
 		Windows (Dokan? fuse4win?)
-		Minix, Hurd, Haiku?
+		Hurd?
+		Android?
+		Early Linux
+			fuse 2.3 - First low-level API
+			fuse 0.x, 1.x
+			LUFS
