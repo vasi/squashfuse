@@ -59,7 +59,7 @@ Testing
 			Use CFLAGS, LDFLAGS from fuse-android
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
-		Minix 4.3 (puffs/refuse): High-level won't work
+		Minix 3.2 (puffs/refuse): High-level won't work
 		Haiku (userlandfs): High-level won't work, userlandfs hard to build
 		Hurd (libfuse): High-level works fine, version 2.5
 	Known bad
