@@ -57,21 +57,15 @@ Testing
 		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
 		Android 2.3.3 (fuse-android, FUSE-enabled kernel)
 			Use CFLAGS, LDFLAGS from fuse-android
+	No low-level fuse
+		Solaris 11 (uvfs/fuse): High-level sort-of works
+		Minix 4.3 (puffs/refuse): High-level won't work
+		Haiku (userlandfs): High-level won't work, userlandfs hard to build
+		Hurd (libfuse): High-level works fine, version 2.5
 	Known bad
-		Solaris 11 (fuse/uvfs)
-			No fuse_lowlevel
-			High-level at least sort-of-works
 		QNX 6.5 (qfuse)
-			Calling fuse_session_add_chan() always crashes?
-			High-level core dumps
-		Minix 3.2 (refuse/puffs)
-			No fuse_lowelevel, perfuse doesn't compile
-			Can't get high-level to work
-				"kernel: SYSTEM: denied request 44 from 8152518"
-		Haiku (fuse/userlandfs)
-			No fuse_lowlevel
-			Can't get high-level to work
-			fuse & userlandfs aren't included by default, hard to build
+			fuse_session_add_chan() crashes
+			High-level crashes too
 	No FUSE available
 		DragonFly BSD - puffs is in git
 		OpenBSD
@@ -79,7 +73,6 @@ Testing
 		iOS
 	Todo
 		Windows (Dokan? fuse4win?)
-		Hurd?
 		Early Linux
 			fuse 2.3 - First low-level API
 			fuse 0.x, 1.x
