@@ -62,6 +62,10 @@ Testing
 		Minix 3.2 (puffs/refuse): High-level won't work
 		Haiku (userlandfs): High-level won't work, userlandfs hard to build
 		Hurd (libfuse): High-level works fine, version 2.5
+		Linux 2.4.20 and earlier
+			Require some fuse < 2.4.0
+			High-level ok: Earlier fuse?
+			LUFS?
 	Known bad
 		QNX 6.5 (qfuse)
 			fuse_session_add_chan() crashes
@@ -76,7 +80,3 @@ Testing
 		Commercial UNIX: AIX, HP-UX, etc
 		iOS
 	Todo
-		Early Linux
-			fuse 2.3 - First low-level API
-			fuse 0.x, 1.x
-			LUFS
