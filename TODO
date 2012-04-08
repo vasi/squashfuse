@@ -66,13 +66,16 @@ Testing
 		QNX 6.5 (qfuse)
 			fuse_session_add_chan() crashes
 			High-level crashes too
+		Windows (fuse4win/dokan)
+			Dokan sample bluescreens, fuse4win sample crashes
+			CBFS? Totally different API, expensive
+			Explorer Namespace Extension?
 	No FUSE available
 		DragonFly BSD - puffs is in git
 		OpenBSD
 		Commercial UNIX: AIX, HP-UX, etc
 		iOS
 	Todo
-		Windows (Dokan? fuse4win?)
 		Early Linux
 			fuse 2.3 - First low-level API
 			fuse 0.x, 1.x
