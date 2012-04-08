@@ -259,6 +259,11 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
 ],[AC_MSG_RESULT(no)])
 
 
+##### Misc #####
+
+AC_CHECK_HEADERS([linux/types.h])
+
+
 ###### Can we suppress AppleDouble files? #####
 
 AC_MSG_CHECKING([if ${MAKE-make} supports export])

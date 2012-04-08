@@ -199,10 +199,13 @@ sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
 	
 	st->st_blksize = ll->fs.sb.block_size; // seriously?
 	
-	sqfs_err err = sqfs_id_get(&ll->fs, inode->base.uid, &st->st_uid);
+	uid_t id;
+	sqfs_err err = sqfs_id_get(&ll->fs, inode->base.uid, &id);
 	if (err)
 		return err;
-	err = sqfs_id_get(&ll->fs, inode->base.guid, &st->st_gid);
+	st->st_uid = id;
+	err = sqfs_id_get(&ll->fs, inode->base.guid, &id);
+	st->st_gid = id;
 	if (err)
 		return err;
 	

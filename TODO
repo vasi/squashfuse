@@ -55,6 +55,8 @@ Testing
 		FreeBSD 9.0 amd64
 		NetBSD 6.0 BETA i386 (puffs/perfuse)
 		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
+		Android 2.3.3 (fuse-android, FUSE-enabled kernel)
+			Use CFLAGS, LDFLAGS from fuse-android
 	Known bad
 		Solaris 11 (fuse/uvfs)
 			No fuse_lowlevel
@@ -78,7 +80,6 @@ Testing
 	Todo
 		Windows (Dokan? fuse4win?)
 		Hurd?
-		Android?
 		Early Linux
 			fuse 2.3 - First low-level API
 			fuse 0.x, 1.x
