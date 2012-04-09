@@ -20,38 +20,11 @@ SQ_CHECK_DECL_PREAD
 SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
-##### Compression #####
-
-# SQ_CHECK_DECOMPRESS(NAME, LIBRARY, FUNCTION, HEADER, PKGCONFIG)
-# Check for a decompression library
-AC_DEFUN([SQ_CHECK_DECOMPRESS],[
-	sq_check=yes
-	AC_ARG_WITH($1,
-		AS_HELP_STRING([--with-]$1[=DIR],$1[ prefix directory]),[
-		AS_IF([test "x$withval" = xno],[
-			sq_check=no
-		],[
-			sq_pkg=no
-			CPPFLAGS="$CPPFLAGS -I$withval/include"
-			LIBS="$LIBS -L$withval/lib"
-		])
-	])
-	
-	AS_IF([test "x$sq_check" = xyes],[
-		m4_ifval($5,[AS_IF([test "x$sq_pkg" = xno],,[
-			PKG_CHECK_MODULES($5,$5,[
-				LIBS="$LIBS $]$5[_LIBS"
-				CPPFLAGS="$CPPFLAGS $]$5[_CFLAGS"
-			],[:])
-		])])
-		AC_SEARCH_LIBS($3,$2,[AC_CHECK_HEADERS($4,[decomp_found=yes])])
-	])
-])
-
+# Decompression
 SQ_CHECK_DECOMPRESS([zlib],[z],[uncompress],[zlib.h])
 SQ_CHECK_DECOMPRESS([xz],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
 SQ_CHECK_DECOMPRESS([lzo],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
-AS_IF([test "x$decomp_found" = xyes],,
+AS_IF([test "x$sq_decompress_found" = xyes],,
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
 
@@ -155,23 +128,9 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
 ],[AC_MSG_RESULT(no)])
 
 
-##### Misc #####
-
+# Misc
 AC_CHECK_HEADERS([linux/types.h])
-
-
-###### Can we suppress AppleDouble files? #####
-
-AC_MSG_CHECKING([if ${MAKE-make} supports export])
-cat > confmak <<'END'
-export FOO=1
-all:
-END
-AS_IF([${MAKE-make} -f confmak >/dev/null 2>/dev/null],[gnu_make=yes],[gnu_make=no])
-rm -f confmak
-AC_MSG_RESULT([$gnu_make])
-AM_CONDITIONAL([GNU_MAKE],[test "x$gnu_make" == xyes])
-
+SQ_CHECK_PROG_MAKE_EXPORT
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
