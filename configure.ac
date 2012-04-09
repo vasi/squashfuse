@@ -8,6 +8,7 @@ AC_CONFIG_HEADERS([config.h])
 # Compiler
 AC_PROG_CPP
 AC_PROG_CC_C99
+AM_PROG_CC_C_O
 SQ_PROG_CPP_POSIX_2001
 SQ_PROG_CC_WALL
 
@@ -21,9 +22,9 @@ SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
 # Decompression
-SQ_CHECK_DECOMPRESS([zlib],[z],[uncompress],[zlib.h])
-SQ_CHECK_DECOMPRESS([xz],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
-SQ_CHECK_DECOMPRESS([lzo],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
+SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h])
+SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
+SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
 AS_IF([test "x$sq_decompress_found" = xyes],,
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
