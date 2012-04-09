@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS = -I m4 --install
+
 # Suppress AppleDouble
 if GNU_MAKE
 export COPYFILE_DISABLE = 1

@@ -1,8 +1,15 @@
-Building
+For 0.1
 	README
 		Build requirements: Linux: libattr, pkgconfig
 		Good for/not good for
+		Platform
 	Licensing: Make sure squashfs_fs.h use is ok
+	squashfs-tools
+		Submit OS X patches
+	Test platforms, including squashfs-tools
+	Test install
+
+Building
 	Currently on autoconf 2.68, automake 1.11
 		Test older versions?
 		Other platforms?
@@ -18,9 +25,7 @@ Features
 	Support LZMA1?
 	Unsquashfs clone?
 	High-level FUSE API?
-	Code cleanup
-		API design
-		Better error codes, sanity checks
+	Better error codes, sanity checks
 	Support/emulate non-prefixed xattrs?
 
 Performance
@@ -39,10 +44,6 @@ Performance
 	Delegation of caching and threading strategies
 		eg: For unsquashfs, cache all inodes
 	Speculative readahead?
-
-squashfs-tools
-	Submit OS X patches
-	Make sure they work on all supported platforms
 
 Testing
 	Known good
