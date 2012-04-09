@@ -1,0 +1,4 @@
+# Should these be included?
+lt*.m4
+libtool.m4
+pkg.m4
