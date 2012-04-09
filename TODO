@@ -13,6 +13,7 @@ Building
 		Why don't builds from 10.7 -> 10.4 work?
 
 Features
+	Design a good API!!!
 	Support old versions of squashfs?
 	Support LZMA1?
 	Unsquashfs clone?
