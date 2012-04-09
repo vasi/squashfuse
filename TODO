@@ -1,5 +1,6 @@
 For 0.1
 	Separate out autoconf macros
+	Print version of squashfuse
 	README
 		Build requirements: Linux: libattr, pkgconfig
 		Good for/not good for

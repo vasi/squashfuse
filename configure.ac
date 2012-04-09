@@ -5,9 +5,7 @@ AM_INIT_AUTOMAKE([foreign -Wall])
 LT_INIT
 AC_CONFIG_HEADERS([config.h])
 
-
-##### Compiler #####
-
+# Compiler
 AC_PROG_CPP
 AC_PROG_CC_C99
 SQ_PROG_CPP_POSIX_2001
@@ -16,84 +14,11 @@ SQ_PROG_CC_WALL
 AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
 
-
-##### Non-POSIX declarations #####
-
-# SQ_NONSTD_DEFINE(NAME, PROLOG, SOURCE, [IF_NOT_FOUND])
-# Check what #define we need for non-POSIX declarations
-AC_DEFUN([SQ_NONSTD_DEFINE],[
-	AH_TEMPLATE(AS_TR_CPP([NONSTD_]$1[_DEF]),
-		[Extra definition needed by non-POSIX ]$1)
-	
-	AS_VAR_PUSHDEF([sq_cache],[sq_cv_decl_nonstd_$1])
-	AC_CACHE_VAL([sq_cache],[
-		AS_VAR_SET([sq_cache],[no])
-		for def in none _DARWIN_C_SOURCE _NETBSD_SOURCE _XOPEN_SOURCE _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
-		do
-			AS_IF([test "x$def" = "x_POSIX_C_SOURCE"],[op=undef],[op=define])
-			AS_IF([test "x$def" = "x_XOPEN_SOURCE"],[val=500],[val=1])
-			AS_IF([test "x$def" = "xnone"],[
-				pref=
-				AC_MSG_CHECKING([if $1 works without changes])
-			],[
-				pref="#$op $def $val"
-				AC_MSG_CHECKING([if $1 requires changing $def])
-			])
-			AC_LINK_IFELSE([AC_LANG_PROGRAM([
-					$pref
-					$2
-				],[$3])
-			],[
-				AC_MSG_RESULT(yes)
-				AS_VAR_SET([sq_cache],[$def])
-				break
-			],[AC_MSG_RESULT(no)])
-		done
-	])
-	AS_VAR_IF([sq_cache],[no],
-		m4_default($4,[AC_MSG_FAILURE([can't figure out how to use $1])]),
-		[AS_VAR_IF([sq_cache],[none],[],[
-			AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$def],[])
-		])]
-	)
-	AS_VAR_POPDEF([sq_cache])
-])
-
-AC_MSG_CHECKING([for QNX makedev])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([
-	#include <sys/types.h>
-	#include <sys/sysmacros.h>
-	#include <sys/netmgr.h>
-	],[makedev(ND_LOCAL_NODE,0,0)])
-],[
-	AC_MSG_RESULT([yes])
-	AC_DEFINE([QNX_MAKEDEV],[1],[define if makedev() is QNX-style])
-],[
-	AC_MSG_RESULT([no])
-	AC_CHECK_HEADERS([sys/mkdev.h],,,[#include <sys/types.h>])
-	AC_CHECK_HEADERS([sys/sysmacros.h],,,[#include <sys/types.h>])
-	SQ_NONSTD_DEFINE(makedev,[
-		#include <sys/types.h>
-		#ifdef HAVE_SYS_MKDEV_H
-			#include <sys/mkdev.h>
-		#endif
-		#ifdef HAVE_SYS_SYSMACROS_H
-			#include <sys/sysmacros.h>
-		#endif
-	],[makedev(0,0)])
-])
-
-SQ_NONSTD_DEFINE(pread,[#include <unistd.h>],[(void)pread;])
-SQ_NONSTD_DEFINE(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])
-
-AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])
-SQ_NONSTD_DEFINE(ENOATTR,[
-	#ifdef HAVE_ATTR_XATTR_H
-		#include <sys/types.h>
-		#include <attr/xattr.h>
-	#endif
-	#include <errno.h>
-],[int e = ENOATTR;],[:])
+# Non-POSIX declarations
+SQ_CHECK_DECL_MAKEDEV
+SQ_CHECK_DECL_PREAD
+SQ_CHECK_DECL_S_IFSOCK
+SQ_CHECK_DECL_ENOATTR([:])
 
 ##### Compression #####
 
@@ -207,7 +132,7 @@ AS_IF([test "x$found_dirent" = xyes],,
 	[AC_MSG_FAILURE([No way to add directory entries])])
 
 AC_CHECK_DECLS([fuse_daemonize],,
-	[SQ_NONSTD_DEFINE(daemon,[#include <unistd.h>],[(void)daemon;])],
+	[SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[(void)daemon;])],
 	[#include <fuse_lowlevel.h>])
 
 AC_CHECK_DECLS([fuse_session_remove_chan],,,[#include <fuse_lowlevel.h>])
