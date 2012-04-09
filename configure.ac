@@ -10,41 +10,11 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CPP
 AC_PROG_CC_C99
-
-# Solaris headers reject POSIX-2001 without special C99 flags
-AC_DEFUN([SQ_PREPROC_2001],[
-	AC_MSG_CHECKING([for option for POSIX-2001 preprocessor])
-	save_CPPFLAGS=$CPPFLAGS
-	sq_preproc=no
-	for p2001 in none -std=gnu99 -xc99=all
-	do
-		AS_IF([test "x$p2001" = xnone],,[CPPFLAGS="$save_CPPFLAGS $p2001"])
-		AC_PREPROC_IFELSE([AC_LANG_PROGRAM([
-			#define _POSIX_C_SOURCE 200112L
-			#include <sys/types.h>
-		])],[
-			sq_preproc=$p2001
-			break
-		])
-	done
-	AS_IF([test "x$sq_preproc" = xno],
-		[AC_MSG_FAILURE([can't preprocess for POSIX-2001])],
-		[AC_MSG_RESULT([$sq_preproc])])
-])
-SQ_PREPROC_2001
+SQ_PROG_CPP_POSIX_2001
+SQ_PROG_CC_WALL
 
 AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
-
-AC_MSG_CHECKING([whether ${CC-cc} accepts -Wall])
-save_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS -Wall"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,)],
-	[AC_MSG_RESULT([yes])],
-[
-	AC_MSG_RESULT([no])
-	CFLAGS="$save_CFLAGS"
-])
 
 
 ##### Non-POSIX declarations #####
