@@ -1,8 +1,6 @@
 For 0.1
 	Separate out autoconf macros
-		Default CFLAGS
 		AC_CONFIG_AUX_DIR?
-		Check autoconf archive: save/restore, -Wall
 		Print compression results?
 	Print version of squashfuse, fix help
 	README
