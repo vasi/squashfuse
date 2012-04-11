@@ -1,7 +1,7 @@
 For 0.1
 	Separate out autoconf macros
-		AC_CONFIG_AUX_DIR?
 		Print compression results?
+		Save/restore flags
 	Print version of squashfuse, fix help
 	README
 		Build requirements: Linux: libattr, pkgconfig

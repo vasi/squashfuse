@@ -5,17 +5,13 @@ squashfuse
 
 *.tar.gz
 
+.deps
 Makefile
 Makefile.in
-.deps
 aclocal.m4
 autom4te.cache
-compile
+build-aux
 config.*
 configure
-depcomp
-install-sh
 libtool
-ltmain.sh
-missing
 stamp-h1

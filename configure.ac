@@ -1,9 +1,10 @@
 AC_INIT([squashfuse], [0.1], [dave@vasilevsky.ca])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE([foreign -Wall])
-LT_INIT
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+LT_INIT
 
 # Compiler
 AC_PROG_CPP
