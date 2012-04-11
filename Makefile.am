@@ -18,6 +18,6 @@ dist_man_MANS = squashfuse.1
 
 BUILT_SOURCES = swap.h.inc swap.c.inc
 CLEANFILES = swap.h.inc swap.c.inc
-EXTRA_DIST = gen_swap.sh
+EXTRA_DIST = gen_swap.sh LICENSE
 swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
 	$(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h

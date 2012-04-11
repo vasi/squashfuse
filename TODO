@@ -3,7 +3,7 @@ For 0.1
 		Default CFLAGS
 		AC_CONFIG_AUX_DIR?
 		Check autoconf archive: save/restore, -Wall
-		Check 'make dist' and m4!
+		Print compression results?
 	Print version of squashfuse, fix help
 	README
 		Build requirements: Linux: libattr, pkgconfig
