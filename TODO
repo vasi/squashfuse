@@ -1,6 +1,10 @@
 For 0.1
 	Separate out autoconf macros
-	Print version of squashfuse
+		Default CFLAGS
+		AC_CONFIG_AUX_DIR?
+		Check autoconf archive: save/restore, -Wall
+		Check 'make dist' and m4!
+	Print version of squashfuse, fix help
 	README
 		Build requirements: Linux: libattr, pkgconfig
 		Good for/not good for
@@ -13,6 +17,7 @@ For 0.1
 
 Building
 	Currently on autoconf 2.68, automake 1.11
+		AC_PREREQ?
 		Test older versions?
 		Other platforms?
 	Create a separate libsquashfuse, for eg: File Roller
@@ -59,7 +64,7 @@ Testing
 		FreeBSD 9.0 amd64
 		NetBSD 6.0 BETA i386 (puffs/perfuse)
 		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
-		Android 2.3.3 (fuse-android, FUSE-enabled kernel)
+		Android 2.3.3 armel/emulator (fuse-android, FUSE-enabled kernel)
 			Use CFLAGS, LDFLAGS from fuse-android
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
@@ -78,9 +83,9 @@ Testing
 			Dokan sample bluescreens, fuse4win sample crashes
 			CBFS? Totally different API, expensive
 			Explorer Namespace Extension?
+			7-zip can browse!
 	No FUSE available
 		DragonFly BSD - puffs is in git
 		OpenBSD
 		Commercial UNIX: AIX, HP-UX, etc
 		iOS
-	Todo
