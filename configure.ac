@@ -7,6 +7,8 @@ AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 LT_INIT
 
 # Compiler
+AC_PROG_AWK
+AC_PROG_SED
 AC_PROG_CPP
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
