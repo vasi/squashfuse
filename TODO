@@ -7,7 +7,6 @@ For 0.1
 		Build requirements: Linux: libattr, pkgconfig
 		Good for/not good for
 		Platform
-	Licensing: Make sure squashfs_fs.h use is ok
 	squashfs-tools
 		Submit OS X patches
 	Test platforms, including squashfs-tools
