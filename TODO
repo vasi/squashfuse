@@ -81,9 +81,11 @@ Testing
 			Dokan sample bluescreens, fuse4win sample crashes
 			CBFS? Totally different API, expensive
 			Explorer Namespace Extension?
+			FUSE-NT?
 			7-zip can browse!
 	No FUSE available
 		DragonFly BSD - puffs is in git
 		OpenBSD
 		Commercial UNIX: AIX, HP-UX, etc
 		iOS
+	Todo
