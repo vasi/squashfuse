@@ -44,8 +44,8 @@ AM_CONDITIONAL([MAKE_EXPORT],[test "x$sq_cv_prog_make_export" == xyes])
 #
 # If STRING starts with PREFIX, return the part of string after the PREFIX.
 # Otherwise, return the original string.
-AC_DEFUN([SQ_SUFFIX],[
-	`echo | $AWK '{ i=index(v,o); if(i==1){print substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
+AC_DEFUN([SQ_SUFFIX],[dnl
+`echo | $AWK '{ i=[index](v,o); if(i==1){print substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
 ])
 
 # SQ_SAVE_FLAGS
@@ -55,22 +55,22 @@ AC_DEFUN([SQ_SUFFIX],[
 # variables containing the changes in the flags. Eg: If saved when LIBS="foo",
 # and restored when LIBS="foo bar", PREFIX_LIBS would be set to "bar".
 AC_DEFUN([SQ_SAVE_FLAGS],[
-	sq_save_LIBS=$LIBS
-	sq_save_CPPFLAGS=$CPPFLAGS
+	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
+		AS_VAR_PUSHDEF([sq_save_]sq_flag,[$sq_flag])
+	])
 ])
 AC_DEFUN([SQ_RESTORE_FLAGS],[
-	m4_ifval($1,[
-		m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
-			AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
+	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
+		AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
+		m4_ifval($1,[
 			AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
-			AS_VAR_SET([sq_tgt], [SQ_SUFFIX([$sq_flag],[$sq_saved])])
+			AS_VAR_SET([sq_tgt], [SQ_SUFFIX([$sq_flag],sq_saved)])
 			AC_SUBST(sq_tgt)
-			AS_VAR_POPDEF([sq_saved])
 			AS_VAR_POPDEF([sq_tgt])
 		])
+		sq_flag[]="sq_saved"
+		AS_VAR_POPDEF([sq_saved])
 	])
-	LIBS=$sq_save_LIBS
-	CPPFLAGS=$sq_save_CPPFLAGS
 ])
 
 
