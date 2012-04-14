@@ -38,3 +38,43 @@ END
 ])
 AM_CONDITIONAL([MAKE_EXPORT],[test "x$sq_cv_prog_make_export" == xyes])
 ])
+
+
+# SQ_SAVE_FLAGS
+# SQ_RESTORE_FLAGS([PREFIX])
+#
+# Save and restore compiler flags. If PREFIX is given, substitute
+# variables containing the changes in the flags. Eg: If saved when LIBS="foo",
+# and restored when LIBS="foo bar", PREFIX_LIBS would be set to "bar".
+AC_DEFUN([SQ_SAVE_FLAGS],[
+	sq_save_LIBS=$LIBS
+	sq_save_CPPFLAGS=$CPPFLAGS
+])
+AC_DEFUN([SQ_RESTORE_FLAGS],[
+	m4_ifval($1,[
+		m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
+			AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
+			AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
+			AS_VAR_SET([sq_tgt],
+				[`echo | $AWK '{ print substr(v,length(o)+1) }' o="$sq_saved" v="$sq_flag"`])
+			AC_SUBST(sq_tgt)
+			AS_VAR_POPDEF([sq_saved])
+			AS_VAR_POPDEF([sq_tgt])
+		])
+	])
+	LIBS=$sq_save_LIBS
+	CPPFLAGS=$sq_save_CPPFLAGS
+])
+
+# SQ_PKG(NAME, PKG, [IF-FOUND], [IF-NOT-FOUND])
+#
+# Like PKG_CHECK_MODULES, but sets non-prefixed LIBS and CPPFLAGS
+AC_DEFUN([SQ_PKG],[
+	AS_VAR_PUSHDEF([sq_pkg],[pkgconfig_]$1)
+	PKG_CHECK_MODULES(sq_pkg,[$2],[
+		LIBS="$LIBS $[]pkgconfig_[]$1[]_LIBS"
+		# yes, CFLAGS, we want the preprocessor to work
+		CPPFLAGS="$CPPFLAGS $[]pkgconfig_[]$1[]_CFLAGS"
+		$3
+	],[$4])
+])

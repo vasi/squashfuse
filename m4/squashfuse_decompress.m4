@@ -28,49 +28,41 @@
 #
 # On success, set sq_decompress_found to yes, and modify CPPFLAGS and LIBS.
 AC_DEFUN([SQ_CHECK_DECOMPRESS],[
-	sq_check=yes
+	SQ_SAVE_FLAGS
+	
+	sq_want=yes
+	sq_specified=no
 	AC_ARG_WITH(m4_tolower($1),
 		AS_HELP_STRING([--with-]m4_tolower($1)[=DIR],
 			m4_tolower($1)[ prefix directory]),[
 		AS_IF([test "x$withval" = xno],[
-			sq_check=no
+			sq_want=no
 		],[
-			sq_pkg=no
-			$1[]_CFLAGS="-I$withval/include"
-			$1[]_LIBS="-L$withval/lib"
+			sq_specified=yes
+			CPPFLAGS="$CPPFLAGS -I$withval/include"
+			LIBS="$LIBS -L$withval/lib"
 		])
 	])
 	
-	AS_IF([test "x$sq_check" = xyes],[
-		sq_search="$2"
-		m4_ifval($5,[AS_IF([test "x$sq_pkg" = xno],,[
-			PKG_CHECK_MODULES($1,$5,[sq_search=],[:])
+	AS_IF([test "x$sq_want" = xyes],[
+		sq_lib="$2"
+		m4_ifval($5,[AS_IF([test "x$sq_specified" = xno],[
+			SQ_PKG($1,$5,[sq_lib=],[:])
 		])])
 		
-		# We need the preprocessor to accept header, use CPPFLAGS
-		sq_save_CPPFLAGS=$CPPFLAGS
-		sq_save_LIBS=$LIBS
-		CPPFLAGS="$CPPFLAGS $]$1[_CFLAGS"
-		LIBS="$LIBS $]$1[_LIBS"
+		sq_ok=yes
+		AC_SEARCH_LIBS($3,[$sq_lib],,[sq_ok=no])
+		AS_IF([test "x$sq_ok" = xyes],[AC_CHECK_HEADERS($4,,[sq_ok=no])])
 		
-		AC_SEARCH_LIBS($3,[$sq_search],[
-			sq_found="$ac_cv_search_]$3["
-			AS_IF([test "x$sq_found" = "xnone required"],,[
-				]$1[_LIBS="$]$1[_LIBS $sq_found"
-				LIBS="$LIBS $sq_found"
-			])
-			
-			AC_CHECK_HEADERS($4,[
-				sq_decompress_found=yes
-				AC_SUBST($1[_CFLAGS])
-				AC_SUBST($1[_LIBS])
+		AS_IF([test "x$sq_ok" = xyes],[
+			SQ_RESTORE_FLAGS($1)
+			sq_decompress_found=yes
+		],[
+			AS_IF([test "x$sq_specified" = xyes],[
+				AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])
 			],[
-				$1[]_CFLAGS=
-				$1[]_LIBS=
+				SQ_RESTORE_FLAGS
 			])
 		])
-		
-		CPPFLAGS="$sq_save_CPPFLAGS"
-		LIBS="$sq_save_LIBS"
 	])
 ])

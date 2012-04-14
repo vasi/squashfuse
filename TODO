@@ -1,4 +1,5 @@
 For 0.1
+	Use AWK/SED
 	Separate out autoconf macros
 		Print compression results?
 		Save/restore flags
