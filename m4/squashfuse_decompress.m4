@@ -44,25 +44,24 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 		])
 	])
 	
+	sq_ok=
 	AS_IF([test "x$sq_want" = xyes],[
+		
 		sq_lib="$2"
 		m4_ifval($5,[AS_IF([test "x$sq_specified" = xno],[
 			SQ_PKG($1,$5,[sq_lib=],[:])
 		])])
 		
 		sq_ok=yes
-		AC_SEARCH_LIBS($3,[$sq_lib],,[sq_ok=no])
-		AS_IF([test "x$sq_ok" = xyes],[AC_CHECK_HEADERS($4,,[sq_ok=no])])
+		AC_SEARCH_LIBS($3,[$sq_lib],,[sq_ok=])
+		AS_IF([test "x$sq_ok" = xyes],[AC_CHECK_HEADERS($4,,[sq_ok=])])
 		
 		AS_IF([test "x$sq_ok" = xyes],[
-			SQ_RESTORE_FLAGS($1)
 			sq_decompress_found=yes
 		],[
-			AS_IF([test "x$sq_specified" = xyes],[
-				AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])
-			],[
-				SQ_RESTORE_FLAGS
-			])
+			AS_IF([test "x$sq_specified" = xyes],
+				[AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])])
 		])
 	])
+	SQ_RESTORE_FLAGS($1,[$sq_ok])
 ])

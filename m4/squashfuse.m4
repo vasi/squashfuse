@@ -40,37 +40,41 @@ AM_CONDITIONAL([MAKE_EXPORT],[test "x$sq_cv_prog_make_export" == xyes])
 ])
 
 
-# SQ_SUFFIX(STRING, PREFIX)
+# SQ_AROUND(STRING, INSIDE)
 #
-# If STRING starts with PREFIX, return the part of string after the PREFIX.
-# Otherwise, return the original string.
-AC_DEFUN([SQ_SUFFIX],[dnl
-`echo | $AWK '{ i=[index](v,o); if(i==1){print substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
+# If STRING contains INSIDE, return the part of string surrounding INSIDE.
+# Otherwise, return the original STRING.
+AC_DEFUN([SQ_AROUND],[dnl
+`echo | $AWK '{ i=[[index]](v,o); if(i>0){print substr(v,1,i-1) substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
 ])
 
 # SQ_SAVE_FLAGS
-# SQ_RESTORE_FLAGS([PREFIX])
+# SQ_RESTORE_FLAGS(PREFIX,[KEEP])
 #
-# Save and restore compiler flags. If PREFIX is given, substitute
-# variables containing the changes in the flags. Eg: If saved when LIBS="foo",
-# and restored when LIBS="foo bar", PREFIX_LIBS would be set to "bar".
+# Save and restore compiler flags. If KEEP is given, keep any changes that have
+# been made. Eg: If saved when LIBS="foo", and restored when LIBS="foo bar", 
+# PREFIX_LIBS would be set to " bar".
 AC_DEFUN([SQ_SAVE_FLAGS],[
+	AS_VAR_PUSHDEF([sq_save_idx],m4_incr(m4_ifdef([sq_save_idx],sq_save_idx,0)))
 	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
-		AS_VAR_PUSHDEF([sq_save_]sq_flag,[$sq_flag])
+		AS_VAR_PUSHDEF([sq_save_]sq_flag,[sq_save_]sq_flag[_]sq_save_idx)
+		AS_VAR_SET([sq_save_]sq_flag,$[]sq_flag)
 	])
 ])
 AC_DEFUN([SQ_RESTORE_FLAGS],[
 	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
 		AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
-		m4_ifval($1,[
-			AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
-			AS_VAR_SET([sq_tgt], [SQ_SUFFIX([$sq_flag],sq_saved)])
-			AC_SUBST(sq_tgt)
-			AS_VAR_POPDEF([sq_tgt])
+		AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
+		AS_IF([test "x$2" = x],,[
+			AS_VAR_SET([sq_tgt],SQ_AROUND([$sq_flag],$sq_saved))
 		])
-		sq_flag[]="sq_saved"
+		AC_SUBST(sq_tgt)
+		AS_VAR_POPDEF([sq_tgt])
+		sq_flag[]=$sq_saved
+		AS_VAR_POPDEF([sq_save_]sq_flag)
 		AS_VAR_POPDEF([sq_saved])
 	])
+	AS_VAR_POPDEF([sq_save_idx])
 ])
 
 
