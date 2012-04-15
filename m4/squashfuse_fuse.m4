@@ -33,7 +33,9 @@ AC_DEFUN([SQ_CHECK_FUSE],[
 			SQ_SAVE_FLAGS
 			AS_IF([test "x$sq_lib" = x],,[LIBS="$LIBS -l$sq_lib"])
 			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_lowlevel_new])],[
-				AS_VAR_SET([sq_cv_lib],[-l$sq_lib])
+				AS_IF([test "x$sq_lib" = x],[sq_lib_out="already present"],
+					[sq_lib_out="-l$sq_lib"])
+				AS_VAR_SET([sq_cv_lib],[$sq_lib_out])
 			])
 			SQ_RESTORE_FLAGS
 			AS_VAR_SET_IF([sq_cv_lib],[break])
@@ -56,24 +58,28 @@ AC_DEFUN([SQ_CHECK_FUSE],[
 	
 	AS_IF([test "x$sq_fuse_ok" = "xno"],[$3],[
 		AS_VAR_COPY([sq_lib_res],[sq_cv_lib])
-		LIBS="$LIBS $sq_lib_res"
+		AS_IF([test "x$sq_lib_res" = "xalready present"],,
+			[LIBS="$LIBS $sq_lib_res"])
 		$2
 	])
 	AS_VAR_POPDEF([sq_cv_lib])
 ])
 
-# SQ_CHECK_FUSE(INCDIR, LIBDIR, CPPFLAGS, LIBS, [IF-FOUND], [IF-NOT-FOUND])
+# SQ_CHECK_FUSE(NAME, INCDIR, LIBDIR, CPPFLAGS, LIBS,
+#	[IF-FOUND], [IF-NOT-FOUND])
 #
 # Check for FUSE in the given directories.
 AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
+		AS_IF([test "x$1" = x],,[AC_MSG_NOTICE([Checking for FUSE in $1])])
+		
 		SQ_SAVE_FLAGS
-		AS_IF([test "x$1" = x],,[CPPFLAGS="$CPPFLAGS -I$1"])
-		AS_IF([test "x$2" = x],,[LIBS="$LIBS -L$2"])
-		CPPFLAGS="$CPPFLAGS $3"
-		SQ_CHECK_FUSE($4,[sq_fuse_found=yes],[sq_fuse_found=])
+		AS_IF([test "x$2" = x],,[CPPFLAGS="$CPPFLAGS -I$2"])
+		AS_IF([test "x$3" = x],,[LIBS="$LIBS -L$3"])
+		CPPFLAGS="$CPPFLAGS $4"
+		SQ_CHECK_FUSE($5,[sq_fuse_found=yes],[sq_fuse_found=])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
-		AS_IF([test "x$sq_fuse_found" = xyes],$5,$6)
+		AS_IF([test "x$sq_fuse_found" = xyes],$6,$7)
 	])
 ])
 
@@ -103,7 +109,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		AS_HELP_STRING([--with-fuse-lib=DIR], [FUSE library directory]),
 		[fuse_lib=$withval])
 	AS_IF([test "x$fuse_inc$fuse_lib" = x],,[
-		SQ_CHECK_FUSE_DIRS([$fuse_inc],[$fuse_lib],SQ_FUSE_CPPFLAGS,
+		SQ_CHECK_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],SQ_FUSE_CPPFLAGS,
 			SQ_FUSE_LIBS,,
 			[AC_MSG_FAILURE([Can't find FUSE in specified directories])])
 	])
@@ -119,12 +125,13 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	])
 	
 	# Default search locations
-	SQ_CHECK_FUSE_DIRS(,,SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([/usr/include/fuse],[/usr/lib],
+	SQ_CHECK_FUSE_DIRS([default directories],,SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+	SQ_CHECK_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
 		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([/usr/local/include/fuse],[/usr/local/lib],
+	SQ_CHECK_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
 		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([/usr/local/include/osxfuse/fuse],[/usr/local/lib],
+	SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
+		[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
 		SQ_FUSE_CPPFLAGS,[osxfuse ]SQ_FUSE_LIBS)
 	
 	AS_IF([test "x$sq_fuse_found" = xyes],,
