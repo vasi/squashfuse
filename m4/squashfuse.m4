@@ -49,7 +49,8 @@ AC_DEFUN([SQ_AROUND],[dnl
 ])
 
 # SQ_SAVE_FLAGS
-# SQ_RESTORE_FLAGS(PREFIX,[KEEP])
+# SQ_RESTORE_FLAGS
+# SQ_KEEP_FLAGS(PREFIX,[KEEP])
 #
 # Save and restore compiler flags. If KEEP is given, keep any changes that have
 # been made. Eg: If saved when LIBS="foo", and restored when LIBS="foo bar", 
@@ -64,17 +65,23 @@ AC_DEFUN([SQ_SAVE_FLAGS],[
 AC_DEFUN([SQ_RESTORE_FLAGS],[
 	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
 		AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
+		sq_flag[]=$sq_saved
+		AS_VAR_POPDEF([sq_save_]sq_flag)
+		AS_VAR_POPDEF([sq_saved])
+	])
+	AS_VAR_POPDEF([sq_save_idx])
+])
+AC_DEFUN([SQ_KEEP_FLAGS],[
+	m4_foreach_w([sq_flag],[LIBS CPPFLAGS],[
+		AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
 		AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
 		AS_IF([test "x$2" = x],,[
 			AS_VAR_SET([sq_tgt],SQ_AROUND([$sq_flag],$sq_saved))
 		])
 		AC_SUBST(sq_tgt)
 		AS_VAR_POPDEF([sq_tgt])
-		sq_flag[]=$sq_saved
-		AS_VAR_POPDEF([sq_save_]sq_flag)
-		AS_VAR_POPDEF([sq_saved])
 	])
-	AS_VAR_POPDEF([sq_save_idx])
+	SQ_RESTORE_FLAGS
 ])
 
 

@@ -21,46 +21,51 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# SQ_CHECK_DECOMPRESS(NAME, LIBRARY, FUNCTION, HEADER, [PKGCONFIG])
+# SQ_CHECK_FUSE(LIBS,[IF-FOUND],[IF-NOT-FOUND])
 #
-# Check for a decompression library with the given library name, function and
-# header. If given pkg-config package name, also look using pkg-config.
-#
-# On success, set sq_decompress_found to yes, and modify CPPFLAGS and LIBS.
-AC_DEFUN([SQ_CHECK_DECOMPRESS],[
-	SQ_SAVE_FLAGS
+# Check if FUSE low-level compiles and links correctly.
+AC_DEFUN([SQ_CHECK_FUSE],[
+	sq_fuse_ok=yes
+	AS_VAR_PUSHDEF([sq_cv_lib],[sq_cv_lib_fuse_""$1""_""$LIBS])
+	AC_CACHE_CHECK([for FUSE library],[sq_cv_lib],[
+		for sq_lib in '' $1
+		do
+			SQ_SAVE_FLAGS
+			LIBS="$LIBS -l$sq_lib"
+			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_lowlevel_new])],[
+				AS_VAR_SET([sq_cv_lib],[-l$sq_lib])
+			])
+			SQ_RESTORE_FLAGS
+			AS_VAR_SET_IF([sq_cv_lib],[break])
+		done
+		AS_VAR_SET_IF([sq_cv_lib],,[AS_VAR_SET([sq_cv_lib],[no])])
+	])
+	AS_VAR_IF([sq_cv_lib],[no],[sq_fuse_ok=no])
 	
-	sq_want=yes
-	sq_specified=no
-	AC_ARG_WITH(m4_tolower($1),
-		AS_HELP_STRING([--with-]m4_tolower($1)[=DIR],
-			m4_tolower($1)[ prefix directory]),[
-		AS_IF([test "x$withval" = xno],[
-			sq_want=no
-		],[
-			sq_specified=yes
-			CPPFLAGS="$CPPFLAGS -I$withval/include"
-			LIBS="$LIBS -L$withval/lib"
+	AS_VAR_PUSHDEF([sq_cv_hdr],[sq_cv_header_fuse_""$CPPFLAGS])
+	AS_IF([test "x$sq_fuse_ok" = "xno"],,[
+		AC_CACHE_CHECK([for FUSE header],[sq_cv_hdr],[
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>])],
+				[AS_VAR_SET([sq_cv_hdr],[yes])],
+				[AS_VAR_SET([sq_cv_hdr],[no])]
+			)
 		])
 	])
+	AS_VAR_IF([sq_cv_hdr],[yes],,[sq_fuse_ok=no])
 	
-	sq_dec_ok=
-	AS_IF([test "x$sq_want" = xyes],[		
-		sq_lib="$2"
-		m4_ifval($5,[AS_IF([test "x$sq_specified" = xno],[
-			SQ_PKG($1,$5,[sq_lib=],[:])
-		])])
-		
-		sq_dec_ok=yes
-		AC_SEARCH_LIBS($3,[$sq_lib],,[sq_dec_ok=])
-		AS_IF([test "x$sq_dec_ok" = xyes],[AC_CHECK_HEADERS($4,,[sq_dec_ok=])])
-		
-		AS_IF([test "x$sq_dec_ok" = xyes],[
-			sq_decompress_found=yes
-		],[
-			AS_IF([test "x$sq_specified" = xyes],
-				[AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])])
-		])
+	AS_IF([test "x$sq_fuse_ok" = "xno"],[$3],[
+		AS_VAR_COPY([sq_lib_res],[sq_cv_lib])
+		LIBS="$LIBS $sq_lib_res"
+		$4
 	])
-	SQ_KEEP_FLAGS($1,[$sq_dec_ok])
+	AS_VAR_POPDEF([sq_cv_lib])
+	AS_VAR_POPDEF([sq_cv_hdr])
+])
+
+# SQ_FIND_FUSE([IF-FOUND],[IF-NOT-FOUND])
+#
+# Find the FUSE library
+AC_DEFUN([SQ_FIND_FUSE],[
+	SQ_CHECK_FUSE([fuse_ino64 fuse],,
+		[AC_MSG_FAILURE([Can't find FUSE library and headers])])
 ])
