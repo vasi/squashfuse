@@ -176,15 +176,18 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 		[#include <fuse_lowlevel.h>])
 
 	AC_CHECK_DECLS([fuse_session_remove_chan],,,[#include <fuse_lowlevel.h>])
-
-	AC_MSG_CHECKING([for two-argument fuse_unmount])
-	AC_LINK_IFELSE([
-		AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[fuse_unmount(0,0)])
-	],[
-		AC_MSG_RESULT(yes)
+	
+	AC_CACHE_CHECK([for two-argument fuse_unmount],
+			[sq_cv_decl_fuse_unmount_two_arg],[
+		AC_LINK_IFELSE([
+			AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[fuse_unmount(0,0)])],
+			[sq_cv_decl_fuse_unmount_two_arg=yes],
+			[sq_cv_decl_fuse_unmount_two_arg=no])
+	])
+	AS_IF([test "x$sq_cv_decl_fuse_unmount_two_arg" = xyes],[
 		AC_DEFINE([HAVE_NEW_FUSE_UNMOUNT],1,
-			[Define if we have two-argument fuse_unmount])
-	],[AC_MSG_RESULT(no)])
+				[Define if we have two-argument fuse_unmount])
+	])
 	
 	SQ_RESTORE_FLAGS
 ])
@@ -197,15 +200,19 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
 	LIBS="$LIBS $FUSE_LIBS"
 	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
-	AC_MSG_CHECKING([for position argument to FUSE xattr operations])
-	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
-			struct fuse_lowlevel_ops ops;
-			ops.getxattr(0, 0, 0, 0, 0);
-		])],[
-		AC_MSG_RESULT(yes)
+	AC_CACHE_CHECK([for position argument to FUSE xattr operations],
+		[sq_cv_decl_fuse_xattr_position],[
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
+				struct fuse_lowlevel_ops ops;
+				ops.getxattr(0, 0, 0, 0, 0);
+			])],
+			[sq_cv_decl_fuse_xattr_position=yes],
+			[sq_cv_decl_fuse_xattr_position=no])
+	])
+	AS_IF([test "x$sq_cv_decl_fuse_xattr_position" = xyes],[
 		AC_DEFINE([FUSE_XATTR_POSITION],1,
 			[Define if FUSE xattr operations take a position argument])
-	],[AC_MSG_RESULT(no)])
+	])
 	
 	SQ_RESTORE_FLAGS
 ])
