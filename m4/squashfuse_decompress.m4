@@ -26,7 +26,7 @@
 # Check for a decompression library with the given library name, function and
 # header. If given pkg-config package name, also look using pkg-config.
 #
-# On success, set sq_decompress_found to yes, and modify CPPFLAGS and LIBS.
+# On success modify CPPFLAGS and LIBS and append NAME to sq_decompressors.
 AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 	SQ_SAVE_FLAGS
 	
@@ -56,7 +56,7 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 		AS_IF([test "x$sq_dec_ok" = xyes],[AC_CHECK_HEADERS($4,,[sq_dec_ok=])])
 		
 		AS_IF([test "x$sq_dec_ok" = xyes],[
-			sq_decompress_found=yes
+			sq_decompressors="$sq_decompressors $1"
 		],[
 			AS_IF([test "x$sq_specified" = xyes],
 				[AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])])

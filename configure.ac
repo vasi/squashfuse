@@ -28,7 +28,7 @@ SQ_CHECK_DECL_ENOATTR([:])
 SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h])
 SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
 SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
-AS_IF([test "x$sq_decompress_found" = xyes],,
+AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
 # FUSE
@@ -42,3 +42,6 @@ SQ_CHECK_PROG_MAKE_EXPORT
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
+AS_ECHO()
+AS_ECHO(["Compression support:$sq_decompressors"])

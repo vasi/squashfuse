@@ -1,6 +1,4 @@
 For 0.1
-	Separate out autoconf macros
-		Print compression results?
 	Print version of squashfuse, fix help
 	README
 		Build requirements: Linux: libattr, pkgconfig
