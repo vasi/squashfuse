@@ -348,7 +348,21 @@ static struct fuse_lowlevel_ops sqfs_ll_ops = {
 };
 
 
+static void sqfs_usage(char *name, bool fuse_usage) {
+	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
+	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
+		name ? name : PACKAGE_NAME);
+	if (fuse_usage) {
+		fprintf(stderr, "\n");
+		char *argv[] = { "", "-ho", 0 };
+		struct fuse_args args = FUSE_ARGS_INIT(2, argv);
+		fuse_parse_cmdline(&args, NULL, NULL, NULL);
+	}
+	exit(-2);
+}
+
 typedef struct {
+	char *progname;
 	const char *image;
 	int mountpoint;
 } sqfs_ll_opts;
@@ -366,6 +380,9 @@ static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 			opts->image = arg;
 			return 0;
 		}
+	} else if (key == FUSE_OPT_KEY_OPT) {
+		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
+			sqfs_usage(opts->progname, true);
 	}
 	return 1; // Keep
 }
@@ -400,23 +417,19 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
-
 int main(int argc, char *argv[]) {
 	// PARSE ARGS
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-	sqfs_ll_opts opts = { .image = NULL, .mountpoint = 0 };
-	int usage = 0;
+	sqfs_ll_opts opts = { .progname = argv[0], .image = NULL, .mountpoint = 0 };
 	if (fuse_opt_parse(&args, &opts, NULL, sqfs_ll_opt_proc) == -1)
-		usage = 1;
+		sqfs_usage(argv[0], true);
 
 	char *mountpoint = NULL;
 	int mt, fg;
-	if (usage || fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1 ||
-			mountpoint == NULL) {
-		fprintf(stderr, "Usage: %s [OPTIONS] IMAGE MOUNTPOINT\n", argv[0]);
-		exit(-2);
-	}
-	
+	if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)
+		sqfs_usage(argv[0], true);
+	if (mountpoint == NULL)
+		sqfs_usage(argv[0], true);
 	
 	// OPEN FS
 	int err = 0;
