@@ -83,6 +83,25 @@ AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
 	])
 ])
 
+# SQ_SEARCH_FUSE_DIRS
+#
+# Nobody told us where FUSE is, search some common places.
+AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
+	SQ_CHECK_FUSE_DIRS([default directories],,SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+	SQ_CHECK_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
+		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+	SQ_CHECK_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
+		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+	SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
+		[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
+		SQ_FUSE_CPPFLAGS,[osxfuse ]SQ_FUSE_LIBS)
+	
+	AS_IF([test "x$sq_fuse_found" = xyes],[
+		sq_cv_lib_fuse_LIBS="$FUSE_LIBS"
+		sq_cv_lib_fuse_CPPFLAGS="$FUSE_CPPFLAGS"
+	],[sq_cv_lib_fuse_LIBS=no])
+])
+
 # SQ_FIND_FUSE([IF-FOUND],[IF-NOT-FOUND])
 #
 # Find the FUSE library
@@ -125,14 +144,15 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	])
 	
 	# Default search locations
-	SQ_CHECK_FUSE_DIRS([default directories],,SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
-		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
-		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
-		[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
-		SQ_FUSE_CPPFLAGS,[osxfuse ]SQ_FUSE_LIBS)
+	AS_IF([test "x$sq_cv_lib_fuse_LIBS" = x],[SQ_SEARCH_FUSE_DIRS],[
+		AS_IF([test "x$sq_cv_lib_fuse_LIBS" = xno],,[
+			AC_CACHE_CHECK([FUSE libraries],[sq_cv_lib_fuse_LIBS])
+			AC_CACHE_CHECK([FUSE preprocessor flags],[sq_cv_lib_fuse_CPPFLAGS])
+			FUSE_LIBS=$sq_cv_lib_fuse_LIBS
+			FUSE_CPPFLAGS=$sq_cv_lib_fuse_CPPFLAGS
+			sq_fuse_found=yes
+		])
+	])
 	
 	AS_IF([test "x$sq_fuse_found" = xyes],,
 		[AC_MSG_FAILURE([Can't find FUSE])])
