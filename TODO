@@ -1,73 +1,52 @@
 For 0.1
 	README
-		Build requirements: Linux: libattr, pkgconfig
-		Good for/not good for
-		Platform
-	squashfs-tools
-		Submit OS X patches
+	Submit squashfs-tools patches
 	Test platforms, including squashfs-tools
-	Test install
+	Build universal binary?
 
-Building
-	Currently on autoconf 2.68, automake 1.11
-		AC_PREREQ?
-		Test older versions?
-		Other platforms?
-	Create a separate libsquashfuse, for eg: File Roller
+Build system
+	Autotools versioning
+		Currently autoconf 2.68, automake 1.11 tested. Use AC_PREREQ?
+		Test older versions
+	libsquashfuse
+		Separate out a library with a proper API
+		Try connecting it to File Roller, The Unarchiver, etc
+	Debug builds: configure option?
+	Mac builds
+		Support specifying SDK, arch, universal builds
+		Why don't builds on Lion with 10.4 SDK work?
 	Test suite?
-	Allow specifying debug build
-	Support specifying Mac OS X SDK and arch
-		Why don't builds from 10.7 -> 10.4 work?
 
 Features
-	Design a good API!!!
-	Support old versions of squashfs?
-	Support LZMA1?
-	Unsquashfs clone?
-	High-level FUSE API?
+	Design a good API for libsquashfuse
+	Use better error codes, error reporting, sanity checks
+		Report unsupported compression methods usefully
+	Support/emulate non-namespaced xattrs, for OS X
+	Write a clone of unsquashfs using libsquashfuse?
+	Write a squashfuse-highlevel?
+	squashfs 3 and earlier support?
+	LZMA1 compression?
 	Better error codes, sanity checks
-	Support/emulate non-prefixed xattrs?
 
 Performance
-	Profile performance
-	Stack space: readdir uses too much!
-	Fast bit swapping (platform specific)
-	blockidx: Create incrementally, as needed?
-	32-bit inode memory optimizations
-		Currently we store a complete inode_num => inode_id table
-		If export table exists, we could just use that
-			Lookups could be expensive. Maybe cache as well? 
-	Threading
-		Parcel out blocks
-		Caches are not currently thread safe
+	32-bit inodes
+		If export table exists in archive, prefer it to huge inode cache
+		Maybe still do some caching, lookups may be expensive
+	Multi-threading
+		Caches, blockidx aren't thread safe
+		Use a thread pool? Or one thread per request?
 		Read metadata (eg: UIDs) in parallel?
-	Delegation of caching and threading strategies
-		eg: For unsquashfs, cache all inodes
-	Speculative readahead?
+	Stack space: readdir uses too much
+	Byte swapping
+		Use platform-specific optimizations (eg: libkern/OSByteOrder.h)
+		Also arch-specific
+	Block index: Create incrementally, as needed?
+	Speculative read-ahead?
+	Caching and threading strategy delegation?
+		eg: Small caches for low-memory; huge caches for complete extraction 
+	Profile for optimization opportunities
 
-Testing
-	Known good
-		Mac 10.7 amd64 (MacFUSE, OSXFUSE, fuse4x)
-		Mac 10.4 i386 (MacFUSE)
-		Mac 10.5 ppc (MacFUSE)
-		Debian squeeze ppc
-		Debian squeeze i386
-		Ubuntu Lucid amd64
-		CentOS 3.9 i386 (FUSE 2.5)
-		FreeBSD 9.0 amd64
-		NetBSD 6.0 BETA i386 (puffs/perfuse)
-		OpenIndiana 151a i386 (libfuse from SFE; gcc or sun cc)
-		Android 2.3.3 armel/emulator (fuse-android, FUSE-enabled kernel)
-			Use CFLAGS, LDFLAGS from fuse-android
-	No low-level fuse
-		Solaris 11 (uvfs/fuse): High-level sort-of works
-		Minix 3.2 (puffs/refuse): High-level won't work
-		Haiku (userlandfs): High-level won't work, userlandfs hard to build
-		Hurd (libfuse): High-level works fine, version 2.5
-		Linux 2.4.20 and earlier
-			Require some fuse < 2.4.0
-			High-level ok: Earlier fuse?
-			LUFS?
+Platform support
 	Known bad
 		QNX 6.5 (qfuse)
 			fuse_session_add_chan() crashes
@@ -78,9 +57,11 @@ Testing
 			Explorer Namespace Extension?
 			FUSE-NT?
 			7-zip can browse!
-	No FUSE available
-		DragonFly BSD - puffs is in git
-		OpenBSD
-		Commercial UNIX: AIX, HP-UX, etc
-		iOS
-	Todo
+	Linux kernel < 2.4.20
+		Requires fuse < 2.4.0. Maybe high-level?
+		LUFS?
+	No low-level fuse
+		Solaris 11 (uvfs/fuse): High-level sort-of works
+		Minix 3.2 (puffs/refuse): High-level won't work
+		Haiku (userlandfs): High-level won't work, userlandfs hard to build
+		Hurd (libfuse): High-level works fine, version 2.5

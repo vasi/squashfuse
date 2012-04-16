@@ -1,0 +1,200 @@
+             squashfuse - http://github.com/vasi/squashfuse
+
+What is it?
+-----------
+Squashfuse is a FUSE[1] filesystem that allows a squashfs archive to be mounted in user-space. It is designed to be fast and memory-efficient, and supports most of the features of the squashfs format. It also has support for many different operating systems.
+
+Squashfs is an efficiently compressed, read-only archive format. Support for squashfs is in the Linux kernel, and the format is commonly used on Live CD distributions. A squashfs archive can be created using `squashfs-tools'[2].
+
+[1] http://fuse.sourceforge.net/
+[2] http://squashfs.sourceforge.net/ . A version that works on non-Linux operating systems is at https://github.com/vasi/squashfs-tools
+
+Licensing
+---------
+squashfuse is available under the 2-clause BSD license. See the file LICENSE for details.
+
+When to use it
+--------------
+Good situations to use squashfuse:
+
+* On non-Linux operating systems
+* When you don't have root access
+* When you don't want to risk elevated privileges
+* When squashfs is not built into your kernel, but FUSE is
+* Instead of tar. Mksquashfs supports multi-threaded squashfs creation,
+  and squashfuse allows you to browse through large archives without
+  decompressing the whole thing.
+
+Bad situations to use squashfuse:
+
+* With old versions of squashfs
+	Neither the Linux kernel nor squashfuse support squashfs versions < 4.0,
+	use `unsquashfs' from squashfs-tools instead.
+
+* To modify or create a squashfs archive
+	Neither the Linux kernel nor squashfuse support write access,
+	use `mksquashfs' from squashfs-tools instead.
+
+* To extract an entire squashfs archive to a directory
+	Mounting a filesystem just for this is inefficient, prefer `unsquashfs'.
+
+* To mount the root filesystem `/'
+	This may be possible, but has not been tested.
+
+* When you're very concerned about stability
+	The squashfs kernel module has much more testing than squashfuse.
+
+
+Installation
+------------
+Many operating systems and architectures are supported by squashfuse. For more details see the section `Platform support'.
+
+Runtime requirements:
+- FUSE 2.5 or later
+- At least one of the following compression libraries: zlib, lzo2, xz/liblzma
+- (optional) libattr, for better xattr support on Linux
+
+Build requirements:
+- A C compiler, make, and sed
+- (optional) pkgconfig, for detection of dependencies
+
+Build and install with the usual `./configure && make && make install'. For help configuring, run `./configure --help'.
+
+
+To build straight from git:
+- autoconf 2.6
+- automake 1.11
+- libtool 2
+Then run `autoreconf -i' and continue as above.
+
+
+Usage
+-----
+To mount a filesystem: squashfuse [options] ARCHIVE MOUNTPOINT
+
+To unmount an existing mount (Mac/BSD): umount MOUNTPOINT
+                               (Linux): fusermount -u MOUNTPOINT
+
+Features
+--------
+- zlib, LZO and XZ compression
+- Fast directory lookup
+- Fast seeking within files
+- Sparse files
+- Extended attribute support
+- Metadata and block caching
+
+Missing features:
+- LZMA1 compression
+- Support for squashfs versions less than 4.0
+- Multi-threading
+
+
+Known bugs
+----------
+- On 32-bit platforms, squashfuse will use more memory, possibly much more, due to a quirk in the FUSE API. For at least certain squashfs archives, this will be fixed in a future release.
+
+
+Platform support
+----------------
+Squashfuse should work on any platform with a robust FUSE implementation that supports the low-level FUSE API.
+
+The following operating systems are known to be supported:
+* Linux
+* Mac OS X
+* FreeBSD
+* NetBSD
+* OpenIndiana
+* Android
+
+These don't seem to work yet:
+* Windows
+* Solaris
+* QNX
+* Minix
+* Haiku
+* Hurd
+
+These don't have FUSE:
+* iOS
+* OpenBSD
+* DragonFly BSD - NetBSD's `puffs' is in HEAD
+* Commercial UNIX: AIX, HP-UX, etc
+
+
+Details:
+
+* Linux
+	+ Versions: Kernel 2.4.20 or later, most distros since ~2004
+	+ Tested on:
+		- Debian / squeeze 6.0              / i386, ppc
+		- Ubuntu / Lucid 10.04, *** Natty 11.10 / amd64
+		- CentOS / 3.9                      / i386      / FUSE 2.5
+	+ Requirements: CONFIG_FUSE_FS kernel option
+	+ Packages:
+		- apt-get
+			Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev
+				liblzma-dev libattr1-dev pkg-config
+			Runtime: libfuse2 zlib1g liblzo2-2 liblzma2
+
+* Mac OS X
+	+ Versions: Mac OS X 10.4 and later
+	+ Tested on:
+		- 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE
+		- 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x
+		- 10.5 Leopard      / ppc    / MacFUSE
+		- 10.4 Tiger        / i386   / MacFUSE
+	+ Requirements
+		- Command-line developer tools
+		- fuse4x, OSXFUSE or MacFUSE: http://fuse4x.org/,
+			http://osxfuse.github.com/, http://code.google.com/p/macfuse/
+	+ Packages:
+		- All package managers require the full Xcode for FUSE,
+			not just command-line tools.
+		- MacPorts
+			port install lzo2 liblzma zlib fuse4x
+		- Fink
+			fink install automake1.11 libtool2
+			fink install lzo2 liblzma5 fuse4x-dev fuse4x-shlibs pkgconfig
+		- Homebrew
+			brew install lzo xz fuse4x
+			# follow instructions from `brew info fuse4x-kext'
+	+ Configure: If using a package manager, use --with-lzo=/wherever
+	+ Notes: OS X uses a different naming scheme for extended attributes, so
+		they may not be very useful
+
+* FreeBSD
+	+ Versions: FreeBSD 6.0 and later
+	+ Tested on: FreeBSD 9.0 / amd64
+	+ Packages: From ports or packages: fusefs-libs fusefs-kmod lzo2
+	+ Notes: FreeBSD FUSE doesn't support extended attributes
+
+* NetBSD
+	+ Versions: NetBSD 6.0 and later
+	+ Tested on: NetBSD 6.0 BETA / i386
+	+ Requirements: puffs enabled in kernel (present by default)
+	+ Packages: From pkgsrc: libfuse libperfuse lzo
+	+ Configure: ./configure --with-fuse=/usr/pkg --with-lzo=/usr/pkg
+	+ Notes:
+		- Mounting seems to require root
+		- NetBSD FUSE doesn't support extended attributes
+		- perfused crashes mysteriously on some archives
+
+* OpenIndiana
+	+ Tested on: OpenIndiana 151a / i386
+	+ Requirements: C compiler: gcc or Sun Studio 12.3 work
+	+ Packages: From Spec Files Extra: fusefs libfuse lzo xz
+	+ Installation: Must ensure device is where libfuse expects it:
+		ln -s "/devices/pseudo/fuse@0:fuse" /dev/fuse
+	+ Notes:
+		- Mounting requires root
+		- OpenIndiana FUSE doesn't support extended attributes
+
+* Android ***
+	+ Tested on: Android emulator / 2.3.3 / armel
+	+ Requirements:
+		- CONFIG_FUSE_FS enabled in kernel. Most Android kernels have this
+			disabled, and must be rebuilt.
+		- fuse-android https://github.com/seth-hg/fuse-android
+	+ Configure:
+		- Use CFLAGS/LDFLAGS from fuse-android
