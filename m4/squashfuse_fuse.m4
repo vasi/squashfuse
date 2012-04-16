@@ -87,14 +87,17 @@ AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
 #
 # Nobody told us where FUSE is, search some common places.
 AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
-	SQ_CHECK_FUSE_DIRS([default directories],,SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+	SQ_CHECK_FUSE_DIRS([default directories],,,
+		[$sq_fuse_cppflags],[$sq_fuse_libs])
 	SQ_CHECK_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
-		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
+		[$sq_fuse_cppflags],[$sq_fuse_libs])
 	SQ_CHECK_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
-		SQ_FUSE_CPPFLAGS,SQ_FUSE_LIBS)
-	SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
-		[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
-		SQ_FUSE_CPPFLAGS,[osxfuse ]SQ_FUSE_LIBS)
+		[$sq_fuse_cppflags],[$sq_fuse_libs])
+	AS_CASE([$target_os],[darwin*],[
+		SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
+			[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
+			[$sq_fuse_cppflags],[osxfuse $sq_fuse_libs])
+	])
 	
 	AS_IF([test "x$sq_fuse_found" = xyes],[
 		sq_cv_lib_fuse_LIBS="$FUSE_LIBS"
@@ -106,12 +109,11 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 #
 # Find the FUSE library
 AC_DEFUN([SQ_FIND_FUSE],[
-	m4_define([SQ_FUSE_CPPFLAGS],[-D_FILE_OFFSET_BITS=64])
-	m4_define([SQ_FUSE_LIBS],[fuse])
+	sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
+	sq_fuse_libs="fuse"
 	AS_CASE([$target_os],[darwin*],[
-		m4_append([SQ_FUSE_CPPFLAGS],
-			[ -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE])
-		m4_define([SQ_FUSE_LIBS],[fuse_ino64 ]SQ_FUSE_LIBS)
+		sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
+		sq_fuse_libs="fuse4x fuse_ino64 $sq_fuse_libs"
 	])
 	sq_fuse_found=
 	
@@ -128,8 +130,8 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		AS_HELP_STRING([--with-fuse-lib=DIR], [FUSE library directory]),
 		[fuse_lib=$withval])
 	AS_IF([test "x$fuse_inc$fuse_lib" = x],,[
-		SQ_CHECK_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],SQ_FUSE_CPPFLAGS,
-			SQ_FUSE_LIBS,,
+		SQ_CHECK_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],[$sq_fuse_cppflags],
+			[$sq_fuse_libs],,
 			[AC_MSG_FAILURE([Can't find FUSE in specified directories])])
 	])
 	
