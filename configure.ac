@@ -37,8 +37,11 @@ SQ_FUSE_API_VERSION
 SQ_FUSE_API_XATTR_POSITION
 
 # Misc
-AC_CHECK_HEADERS([linux/types.h])
 SQ_CHECK_PROG_MAKE_EXPORT
+AC_CHECK_TYPE([__le16],[
+	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
+		[Define if <linux/types.h> defines the type __le16])
+],,[#include <linux/types.h>])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -28,7 +28,7 @@
 #ifndef SQUASHFS_FS
 #define SQUASHFS_FS
 
-#ifdef HAVE_LINUX_TYPES_H
+#ifdef HAVE_LINUX_TYPES_LE16
 	#include <linux/types.h>
 #else
 	#include <stdint.h>
