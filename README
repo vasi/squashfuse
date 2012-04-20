@@ -2,9 +2,9 @@
 
 What is it?
 -----------
-Squashfuse is a FUSE[1] filesystem that allows a squashfs archive to be mounted in user-space. It is designed to be fast and memory-efficient, and supports most of the features of the squashfs format. It also has support for many different operating systems.
+Squashfuse is a FUSE [1] filesystem that allows a squashfs archive to be mounted in user-space. It is designed to be fast and memory-efficient, and supports most of the features of the squashfs format. It also has support for many different operating systems.
 
-Squashfs is an efficiently compressed, read-only archive format. Support for squashfs is in the Linux kernel, and the format is commonly used on Live CD distributions. A squashfs archive can be created using `squashfs-tools'[2].
+Squashfs is an efficiently compressed, read-only archive format. Support for squashfs is in the Linux kernel, and the format is commonly used on Live CD distributions. A squashfs archive can be created using `mksquashfs' from squashfs-tools [2].
 
 [1] http://fuse.sourceforge.net/
 [2] http://squashfs.sourceforge.net/ . A version that works on non-Linux operating systems is at https://github.com/vasi/squashfs-tools
@@ -27,7 +27,7 @@ Good situations to use squashfuse:
 
 Bad situations to use squashfuse:
 
-* With old versions of squashfs
+* With very old squashfs archives
 	Neither the Linux kernel nor squashfuse support squashfs versions < 4.0,
 	use `unsquashfs' from squashfs-tools instead.
 
@@ -52,7 +52,7 @@ Many operating systems and architectures are supported by squashfuse. For more d
 Runtime requirements:
 - FUSE 2.5 or later
 - At least one of the following compression libraries: zlib, lzo2, xz/liblzma
-- (optional) libattr, for better xattr support on Linux
+- (optional) libattr, for better extended attribute support on Linux
 
 Build requirements:
 - A C compiler, make, and sed
@@ -77,15 +77,15 @@ To unmount an existing mount (Mac/BSD): umount MOUNTPOINT
 
 Features
 --------
-- zlib, LZO and XZ compression
+- zlib, LZO and LZMA2 compression
 - Fast directory lookup
 - Fast seeking within files
-- Sparse files
+- Sparse file support
 - Extended attribute support
 - Metadata and block caching
 
 Missing features:
-- LZMA1 compression
+- LZMA1 compression (deprecated)
 - Support for squashfs versions less than 4.0
 - Multi-threading
 
