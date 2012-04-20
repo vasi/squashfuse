@@ -128,7 +128,7 @@ Details:
 	+ Versions: Kernel 2.4.20 or later, most distros since ~2004
 	+ Tested on:
 		- Debian / squeeze 6.0              / i386, ppc
-		- Ubuntu / Lucid 10.04, *** Natty 11.10 / amd64
+		- Ubuntu / Lucid 10.04, Natty 11.10 / amd64
 		- CentOS / 3.9                      / i386      / FUSE 2.5
 	+ Requirements: CONFIG_FUSE_FS kernel option
 	+ Packages:
@@ -190,11 +190,16 @@ Details:
 		- Mounting requires root
 		- OpenIndiana FUSE doesn't support extended attributes
 
-* Android ***
+* Android
 	+ Tested on: Android emulator / 2.3.3 / armel
 	+ Requirements:
 		- CONFIG_FUSE_FS enabled in kernel. Most Android kernels have this
-			disabled, and must be rebuilt.
-		- fuse-android https://github.com/seth-hg/fuse-android
+			disabled, so the kernel must be rebuilt.
+		- fuse-android: https://github.com/seth-hg/fuse-android
 	+ Configure:
-		- Use CFLAGS/LDFLAGS from fuse-android
+		- Cross-compile from Linux by passing --host flag to configure
+		- Use CPPFLAGS/LDFLAGS/LIBS that fuse-android used for fusexmp
+		- May need `-nodefaultlibs' in LDFLAGS, since configure likes linking
+			and compiling together in a single gcc invokation, and Android's
+			build system doesn't.
+
