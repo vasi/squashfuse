@@ -2,12 +2,14 @@ For 0.1
 	Submit squashfs-tools patches
 
 Build system
+	Support AM_SILENT_RULES
 	Autotools versioning
 		Currently autoconf 2.68, automake 1.11 tested. Use AC_PREREQ?
 		Test older versions
 	libsquashfuse
 		Separate out a library with a proper API
 		Try connecting it to File Roller, The Unarchiver, etc
+		Support win32api?
 	Debug builds: configure option?
 	Mac builds
 		Support specifying SDK, arch, universal builds
@@ -53,7 +55,7 @@ Platform support
 			CBFS? Totally different API, expensive
 			Explorer Namespace Extension?
 			FUSE-NT?
-			7-zip can browse!
+			7-zip can browse squashfs archives, just not in explorer
 	Linux kernel < 2.4.20
 		Requires fuse < 2.4.0. Maybe high-level?
 		LUFS?
