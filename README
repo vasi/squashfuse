@@ -203,3 +203,10 @@ Details:
 			and compiling together in a single gcc invokation, and Android's
 			build system doesn't.
 
+Alternatives
+------------
+Other squashfs implementations:
+* Linux kernel module
+* squashfs-tools
+* 7-zip / p7zip
+* Grub 2 bootloader
