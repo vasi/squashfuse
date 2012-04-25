@@ -200,8 +200,8 @@ Details:
 		- Cross-compile from Linux by passing --host flag to configure
 		- Use CPPFLAGS/LDFLAGS/LIBS that fuse-android used for fusexmp
 		- May need `-nodefaultlibs' in LDFLAGS, since configure likes linking
-			and compiling together in a single gcc invokation, and Android's
-			build system doesn't.
+			and compiling together in a single gcc invokation, and
+			Android's build system doesn't.
 
 Alternatives
 ------------
