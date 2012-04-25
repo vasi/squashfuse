@@ -25,7 +25,6 @@ Features
 	Write a squashfuse-highlevel?
 	squashfs 3 and earlier support?
 	LZMA1 compression?
-	Better error codes, sanity checks
 
 Performance
 	32-bit inodes
@@ -44,6 +43,9 @@ Performance
 	Caching and threading strategy delegation?
 		eg: Small caches for low-memory; huge caches for complete extraction 
 	Profile for optimization opportunities
+
+Misc
+	mksquashfs is slow, write a faster version?
 
 Platform support
 	Known bad
