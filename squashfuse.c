@@ -440,10 +440,12 @@ int main(int argc, char *argv[]) {
 	}
 
 	sqfs_ll ll;
-	sqfs_err serr = sqfs_ll_init(&ll, fd);
-	if (serr) {
-		fprintf(stderr, "Can't open image: %d\n", serr);
-		err = 1;
+	if (!err) {
+		sqfs_err serr = sqfs_ll_init(&ll, fd);
+		if (serr) {
+			fprintf(stderr, "Can't open image: %d\n", serr);
+			err = 1;
+		}
 	}
 	
 	// STARTUP FUSE
