@@ -26,6 +26,7 @@
 
 #include "squashfuse.h"
 
+#include <string.h>
 
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
@@ -88,4 +89,28 @@ sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 #endif
 		default: return NULL;
 	}
+}
+
+static char *const sqfs_compression_names[SQFS_COMP_MAX] = {
+	NULL, "zlib", "lzma", "lzo", "xz",
+};
+
+char *sqfs_compression_name(sqfs_compression_type type) {
+	if (type < 0 || type >= SQFS_COMP_MAX)
+		return NULL;
+	return sqfs_compression_names[type];
+}
+
+void sqfs_compression_supported(sqfs_compression_type *types) {
+	memset(types, SQFS_COMP_UNKNOWN, SQFS_COMP_MAX * sizeof(*types));
+	size_t i = 0;
+#ifdef HAVE_ZLIB_H
+	types[i++] = ZLIB_COMPRESSION;
+#endif
+#ifdef HAVE_LZMA_H
+	types[i++] = XZ_COMPRESSION;
+#endif
+#ifdef HAVE_LZO_LZO1X_H
+	types[i++] = LZO_COMPRESSION;
+#endif
 }

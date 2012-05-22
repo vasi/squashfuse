@@ -33,7 +33,9 @@
 typedef enum {
 	SQFS_OK,
 	SQFS_ERR,
-	SQFS_FORMAT,
+	SQFS_BADFORMAT,		// unsupported file format
+	SQFS_BADVERSION,	// unsupported squashfs version
+	SQFS_BADCOMP,		// unsupported compression method
 } sqfs_err;
 
 #define SQFS_INODE_ID_BYTES 6

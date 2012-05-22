@@ -36,6 +36,22 @@
 #define DATA_CACHED_BLKS 1
 #define FRAG_CACHED_BLKS 3
 
+void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
+		int *max_minor) {
+	*min_major = *max_major = SQUASHFS_MAJOR;
+	*min_minor = 0;
+	*max_minor = SQUASHFS_MINOR;
+}
+
+void sqfs_version(sqfs *fs, int *major, int *minor) {
+	*major = fs->sb.s_major;
+	*minor = fs->sb.s_minor;
+}
+
+sqfs_compression_type sqfs_compression(sqfs *fs) {
+	return fs->sb.compression;
+}
+
 sqfs_err sqfs_init(sqfs *fs, int fd) {
 	memset(fs, 0, sizeof(*fs));
 	
@@ -45,12 +61,12 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	sqfs_swapin_super_block(&fs->sb);
 	
 	if (fs->sb.s_magic != SQUASHFS_MAGIC)
-		return SQFS_FORMAT;
+		return SQFS_BADFORMAT;
 	if (fs->sb.s_major != SQUASHFS_MAJOR || fs->sb.s_minor > SQUASHFS_MINOR)
-		return SQFS_ERR;
+		return SQFS_BADVERSION;
 	
 	if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
-		return SQFS_ERR;
+		return SQFS_BADCOMP;
 	
 	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
 		sizeof(uint32_t), fs->sb.no_ids);

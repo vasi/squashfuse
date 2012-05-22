@@ -80,6 +80,8 @@ struct sqfs_inode {
 	} xtra;
 };
 
+void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
+	int *max_minor);
 
 // Number of groups of size 'group' required to hold size 'total'
 size_t sqfs_divceil(size_t total, size_t group);
@@ -87,6 +89,10 @@ size_t sqfs_divceil(size_t total, size_t group);
 
 sqfs_err sqfs_init(sqfs *fs, int fd);
 void sqfs_destroy(sqfs *fs);
+
+// Ok to call these even on incompletely constructed filesystems
+void sqfs_version(sqfs *fs, int *major, int *minor);
+sqfs_compression_type sqfs_compression(sqfs *fs);
 
 
 void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size);
