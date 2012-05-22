@@ -104,13 +104,13 @@ char *sqfs_compression_name(sqfs_compression_type type) {
 void sqfs_compression_supported(sqfs_compression_type *types) {
 	memset(types, SQFS_COMP_UNKNOWN, SQFS_COMP_MAX * sizeof(*types));
 	size_t i = 0;
-#ifdef HAVE_ZLIB_H
-	types[i++] = ZLIB_COMPRESSION;
+#ifdef HAVE_LZO_LZO1X_H
+	types[i++] = LZO_COMPRESSION;
 #endif
 #ifdef HAVE_LZMA_H
 	types[i++] = XZ_COMPRESSION;
 #endif
-#ifdef HAVE_LZO_LZO1X_H
-	types[i++] = LZO_COMPRESSION;
+#ifdef HAVE_ZLIB_H
+	types[i++] = ZLIB_COMPRESSION;
 #endif
 }

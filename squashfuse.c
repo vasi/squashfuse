@@ -417,6 +417,49 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
+static sqfs_err sqfs_ll_open(sqfs_ll *ll, int fd) {
+	sqfs_err err = sqfs_ll_init(ll, fd);
+	sqfs *fs = &ll->fs;
+	switch (err) {
+		case SQFS_OK:
+			break;
+		case SQFS_BADFORMAT:
+			fprintf(stderr, "This doesn't look like a squashfs image.\n");
+			break;
+		case SQFS_BADVERSION: {
+			int major, minor, mj1, mn1, mj2, mn2;
+			sqfs_version(fs, &major, &minor);
+			sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
+			fprintf(stderr, "Squashfs version %d.%d detected, only versions "
+				"%d.%d to %d.%d supported.\n",
+				major, minor, mj1, mn1, mj2, mn2);
+			break;
+		}
+		case SQFS_BADCOMP: {
+			sqfs_compression_type sup[SQFS_COMP_MAX],
+				comp = sqfs_compression(fs);
+			sqfs_compression_supported(sup);
+			fprintf(stderr, "Squashfs image uses %s compression, this version "
+				"supports only ", sqfs_compression_name(comp));
+			bool first = true;
+			for (int i = 0; i < SQFS_COMP_MAX; ++i) {
+				if (sup[i] == SQFS_COMP_UNKNOWN)
+					continue;
+				if (!first)
+					fprintf(stderr, ", ");
+				fprintf(stderr, "%s", sqfs_compression_name(sup[i]));
+				first = false;
+			}
+			fprintf(stderr, ".\n");
+			break;
+		}
+		default:
+			fprintf(stderr, "Something went wrong trying to read the squashfs "
+				"image.\n");
+	}
+	return err;
+}
+
 int main(int argc, char *argv[]) {
 	// PARSE ARGS
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
@@ -441,11 +484,8 @@ int main(int argc, char *argv[]) {
 
 	sqfs_ll ll;
 	if (!err) {
-		sqfs_err serr = sqfs_ll_init(&ll, fd);
-		if (serr) {
-			fprintf(stderr, "Can't open image: %d\n", serr);
+		if (sqfs_ll_open(&ll, fd))
 			err = 1;
-		}
 	}
 	
 	// STARTUP FUSE
