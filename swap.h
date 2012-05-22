@@ -27,6 +27,10 @@
 
 #include <stdint.h>
 
+#define SQFS_MAGIC_SWAP 0x68737173
+
+void swap16(uint16_t *n);
+
 void sqfs_swapin16(uint16_t *v);
 void sqfs_swapin32(uint32_t *v);
 void sqfs_swapin64(uint64_t *v);

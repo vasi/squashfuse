@@ -430,9 +430,13 @@ static sqfs_err sqfs_ll_open(sqfs_ll *ll, int fd) {
 			int major, minor, mj1, mn1, mj2, mn2;
 			sqfs_version(fs, &major, &minor);
 			sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
-			fprintf(stderr, "Squashfs version %d.%d detected, only versions "
-				"%d.%d to %d.%d supported.\n",
-				major, minor, mj1, mn1, mj2, mn2);
+			fprintf(stderr, "Squashfs version %d.%d detected, only version",
+				major, minor);
+			if (mj1 == mj2 && mn1 == mn2)
+				fprintf(stderr, " %d.%d", mj1, mn1);
+			else
+				fprintf(stderr, "s %d.%d to %d.%d", mj1, mn1, mj2, mn2);
+			fprintf(stderr, " supported.\n");
 			break;
 		}
 		case SQFS_BADCOMP: {

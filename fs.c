@@ -60,8 +60,12 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);
 	
-	if (fs->sb.s_magic != SQUASHFS_MAGIC)
-		return SQFS_BADFORMAT;
+	if (fs->sb.s_magic != SQUASHFS_MAGIC) {
+		if (fs->sb.s_magic != SQFS_MAGIC_SWAP)
+			return SQFS_BADFORMAT;
+		swap16(&fs->sb.s_major);
+		swap16(&fs->sb.s_minor);
+	}
 	if (fs->sb.s_major != SQUASHFS_MAJOR || fs->sb.s_minor > SQUASHFS_MINOR)
 		return SQFS_BADVERSION;
 	

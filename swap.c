@@ -40,5 +40,9 @@ SWAP(32)
 SWAP(64)
 #undef SWAP
 
+void swap16(uint16_t *n) {
+	*n = (*n >> 8) + (*n << 8);
+}
+
 #include "squashfs_fs.h"
 #include "swap.c.inc"
