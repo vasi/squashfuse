@@ -57,7 +57,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	
 	fs->fd = fd;
 	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
-		return SQFS_ERR;
+		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);
 	
 	if (fs->sb.s_magic != SQUASHFS_MAGIC)
