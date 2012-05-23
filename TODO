@@ -60,6 +60,7 @@ Platform support
 		Windows (fuse4win/dokan)
 			Dokan sample bluescreens, fuse4win sample crashes
 			CBFS? Totally different API, expensive
+			Pismo File Mount?
 			Explorer Namespace Extension?
 			FUSE-NT?
 			7-zip can browse squashfs archives, just not in explorer
