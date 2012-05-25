@@ -40,7 +40,7 @@ SWAP(32)
 SWAP(64)
 #undef SWAP
 
-void swap16(uint16_t *n) {
+void sqfs_swap16(uint16_t *n) {
 	*n = (*n >> 8) + (*n << 8);
 }
 
