@@ -19,7 +19,6 @@ Build system
 Features
 	Design a good API for libsquashfuse
 	Use better error codes, error reporting, sanity checks
-		Report unsupported compression methods usefully!!!
 	Support/emulate non-namespaced xattrs, for OS X
 	Write a clone of unsquashfs using libsquashfuse?
 	Write a squashfuse-highlevel?
