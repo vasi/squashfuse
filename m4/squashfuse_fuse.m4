@@ -113,7 +113,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	sq_fuse_libs="fuse"
 	AS_CASE([$target_os],[darwin*],[
 		sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
-		sq_fuse_libs="fuse4x fuse_ino64 $sq_fuse_libs"
+		sq_fuse_libs="osxfuse fuse4x fuse_ino64 $sq_fuse_libs"
 	])
 	sq_fuse_found=
 	
