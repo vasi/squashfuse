@@ -226,7 +226,7 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
 	if (err)
 		return err;
 	
-	if (0 && sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
+	if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
 		err = sqfs_ll_ino64_init(ll);
 	} else {
 		err = sqfs_ll_ino32_init(ll);
