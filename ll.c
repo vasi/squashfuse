@@ -85,7 +85,6 @@ static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
  * FIXME:
  * - Theoretically this could overflow if a filesystem uses all 2 ** 32 inodes,
  *   since fuse inode zero is unavailable.
- * - We only strictly need 48 bits for each table entry, not 64.
  * - If an export table is available, we can lookup inode_id's there, instead of
  *   keeping a table. Or maybe keep just a small cache?
  */

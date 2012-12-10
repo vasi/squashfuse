@@ -26,11 +26,6 @@ Features
 	LZMA1 compression?
 
 Performance
-	32-bit inodes
-		If export table exists in archive, prefer it to huge inode cache
-			Maybe still do some caching? lookups may be expensive
-		If < 2^19 inode blocks, use packed inode numbers
-		Revert to high-level API?
 	Multi-threading
 		Caches, blockidx aren't thread safe
 		Use a thread pool? Or one thread per request?
