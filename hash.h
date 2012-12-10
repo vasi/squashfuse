@@ -22,46 +22,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_DIR_H
-#define SQFS_DIR_H
+#ifndef SQFS_HASH_H
+#define SQFS_HASH_H
 
 #include "common.h"
 
-#include <sys/param.h>
+/* Simple hashtable
+ *	- Keys are integers
+ *	- Values are free()-able pointers; hash takes ownership
+ *
+ * Implementation
+ *	- Hash function is modulus
+ *	- Chaining for duplicates
+ *	- Sizes are powers of two
+ */
+typedef uint32_t sqfs_hash_key;
+typedef void *sqfs_hash_value; // should be free()-able
 
-#include "squashfs_fs.h"
+typedef struct sqfs_hash_bucket {
+	struct sqfs_hash_bucket *next;
+	sqfs_hash_key key;
+	sqfs_hash_value value;
+} sqfs_hash_bucket;
 
 typedef struct {
-	sqfs_inode_id inode;
-	sqfs_inode_num inode_number;
-	int type;
-	char *name;
-} sqfs_dir_entry;
+	size_t capacity;
+	size_t size;
+	sqfs_hash_bucket **buckets;
+} sqfs_hash;
 
-typedef struct {
-	sqfs *fs;
-	
-	sqfs_md_cursor cur;
-	size_t remain;
-	struct squashfs_dir_header header;
-	
-	char name[SQUASHFS_NAME_LEN+1];
-	sqfs_dir_entry entry;
-} sqfs_dir;
+sqfs_err sqfs_hash_init(sqfs_hash *h, size_t initial);
+void sqfs_hash_destroy(sqfs_hash *h);
 
-sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir);
-sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err);
+sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);
 
-// Fast forward in a directory to find a given file
-sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name);
-
-// For lookup functions, returned entry will have no name field
-sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
-	sqfs_dir_entry *entry);
-sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
-	const char *name, sqfs_dir_entry *entry);
-
-// 'path' will be modified, 'inode' replaced
-sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path);
+sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value v);
+sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k);
 
 #endif

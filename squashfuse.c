@@ -123,7 +123,7 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		fuse_reply_buf(req, NULL, 0);
 	} else {
 		struct stat st = {
-			.st_ino = lli.ll->ino_register(lli.ll, entry),
+			.st_ino = lli.ll->ino_fuse_num(lli.ll, entry),
 			.st_mode = sqfs_mode(entry->type),
 		};
 		
@@ -333,6 +333,14 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 	free(buf);
 }
 
+static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
+		unsigned long nlookup) {
+	sqfs_ll_i lli;
+	sqfs_ll_iget(req, &lli, SQFS_FUSE_INODE_NONE);
+	lli.ll->ino_forget(lli.ll, ino, nlookup);
+	fuse_reply_none(req);
+}
+
 static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.getattr	= sqfs_ll_op_getattr,
 	.opendir	= sqfs_ll_op_opendir,
@@ -345,6 +353,7 @@ static struct fuse_lowlevel_ops sqfs_ll_ops = {
 	.readlink	= sqfs_ll_op_readlink,
 	.listxattr	= sqfs_ll_op_listxattr,
 	.getxattr	= sqfs_ll_op_getxattr,
+	.forget		= sqfs_ll_op_forget,
 };
 
 

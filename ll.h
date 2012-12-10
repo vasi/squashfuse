@@ -39,7 +39,14 @@ struct sqfs_ll {
 	
 	// Register a new inode, returning the fuse ID for it
 	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
+	void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
+	
+	// Like register, but don't actually remember it
+	fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
+	
+	// Private data, and how to destroy it
 	void *ino_data;
+	void (*ino_destroy)(sqfs_ll *ll);	
 };
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd);

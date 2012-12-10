@@ -24,6 +24,7 @@
  */
 #include "config.h"
 #include "ll.h"
+#include "hash.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -58,15 +59,22 @@ static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	}
 }
 
-static fuse_ino_t sqfs_ll_ino64_register(sqfs_ll *ll, sqfs_dir_entry *e) {
+static fuse_ino_t sqfs_ll_ino64_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
 	return sqfs_ll_ino64_fuse(ll, e->inode);
+}
+
+static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
+	ll->ino_fuse = sqfs_ll_ino64_fuse;
+	ll->ino_sqfs = sqfs_ll_ino64_sqfs;
+	ll->ino_fuse_num = sqfs_ll_ino64_fuse_num;
+	return SQFS_OK;
 }
 
 
 
 /***** INODE CONVERSION FOR 32-BIT INODES ****
  *
- * We maintain a table of sqfs_inode_num => sqfs_inode_id.
+ * We maintain a cache of sqfs_inode_num => sqfs_inode_id.
  * We go the other direction by fetching inodes.
  *
  * Mapping: sqfs_inode_num <=> fuse_ino_t
@@ -81,13 +89,20 @@ static fuse_ino_t sqfs_ll_ino64_register(sqfs_ll *ll, sqfs_dir_entry *e) {
  * - If an export table is available, we can lookup inode_id's there, instead of
  *   keeping a table. Or maybe keep just a small cache?
  */
+#define SQFS_ICACHE_INITIAL 65536
+
 #define FUSE_INODE_NONE 0
 #define SQFS_INODE_NONE 1
 
 typedef struct {
 	sqfs_inode_num root;
-	sqfs_inode_id table[0];
+	sqfs_hash icache;
 } sqfs_ll_inode_map;
+
+typedef struct {
+	size_t refcount;
+	sqfs_inode_id inode;
+} sqfs_ll_inode_entry;
 
 static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
 	sqfs_ll_inode_map *map = ll->ino_data;
@@ -100,6 +115,17 @@ static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
 	} 
 }
 
+static fuse_ino_t sqfs_ll_ino32_fuse2num(sqfs_ll *ll, fuse_ino_t i) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	if (i == FUSE_ROOT_ID) {
+		return map->root;
+	} else if (i == map->root + 1) {
+		return 0;
+	} else {
+		return i - 1;
+	}
+}
+
 static fuse_ino_t sqfs_ll_ino32_fuse(sqfs_ll *ll, sqfs_inode_id i) {
 	sqfs_inode inode;
 	if (sqfs_inode_get(&ll->fs, &inode, i))
@@ -108,63 +134,109 @@ static fuse_ino_t sqfs_ll_ino32_fuse(sqfs_ll *ll, sqfs_inode_id i) {
 }
 
 static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+	if (i == FUSE_ROOT_ID)
+		return ll->fs.sb.root_inode;
+		
 	sqfs_ll_inode_map *map = ll->ino_data;
-	sqfs_inode_num n;
-	if (i == FUSE_ROOT_ID) {
-		n = map->root;
-	} else if (i == map->root + 1) {
-		n = 0;
-	} else {
-		n = i - 1;
-	}
+	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
 	
-	return map->table[n];
+	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
+	return ie ? ie->inode : SQFS_INODE_NONE;
+}
+
+static fuse_ino_t sqfs_ll_ino32_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
+	return sqfs_ll_ino32_num2fuse(ll, e->inode_number);
 }
 
 static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	sqfs_ll_inode_map *map = ll->ino_data;
-	map->table[e->inode_number] = e->inode;
-	return sqfs_ll_ino32_num2fuse(ll, e->inode_number);
+	
+	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, e->inode_number);
+	if (ie) {
+		++ie->refcount;
+	} else {
+		ie = malloc(sizeof(*ie));
+		if (!ie)
+			return FUSE_INODE_NONE;
+		ie->inode = e->inode;
+		ie->refcount = 1;
+		sqfs_hash_add(&map->icache, e->inode_number, ie);
+	}
+	
+	return sqfs_ll_ino32_fuse_num(ll, e);
 }
 
+static void sqfs_ll_ino32_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
+	
+	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
+	if (!ie)
+		return;
+	
+	if (ie->refcount > refs) {
+		ie->refcount -= refs;
+	} else {
+		sqfs_hash_remove(&map->icache, n);
+	}
+}
 
+static void sqfs_ll_ino32_destroy(sqfs_ll *ll) {
+	sqfs_ll_inode_map *map = ll->ino_data;
+	sqfs_hash_destroy(&map->icache);
+	free(map);
+}
 
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
-	sqfs_err err = sqfs_init(&ll->fs, fd);
+static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
+	sqfs_inode inode;
+	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
 	if (err)
 		return err;
-	
-	ll->ino_data = NULL;
-	if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
-		ll->ino_fuse = sqfs_ll_ino64_fuse;
-		ll->ino_sqfs = sqfs_ll_ino64_sqfs;
-		ll->ino_register = sqfs_ll_ino64_register;
-	} else {
-		sqfs_inode inode;
-		err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
-		if (err)
-			return err;
 		
-		sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map) +
-			ll->fs.sb.inodes * sizeof(sqfs_inode_id));
-		for (uint32_t i = 0; i < ll->fs.sb.inodes; ++i)
-			map->table[i] = SQFS_INODE_NONE;
-		map->root = inode.base.inode_number;
-		map->table[map->root] = ll->fs.sb.root_inode;
+	sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map));
+	map->root = inode.base.inode_number;
+	sqfs_hash_init(&map->icache, SQFS_ICACHE_INITIAL);
 		
-		ll->ino_fuse = sqfs_ll_ino32_fuse;
-		ll->ino_sqfs = sqfs_ll_ino32_sqfs;
-		ll->ino_register = sqfs_ll_ino32_register;
-		ll->ino_data = map;
-	}
+	ll->ino_fuse = sqfs_ll_ino32_fuse;
+	ll->ino_sqfs = sqfs_ll_ino32_sqfs;
+	ll->ino_fuse_num = sqfs_ll_ino32_fuse_num;
+	ll->ino_register = sqfs_ll_ino32_register;
+	ll->ino_forget = sqfs_ll_ino32_forget;
+	ll->ino_destroy = sqfs_ll_ino32_destroy;
+	ll->ino_data = map;
 	
 	return err; 
 }
 
+
+
+static void sqfs_ll_null_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
+	// pass
+}
+
+sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
+	memset(ll, 0, sizeof(*ll));
+	sqfs_err err = sqfs_init(&ll->fs, fd);
+	if (err)
+		return err;
+	
+	if (0 && sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
+		err = sqfs_ll_ino64_init(ll);
+	} else {
+		err = sqfs_ll_ino32_init(ll);
+	}
+	if (!ll->ino_register)
+		ll->ino_register = ll->ino_fuse_num;
+	if (!ll->ino_forget)
+		ll->ino_forget = sqfs_ll_null_forget;
+	
+	return err;
+}
+
 void sqfs_ll_destroy(sqfs_ll *ll) {
 	sqfs_destroy(&ll->fs);
-	if (ll->ino_data)
-		free(ll->ino_data);
+	if (ll->ino_destroy)
+		ll->ino_destroy(ll);
 }
 
 sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i) {

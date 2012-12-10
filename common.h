@@ -40,6 +40,7 @@ typedef enum {
 
 #define SQFS_INODE_ID_BYTES 6
 typedef uint64_t sqfs_inode_id;
+typedef uint32_t sqfs_inode_num;
 
 typedef struct sqfs sqfs;
 typedef struct sqfs_inode sqfs_inode;
