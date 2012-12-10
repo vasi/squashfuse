@@ -99,10 +99,16 @@ typedef struct {
 	sqfs_hash icache;
 } sqfs_ll_inode_map;
 
+// Pack tightly to save memory
 typedef struct {
-	sqfs_inode_id inode;
 	uint32_t refcount;
+	uint32_t ino_hi;
+	uint16_t ino_lo;
 } sqfs_ll_inode_entry;
+
+#define IE_INODE(ie) (((uint64_t)(ie)->ino_hi << 16) | (ie)->ino_lo)
+#define INODE_HI(i) ((i) >> 16)
+#define INODE_LO(i) ((i) & 0xFFFF)
 
 static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
 	sqfs_ll_inode_map *map = ll->ino_data;
@@ -141,7 +147,7 @@ static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
 	
 	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
-	return ie ? ie->inode : SQFS_INODE_NONE;
+	return ie ? IE_INODE(ie) : SQFS_INODE_NONE;
 }
 
 static fuse_ino_t sqfs_ll_ino32_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
@@ -155,7 +161,9 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	if (ie) {
 		++ie->refcount;
 	} else {
-		sqfs_ll_inode_entry nie = { .inode = e->inode, .refcount = 1 };
+		sqfs_inode_id i = e->inode;
+		sqfs_ll_inode_entry nie = { .ino_hi = INODE_HI(i),
+			.ino_lo = INODE_LO(i), .refcount = 1 };
 		sqfs_err err = sqfs_hash_add(&map->icache, e->inode_number, &nie);
 		if (err)
 			return FUSE_INODE_NONE;
