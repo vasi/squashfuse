@@ -43,6 +43,7 @@ struct sqfs {
 	struct squashfs_super_block sb;
 	sqfs_table id_table;
 	sqfs_table frag_table;
+	sqfs_table export_table;
 	sqfs_cache md_cache;
 	sqfs_cache data_cache;
 	sqfs_cache frag_cache;
@@ -125,5 +126,9 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 // buf must have enough space for link contents, including null terminator
 // Get size from symlink_size field.
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf);
+
+// Find inode_id by inode_num
+int sqfs_export_ok(sqfs *fs);
+sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i);
 
 #endif

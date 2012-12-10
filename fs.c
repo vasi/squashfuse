@@ -76,6 +76,10 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 		sizeof(uint32_t), fs->sb.no_ids);
 	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
+	if (sqfs_export_ok(fs)) {
+		err |= sqfs_table_init(&fs->export_table, fd, fs->sb.lookup_table_start,
+			sizeof(uint64_t), fs->sb.inodes);
+	}
 	err |= sqfs_xattr_init(fs);
 	err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
 	err |= sqfs_block_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
@@ -266,6 +270,23 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 	sqfs_err err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
 	buf[inode->xtra.symlink_size] = '\0';
 	return err;
+}
+
+int sqfs_export_ok(sqfs *fs) {
+	return fs->sb.lookup_table_start != SQUASHFS_INVALID_BLK;
+}
+
+sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
+	if (!sqfs_export_ok(fs))
+		return SQFS_UNSUP;
+	
+	uint64_t r;
+	sqfs_err err = sqfs_table_get(&fs->export_table, fs, n - 1, &r);
+	if (err)
+		return err;
+	sqfs_swapin64(&r);
+	*i = r;
+	return SQFS_OK;
 }
 
 // Turn the internal format of a device number to our system's dev_t

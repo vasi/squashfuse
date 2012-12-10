@@ -85,8 +85,6 @@ static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
  * FIXME:
  * - Theoretically this could overflow if a filesystem uses all 2 ** 32 inodes,
  *   since fuse inode zero is unavailable.
- * - If an export table is available, we can lookup inode_id's there, instead of
- *   keeping a table. Or maybe keep just a small cache?
  */
 #define SQFS_ICACHE_INITIAL 32
 
@@ -216,6 +214,45 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 
 
 
+/***** INODE CONVERSION FOR 32-BIT INODES, EXPORT TABLE AVAILABLE ****
+ *
+ * Same transformation as regular 32-bit, but no caching.
+ */
+static sqfs_inode_id sqfs_ll_ino32exp_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+	if (i == FUSE_ROOT_ID)
+		return ll->fs.sb.root_inode;
+	
+	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
+	
+	sqfs_inode_id ret;
+	sqfs_err err = sqfs_export_inode(&ll->fs, n, &ret);
+	return err ? SQFS_INODE_NONE : ret;
+}
+
+static void sqfs_ll_ino32exp_destroy(sqfs_ll *ll) {
+	free(ll->ino_data);
+}
+
+static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
+	sqfs_inode inode;
+	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
+	if (err)
+		return err;
+		
+	sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map));
+	map->root = inode.base.inode_number;
+	
+	ll->ino_fuse = sqfs_ll_ino32_fuse;
+	ll->ino_sqfs = sqfs_ll_ino32exp_sqfs;
+	ll->ino_fuse_num = sqfs_ll_ino32_fuse_num;
+	ll->ino_destroy = sqfs_ll_ino32exp_destroy;
+	ll->ino_data = map;
+	
+	return err;
+}
+
+
+
 static void sqfs_ll_null_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
 	// pass
 }
@@ -228,6 +265,8 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
 	
 	if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
 		err = sqfs_ll_ino64_init(ll);
+	} else if (sqfs_export_ok(&ll->fs)) {
+		err = sqfs_ll_ino32exp_init(ll);
 	} else {
 		err = sqfs_ll_ino32_init(ll);
 	}
