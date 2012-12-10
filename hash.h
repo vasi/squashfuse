@@ -29,7 +29,7 @@
 
 /* Simple hashtable
  *	- Keys are integers
- *	- Values are free()-able pointers; hash takes ownership
+ *	- Values are opaque data
  *
  * Implementation
  *	- Hash function is modulus
@@ -37,21 +37,22 @@
  *	- Sizes are powers of two
  */
 typedef uint32_t sqfs_hash_key;
-typedef void *sqfs_hash_value; // should be free()-able
+typedef void *sqfs_hash_value;
 
 typedef struct sqfs_hash_bucket {
 	struct sqfs_hash_bucket *next;
 	sqfs_hash_key key;
-	sqfs_hash_value value;
+	char value[0];
 } sqfs_hash_bucket;
 
 typedef struct {
+	size_t value_size;
 	size_t capacity;
 	size_t size;
 	sqfs_hash_bucket **buckets;
 } sqfs_hash;
 
-sqfs_err sqfs_hash_init(sqfs_hash *h, size_t initial);
+sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial);
 void sqfs_hash_destroy(sqfs_hash *h);
 
 sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);

@@ -89,7 +89,7 @@ static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
  * - If an export table is available, we can lookup inode_id's there, instead of
  *   keeping a table. Or maybe keep just a small cache?
  */
-#define SQFS_ICACHE_INITIAL 65536
+#define SQFS_ICACHE_INITIAL 32
 
 #define FUSE_INODE_NONE 0
 #define SQFS_INODE_NONE 1
@@ -100,8 +100,8 @@ typedef struct {
 } sqfs_ll_inode_map;
 
 typedef struct {
-	size_t refcount;
 	sqfs_inode_id inode;
+	uint32_t refcount;
 } sqfs_ll_inode_entry;
 
 static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
@@ -155,12 +155,10 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	if (ie) {
 		++ie->refcount;
 	} else {
-		ie = malloc(sizeof(*ie));
-		if (!ie)
+		sqfs_ll_inode_entry nie = { .inode = e->inode, .refcount = 1 };
+		sqfs_err err = sqfs_hash_add(&map->icache, e->inode_number, &nie);
+		if (err)
 			return FUSE_INODE_NONE;
-		ie->inode = e->inode;
-		ie->refcount = 1;
-		sqfs_hash_add(&map->icache, e->inode_number, ie);
 	}
 	
 	return sqfs_ll_ino32_fuse_num(ll, e);
@@ -195,7 +193,8 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 		
 	sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map));
 	map->root = inode.base.inode_number;
-	sqfs_hash_init(&map->icache, SQFS_ICACHE_INITIAL);
+	sqfs_hash_init(&map->icache, sizeof(sqfs_ll_inode_entry),
+		SQFS_ICACHE_INITIAL);
 		
 	ll->ino_fuse = sqfs_ll_ino32_fuse;
 	ll->ino_sqfs = sqfs_ll_ino32_sqfs;

@@ -31,11 +31,11 @@
 static sqfs_err sqfs_hash_add_internal(sqfs_hash *h, int doubling,
 		sqfs_hash_key k, sqfs_hash_value v) {
 	size_t hash = (k & (h->capacity - 1));	
-	sqfs_hash_bucket *b = malloc(sizeof(sqfs_hash_bucket));
+	sqfs_hash_bucket *b = malloc(sizeof(sqfs_hash_bucket) + h->value_size);
 	if (!b)
 		return SQFS_ERR;
 	b->key = k;
-	b->value = v;
+	memcpy(&b->value, v, h->value_size);
 	b->next = h->buckets[hash];
 	h->buckets[hash] = b;
 	++h->size;
@@ -48,17 +48,14 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
 	size_t oc = h->capacity;
 	
 	sqfs_err err;
-	if ((err = sqfs_hash_init(h, oc * 2)))
+	if ((err = sqfs_hash_init(h, h->value_size, oc * 2)))
 		return err;
 	
 	for (size_t i = 0; i < oc; ++i) {
 		sqfs_hash_bucket *b = ob[i];
 		while (b) {
 			if (!err)
-				err = sqfs_hash_add_internal(h, 1, b->key, b->value);
-			if (err)
-				free(b->value);
-			
+				err = sqfs_hash_add_internal(h, 1, b->key, &b->value);
 			sqfs_hash_bucket *n = b->next;
 			free(b);
 			b = n;
@@ -69,7 +66,7 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
 	return err;
 }
 
-sqfs_err sqfs_hash_init(sqfs_hash *h, size_t initial) {
+sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial) {
 	memset(h, 0, sizeof(*h));
 	if ((initial & (initial - 1))) // not power of two?
 		return SQFS_ERR;
@@ -79,6 +76,7 @@ sqfs_err sqfs_hash_init(sqfs_hash *h, size_t initial) {
 		return SQFS_ERR;
 	h->capacity = initial;
 	h->size = 0;
+	h->value_size = vsize;
 	return SQFS_OK;
 }
  
@@ -87,7 +85,6 @@ void sqfs_hash_destroy(sqfs_hash *h) {
 		sqfs_hash_bucket *b = h->buckets[i];
 		while (b) {
 			sqfs_hash_bucket *n = b->next;
-			free(b->value);
 			free(b);
 			b = n;
 		}
@@ -100,7 +97,7 @@ sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k) {
 	sqfs_hash_bucket *b = h->buckets[hash];
 	while (b) {
 		if (b->key == k)
-			return b->value;
+			return &b->value;
 		b = b->next;
 	}
 	return NULL;
@@ -122,7 +119,6 @@ sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k) {
 		if ((*bp)->key == k) {
 			sqfs_hash_bucket *b = *bp;
 			*bp = b->next;
-			free(b->value);
 			free(b);
 			--h->size;
 			return SQFS_OK;
