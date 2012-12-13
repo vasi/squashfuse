@@ -9,6 +9,12 @@ Squashfs is an efficiently compressed, read-only archive format. Support for squ
 [1] http://fuse.sourceforge.net/
 [2] http://squashfs.sourceforge.net/ . A version that works on non-Linux operating systems is at https://github.com/vasi/squashfs-tools
 
+Getting it
+----------
+
+The squashfuse git repository is here: http://github.com/vasi/squashfuse
+Source tarballs can be downloaded here: https://sourceforge.net/projects/squashfuse/files/
+
 Licensing
 ---------
 squashfuse is available under the 2-clause BSD license. See the file LICENSE for details.
