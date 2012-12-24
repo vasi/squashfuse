@@ -5,15 +5,22 @@ if MAKE_EXPORT
 export COPYFILE_DISABLE = 1
 endif
 
-bin_PROGRAMS = squashfuse
-squashfuse_SOURCES = swap.c cache.c table.c dir.c file.c fs.c ll.c \
-	squashfuse.c decompress.c xattr.c hash.c \
-	nonstd-pread.c nonstd-makedev.c nonstd-stat.c nonstd-daemon.c nonstd-enoattr.c \
+COMMON_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
+	decompress.c xattr.c hash.c \
+	nonstd-pread.c nonstd-makedev.c nonstd-stat.c nonstd-enoattr.c \
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
-	dir.h file.h decompress.h xattr.h squashfuse.h ll.h hash.h
-squashfuse_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
-	$(FUSE_CPPFLAGS)
-squashfuse_LDADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(FUSE_LIBS)
+	dir.h file.h decompress.h xattr.h squashfuse.h hash.h
+COMMON_LDADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS)
+AM_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS)
+
+bin_PROGRAMS = squashfuse squashfs-browser
+
+squashfuse_SOURCES = $(COMMON_SOURCES) ll.c ll.h squashfuse.c nonstd-daemon.c
+squashfuse_CPPFLAGS = $(AM_CPPFLAGS) $(FUSE_CPPFLAGS)
+squashfuse_LDADD = $(COMMON_LDADD) $(FUSE_LIBS)
+
+squashfs_browser_SOURCES = $(COMMON_SOURCES) browser.c
+squashfs_browser_LDADD = $(COMMON_LDADD)
 
 dist_man_MANS = squashfuse.1
 
