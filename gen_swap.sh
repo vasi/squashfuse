@@ -31,5 +31,6 @@ ${SED:-sed} -n '
 }
 d
 :decl
-s/{/;/w swap.h.inc
+s/{/;/
+w swap.h.inc
 ' < "$1" > swap.c.inc
