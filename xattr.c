@@ -48,17 +48,18 @@ sqfs_prefix sqfs_xattr_prefixes[] = {
 typedef enum {
 	CURS_VSIZE = 1,
 	CURS_VAL = 2,
-	CURS_NEXT = 4,
+	CURS_NEXT = 4
 } sqfs_xattr_curs;
 
 sqfs_err sqfs_xattr_init(sqfs *fs) {
 	off_t start = fs->sb.xattr_id_table_start;
+	size_t bread;
 	if (start == SQUASHFS_INVALID_BLK)
 		return SQFS_OK;
 	
-	ssize_t read = sqfs_pread(fs->fd, &fs->xattr_info, sizeof(fs->xattr_info),
+	bread = sqfs_pread(fs->fd, &fs->xattr_info, sizeof(fs->xattr_info),
 		start);
-	if (read != sizeof(fs->xattr_info))
+	if (bread != sizeof(fs->xattr_info))
 		return SQFS_ERR;
 	sqfs_swapin_xattr_id_table(&fs->xattr_info);
 	
@@ -68,11 +69,13 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
 }
 
 sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *x) {
-	x->remain = 0; // assume none exist	
+	sqfs_err err;
+	
+	x->remain = 0; /* assume none exist */
 	if (fs->xattr_info.xattr_ids == 0 || inode->xattr == SQUASHFS_INVALID_XATTR)
 		return SQFS_OK;
 	
-	sqfs_err err = sqfs_table_get(&fs->xattr_table, fs, inode->xattr,
+	err = sqfs_table_get(&fs->xattr_table, fs, inode->xattr,
 		&x->info);
 	if (err)
 		return SQFS_ERR;
@@ -88,12 +91,13 @@ sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *x) {
 }
 
 sqfs_err sqfs_xattr_read(sqfs_xattr *x) {
+	sqfs_err err;
+	
 	if (x->remain == 0)
 		return SQFS_ERR;
 	
-	sqfs_err err;
 	if (!(x->cursors & CURS_NEXT)) {
-		x->ool = false; // force inline
+		x->ool = false; /* force inline */
 		if ((err = sqfs_xattr_value(x, NULL)))
 			return err;
 	}
@@ -118,6 +122,8 @@ size_t sqfs_xattr_name_size(sqfs_xattr *x) {
 }
 
 sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix) {
+	sqfs_err err;
+	
 	if (name && prefix) {
 		sqfs_prefix *p = &sqfs_xattr_prefixes[x->type];
 		memcpy(name, p->pref, p->len);
@@ -125,7 +131,7 @@ sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix) {
 	}
 	
 	x->c_vsize = x->c_name;
-	sqfs_err err = sqfs_md_read(x->fs, &x->c_vsize, name, x->entry.size);
+	err = sqfs_md_read(x->fs, &x->c_vsize, name, x->entry.size);
 	if (err)
 		return err;
 	
@@ -167,11 +173,13 @@ sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size) {
 
 sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf) {
 	sqfs_err err;
+	sqfs_md_cursor c;
+	
 	if (!(x->cursors & CURS_VAL))
 		if ((err = sqfs_xattr_value_size(x, NULL)))
 			return err;
 	
-	sqfs_md_cursor c = x->c_val;
+	c = x->c_val;
 	if ((err = sqfs_md_read(x->fs, &c, buf, x->val.vsize)))
 		return err;
 	
@@ -183,7 +191,8 @@ sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf) {
 }
 
 static sqfs_err sqfs_xattr_find_prefix(const char *name, uint16_t *type) {
-	for (int i = 0; i <= SQFS_XATTR_PREFIX_MAX; ++i) {
+	int i;
+	for (i = 0; i <= SQFS_XATTR_PREFIX_MAX; ++i) {
 		sqfs_prefix *p = &sqfs_xattr_prefixes[i];
 		if (strncmp(name, p->pref, p->len) == 0) {
 			*type = i;
@@ -193,21 +202,22 @@ static sqfs_err sqfs_xattr_find_prefix(const char *name, uint16_t *type) {
 	return SQFS_ERR;
 }
 
-// FIXME: Indicate EINVAL, ENOMEM?
+/* FIXME: Indicate EINVAL, ENOMEM? */
 sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
 	sqfs_err err;
 	char *cmp = NULL;
-	
 	uint16_t type;
+	size_t len;
+	
 	if ((err = sqfs_xattr_find_prefix(name, &type))) {
-		// Consider an invalid prefix to just be not found, or OS X
-		// Finder complains.
+		/* Consider an invalid prefix to just be not found, or OS X
+		 * Finder complains. */
 		*found = false;
 		return SQFS_OK;
 	}
 	
 	name += sqfs_xattr_prefixes[type].len;
-	size_t len = strlen(name);
+	len = strlen(name);
 	if (!(cmp = malloc(len)))
 		return SQFS_ERR;
 	

@@ -72,7 +72,7 @@ sqfs_err sqfs_blockidx_init(sqfs_cache *cache);
 sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 	sqfs_blockidx_entry **out);
 
-// Get a blocklist fast-forwarded to the correct location
+/* Get a blocklist fast-forwarded to the correct location */
 sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 	sqfs_blocklist *bl, off_t start);
 

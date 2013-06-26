@@ -33,19 +33,21 @@
 
 sqfs_err sqfs_table_init(sqfs_table *table, int fd, off_t start, size_t each,
 		size_t count) {
+	int i;
+	size_t nblocks, bread;
+	
 	if (count == 0)
 		return SQFS_OK;
 	
-	size_t nblocks = sqfs_divceil(each * count, SQUASHFS_METADATA_SIZE);
-	size_t read = nblocks * sizeof(uint64_t);
+	nblocks = sqfs_divceil(each * count, SQUASHFS_METADATA_SIZE);
+	bread = nblocks * sizeof(uint64_t);
 	
 	table->each = each;
-	if (!(table->blocks = malloc(read)))
+	if (!(table->blocks = malloc(bread)))
 		goto err;
-	if (sqfs_pread(fd, table->blocks, read, start) != read)
+	if (sqfs_pread(fd, table->blocks, bread, start) != bread)
 		goto err;
 	
-	int i;
 	for (i = 0; i < nblocks; ++i)
 		sqfs_swapin64(&table->blocks[i]);
 	
@@ -63,16 +65,16 @@ void sqfs_table_destroy(sqfs_table *table) {
 }
 
 sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
+	sqfs_block *block;
 	size_t pos = idx * table->each;
 	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
 		off = pos % SQUASHFS_METADATA_SIZE;
 	
 	off_t bpos = table->blocks[bnum];
-	sqfs_block *block;
 	if (sqfs_md_cache(fs, &bpos, &block))
 		return SQFS_ERR;
 	
 	memcpy(buf, (char*)(block->data) + off, table->each);
-	// BLOCK CACHED, DON'T DISPOSE
+	/* BLOCK CACHED, DON'T DISPOSE */
 	return SQFS_OK;
 }

@@ -96,7 +96,7 @@ typedef struct {
 	sqfs_hash icache;
 } sqfs_ll_inode_map;
 
-// Pack tightly to save memory
+/* Pack tightly to save memory */
 typedef struct {
 	uint32_t refcount;
 	uint32_t ino_hi;
@@ -132,18 +132,22 @@ static fuse_ino_t sqfs_ll_ino32_fuse2num(sqfs_ll *ll, fuse_ino_t i) {
 static fuse_ino_t sqfs_ll_ino32_fuse(sqfs_ll *ll, sqfs_inode_id i) {
 	sqfs_inode inode;
 	if (sqfs_inode_get(&ll->fs, &inode, i))
-		return FUSE_INODE_NONE; // We shouldn't get here!
+		return FUSE_INODE_NONE; /* We shouldn't get here! */
 	return sqfs_ll_ino32_num2fuse(ll, inode.base.inode_number);
 }
 
 static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+	sqfs_ll_inode_map *map;
+	sqfs_inode_num n;
+	sqfs_ll_inode_entry *ie;
+	
 	if (i == FUSE_ROOT_ID)
 		return ll->fs.sb.root_inode;
-		
-	sqfs_ll_inode_map *map = ll->ino_data;
-	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
 	
-	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
+	map = ll->ino_data;
+	n = sqfs_ll_ino32_fuse2num(ll, i);
+	
+	ie = sqfs_hash_get(&map->icache, n);
 	return ie ? IE_INODE(ie) : SQFS_INODE_NONE;
 }
 
@@ -158,10 +162,13 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	if (ie) {
 		++ie->refcount;
 	} else {
+		sqfs_err err = SQFS_OK;
 		sqfs_inode_id i = e->inode;
-		sqfs_ll_inode_entry nie = { .ino_hi = INODE_HI(i),
-			.ino_lo = INODE_LO(i), .refcount = 1 };
-		sqfs_err err = sqfs_hash_add(&map->icache, e->inode_number, &nie);
+		sqfs_ll_inode_entry nie;
+		nie.ino_hi = INODE_HI(i);
+		nie.ino_lo = INODE_LO(i);
+		nie.refcount = 1;
+		err = sqfs_hash_add(&map->icache, e->inode_number, &nie);
 		if (err)
 			return FUSE_INODE_NONE;
 	}
@@ -192,11 +199,12 @@ static void sqfs_ll_ino32_destroy(sqfs_ll *ll) {
 
 static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 	sqfs_inode inode;
+	sqfs_ll_inode_map *map;
 	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
 	if (err)
 		return err;
 		
-	sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map));
+	map = malloc(sizeof(sqfs_ll_inode_map));
 	map->root = inode.base.inode_number;
 	sqfs_hash_init(&map->icache, sizeof(sqfs_ll_inode_entry),
 		SQFS_ICACHE_INITIAL);
@@ -219,13 +227,15 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
  * Same transformation as regular 32-bit, but no caching.
  */
 static sqfs_inode_id sqfs_ll_ino32exp_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+	sqfs_inode_num n;
+	sqfs_inode_id ret;
+	sqfs_err err = SQFS_OK;
+	
 	if (i == FUSE_ROOT_ID)
 		return ll->fs.sb.root_inode;
 	
-	sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
-	
-	sqfs_inode_id ret;
-	sqfs_err err = sqfs_export_inode(&ll->fs, n, &ret);
+	n = sqfs_ll_ino32_fuse2num(ll, i);
+	err = sqfs_export_inode(&ll->fs, n, &ret);
 	return err ? SQFS_INODE_NONE : ret;
 }
 
@@ -235,11 +245,12 @@ static void sqfs_ll_ino32exp_destroy(sqfs_ll *ll) {
 
 static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
 	sqfs_inode inode;
+	sqfs_ll_inode_map *map;
 	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
 	if (err)
 		return err;
 		
-	sqfs_ll_inode_map *map = malloc(sizeof(sqfs_ll_inode_map));
+	map = malloc(sizeof(sqfs_ll_inode_map));
 	map->root = inode.base.inode_number;
 	
 	ll->ino_fuse = sqfs_ll_ino32_fuse;
@@ -254,12 +265,13 @@ static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
 
 
 static void sqfs_ll_null_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
-	// pass
+	/* pass */
 }
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
+	sqfs_err err = SQFS_OK;
 	memset(ll, 0, sizeof(*ll));
-	sqfs_err err = sqfs_init(&ll->fs, fd);
+	err = sqfs_init(&ll->fs, fd);
 	if (err)
 		return err;
 	
@@ -290,8 +302,8 @@ sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i) {
 
 
 sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i) {
-	lli->ll = fuse_req_userdata(req);
 	sqfs_err err = SQFS_OK;
+	lli->ll = fuse_req_userdata(req);
 	if (i != SQFS_FUSE_INODE_NONE) {
 		err = sqfs_ll_inode(lli->ll, &lli->inode, i);
 		if (err)
@@ -301,23 +313,25 @@ sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i) {
 }
 
 sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
+	sqfs_err err = SQFS_OK;
+	uid_t id;
+	
 	memset(st, 0, sizeof(*st));
 	st->st_mode = inode->base.mode | sqfs_mode(inode->base.inode_type);
 	st->st_nlink = inode->nlink;
 	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
 	
 	if (S_ISREG(st->st_mode)) {
-		// FIXME: do symlinks, dirs, etc have a size?
+		/* FIXME: do symlinks, dirs, etc have a size? */
 		st->st_size = inode->xtra.reg.file_size;
 		st->st_blocks = st->st_size / 512;
 	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
 		st->st_rdev = inode->xtra.dev;
 	}
 	
-	st->st_blksize = ll->fs.sb.block_size; // seriously?
+	st->st_blksize = ll->fs.sb.block_size; /* seriously? */
 	
-	uid_t id;
-	sqfs_err err = sqfs_id_get(&ll->fs, inode->base.uid, &id);
+	err = sqfs_id_get(&ll->fs, inode->base.uid, &id);
 	if (err)
 		return err;
 	st->st_uid = id;

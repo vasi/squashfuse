@@ -43,10 +43,10 @@ static const double SQFS_TIMEOUT = DBL_MAX;
 static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i lli;
+	struct stat st;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	struct stat st;
 	if (sqfs_ll_stat(lli.ll, &lli.inode, &st)) {
 		fuse_reply_err(req, ENOENT);
 	} else {
@@ -57,13 +57,15 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
+	sqfs_ll_i lli;
+	sqfs_dir *dir;
+	
 	fi->fh = (intptr_t)NULL;
 	
-	sqfs_ll_i lli;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	sqfs_dir *dir = malloc(sizeof(sqfs_dir));
+	dir = malloc(sizeof(sqfs_dir));
 	if (!dir) {
 		fuse_reply_err(req, ENOMEM);
 	} else {
@@ -81,19 +83,21 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_dir*)(intptr_t)fi->fh);
-	fuse_reply_err(req, 0); // yes, this is necessary
+	fuse_reply_err(req, 0); /* yes, this is necessary */
 }
 
 static void sqfs_ll_add_direntry(fuse_req_t req, const char *name,
 		const struct stat *st, off_t off) {
 	size_t bsize;
+	char *buf;
+	
 	#if HAVE_DECL_FUSE_ADD_DIRENTRY
 		bsize = fuse_add_direntry(req, NULL, 0, name, st, 0);
 	#else
 		bsize = fuse_dirent_size(strlen(name));
 	#endif
 	
-	char *buf = malloc(bsize);
+	buf = malloc(bsize);
 	if (!buf) {
 		fuse_reply_err(req, ENOMEM);
 	} else {
@@ -107,26 +111,27 @@ static void sqfs_ll_add_direntry(fuse_req_t req, const char *name,
 	}
 }
 
-// TODO: More efficient to return multiple entries at a time?
+/* TODO: More efficient to return multiple entries at a time? */
 static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
 	sqfs_ll_i lli;
+	sqfs_dir *dir;
+	sqfs_dir_entry *entry;
+	sqfs_err err = SQFS_OK;
+	
 	sqfs_ll_iget(req, &lli, SQFS_FUSE_INODE_NONE);
 	
-	sqfs_dir *dir = (sqfs_dir*)(intptr_t)fi->fh;
-	
-	sqfs_err err;
-	sqfs_dir_entry *entry = sqfs_readdir(dir, &err);
+	dir = (sqfs_dir*)(intptr_t)fi->fh;
+	entry = sqfs_readdir(dir, &err);
 	if (err) {
 		fuse_reply_err(req, EIO);
 	} else if (!entry) {
 		fuse_reply_buf(req, NULL, 0);
 	} else {
-		struct stat st = {
-			.st_ino = lli.ll->ino_fuse_num(lli.ll, entry),
-			.st_mode = sqfs_mode(entry->type),
-		};
-		
+		struct stat st;
+		memset(&st, 0, sizeof(st));
+		st.st_ino = lli.ll->ino_fuse_num(lli.ll, entry);
+		st.st_mode = sqfs_mode(entry->type);
 		sqfs_ll_add_direntry(req, entry->name, &st, off);
 	}
 }
@@ -134,21 +139,22 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 		const char *name) {
 	sqfs_ll_i lli;
+	sqfs_dir dir;
+	sqfs_dir_entry entry;
+	sqfs_inode inode;
+	
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
 	
-	sqfs_dir dir;
 	if (sqfs_opendir(&lli.ll->fs, &lli.inode, &dir)) {
 		fuse_reply_err(req, ENOTDIR);
 		return;
 	}
-	sqfs_dir_entry entry;
 	if (sqfs_lookup_dir_fast(&dir, &lli.inode, name, &entry)) {
 		fuse_reply_err(req, ENOENT);
 		return;
 	}
-		
-	sqfs_inode inode;
+	
 	if (sqfs_inode_get(&lli.ll->fs, &inode, entry.inode)) {
 		fuse_reply_err(req, ENOENT);
 	} else {
@@ -167,18 +173,21 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 
 static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
+	sqfs_inode *inode;
+	sqfs_ll *ll;
+	
 	if (fi->flags & (O_WRONLY | O_RDWR)) {
 		fuse_reply_err(req, EROFS);
 		return;
 	}
 	
-	sqfs_inode *inode = malloc(sizeof(sqfs_inode));
+	inode = malloc(sizeof(sqfs_inode));
 	if (!inode) {
 		fuse_reply_err(req, ENOMEM);
 		return;
 	}
 	
-	sqfs_ll *ll = fuse_req_userdata(req);
+	ll = fuse_req_userdata(req);
 	if (sqfs_ll_inode(ll, inode, ino)) {
 		fuse_reply_err(req, ENOENT);
 	} else if (!S_ISREG(sqfs_mode(inode->base.inode_type))) {
@@ -202,18 +211,20 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs_ll *ll = fuse_req_userdata(req);
 	sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
+	sqfs_err err = SQFS_OK;
 	
+	off_t osize;
 	char *buf = malloc(size);
 	if (!buf) {
 		fuse_reply_err(req, ENOMEM);
 		return;
 	}
 	
-	off_t osize = size;
-	sqfs_err err = sqfs_read_range(&ll->fs, inode, off, &osize, buf);
+	osize = size;
+	err = sqfs_read_range(&ll->fs, inode, off, &osize, buf);
 	if (err) {
 		fuse_reply_err(req, EIO);
-	} else if (osize == 0) { // EOF
+	} else if (osize == 0) { /* EOF */
 		fuse_reply_buf(req, NULL, 0);
 	} else {
 		fuse_reply_buf(req, buf, osize);
@@ -222,11 +233,11 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 }
 
 static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
+	char *dst;
 	sqfs_ll_i lli;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	char *dst;
 	if (!S_ISLNK(sqfs_mode(lli.inode.base.inode_type))) {
 		fuse_reply_err(req, EINVAL);
 	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
@@ -244,9 +255,10 @@ static int sqfs_ll_listxattr_real(sqfs_xattr *x, char *buf, size_t *size) {
 	size_t count = 0;
 	
 	while (x->remain) {
+		size_t n;
 		if (sqfs_xattr_read(x))
 			 return EIO;
-		size_t n = sqfs_xattr_name_size(x);
+		n = sqfs_xattr_name_size(x);
 		count += n + 1;
 		
 		if (buf) {
@@ -264,16 +276,19 @@ static int sqfs_ll_listxattr_real(sqfs_xattr *x, char *buf, size_t *size) {
 
 static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	sqfs_ll_i lli;
+	sqfs_xattr x;
+	char *buf;
+	int ferr;
+	
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 
-	sqfs_xattr x;
 	if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
 		fuse_reply_err(req, EIO);
 		return;
 	}
 	
-	char *buf = NULL;
+	buf = NULL;
 	if (size) {
 		if (!(buf = malloc(size))) {
 			fuse_reply_err(req, ENOMEM);
@@ -281,7 +296,7 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 		}
 	}
 	
-	int ferr = sqfs_ll_listxattr_real(&x, buf, &size);
+	ferr = sqfs_ll_listxattr_real(&x, buf, &size);
 	if (ferr) {
 		fuse_reply_err(req, ferr);
 	} else if (buf) {
@@ -298,19 +313,19 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 		, uint32_t position
 #endif
 		) {
-	sqfs_ll_i lli;
-	if (sqfs_ll_iget(req, &lli, ino))
-		return;
-	
 	sqfs_xattr x;
 	bool found;
 	size_t vsize;
 	char *buf = NULL;
 	
+	sqfs_ll_i lli;
+	if (sqfs_ll_iget(req, &lli, ino))
+		return;
+	
 	if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
 		fuse_reply_err(req, EIO);
 #ifdef FUSE_XATTR_POSITION
-	} else if (position != 0) { // We don't support resource forks
+	} else if (position != 0) { /* We don't support resource forks */
 		fuse_reply_err(req, EINVAL);
 #endif
 	} else if (sqfs_xattr_find(&x, name, &found)) {
@@ -341,30 +356,17 @@ static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_none(req);
 }
 
-static struct fuse_lowlevel_ops sqfs_ll_ops = {
-	.getattr	= sqfs_ll_op_getattr,
-	.opendir	= sqfs_ll_op_opendir,
-	.releasedir	= sqfs_ll_op_releasedir,
-	.readdir	= sqfs_ll_op_readdir,
-	.lookup		= sqfs_ll_op_lookup,
-	.open		= sqfs_ll_op_open,
-	.release	= sqfs_ll_op_release,
-	.read		= sqfs_ll_op_read,
-	.readlink	= sqfs_ll_op_readlink,
-	.listxattr	= sqfs_ll_op_listxattr,
-	.getxattr	= sqfs_ll_op_getxattr,
-	.forget		= sqfs_ll_op_forget,
-};
-
+static struct fuse_lowlevel_ops sqfs_ll_ops;
 
 static void sqfs_usage(char *name, bool fuse_usage) {
 	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
 		name ? name : PACKAGE_NAME);
 	if (fuse_usage) {
+		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+		fuse_opt_add_arg(&args, ""); /* progname */
+		fuse_opt_add_arg(&args, "-ho");
 		fprintf(stderr, "\n");
-		char *argv[] = { "", "-ho", 0 };
-		struct fuse_args args = FUSE_ARGS_INIT(2, argv);
 		fuse_parse_cmdline(&args, NULL, NULL, NULL);
 	}
 	exit(-2);
@@ -381,7 +383,7 @@ static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 	sqfs_ll_opts *opts = (sqfs_ll_opts*)data;
 	if (key == FUSE_OPT_KEY_NONOPT) {
 		if (opts->mountpoint) {
-			return -1; // Too many args
+			return -1; /* Too many args */
 		} else if (opts->image) {
 			opts->mountpoint = 1;
 			return 1;
@@ -393,11 +395,11 @@ static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
 		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
 			sqfs_usage(opts->progname, true);
 	}
-	return 1; // Keep
+	return 1; /* Keep */
 }
 
 
-// Helpers to abstract out FUSE 2.5 vs 2.6+ differences
+/* Helpers to abstract out FUSE 2.5 vs 2.6+ differences */
 
 typedef struct {
 	int fd;
@@ -449,13 +451,14 @@ static sqfs_err sqfs_ll_open(sqfs_ll *ll, int fd) {
 			break;
 		}
 		case SQFS_BADCOMP: {
+			bool first = true;
+			int i;
 			sqfs_compression_type sup[SQFS_COMP_MAX],
 				comp = sqfs_compression(fs);
 			sqfs_compression_supported(sup);
 			fprintf(stderr, "Squashfs image uses %s compression, this version "
 				"supports only ", sqfs_compression_name(comp));
-			bool first = true;
-			for (int i = 0; i < SQFS_COMP_MAX; ++i) {
+			for (i = 0; i < SQFS_COMP_MAX; ++i) {
 				if (sup[i] == SQFS_COMP_UNKNOWN)
 					continue;
 				if (!first)
@@ -474,37 +477,61 @@ static sqfs_err sqfs_ll_open(sqfs_ll *ll, int fd) {
 }
 
 int main(int argc, char *argv[]) {
-	// PARSE ARGS
-	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-	sqfs_ll_opts opts = { .progname = argv[0], .image = NULL, .mountpoint = 0 };
+	struct fuse_args args;
+	sqfs_ll_opts opts;
+	
+	char *mountpoint = NULL;
+	int mt, fg;
+	
+	int fd, err;
+	sqfs_ll ll;
+	
+	sqfs_ll_ops.getattr		= sqfs_ll_op_getattr;
+	sqfs_ll_ops.opendir		= sqfs_ll_op_opendir;
+	sqfs_ll_ops.releasedir	= sqfs_ll_op_releasedir;
+	sqfs_ll_ops.readdir		= sqfs_ll_op_readdir;
+	sqfs_ll_ops.lookup		= sqfs_ll_op_lookup;
+	sqfs_ll_ops.open		= sqfs_ll_op_open;
+	sqfs_ll_ops.release		= sqfs_ll_op_release;
+	sqfs_ll_ops.read		= sqfs_ll_op_read;
+	sqfs_ll_ops.readlink	= sqfs_ll_op_readlink;
+	sqfs_ll_ops.listxattr	= sqfs_ll_op_listxattr;
+	sqfs_ll_ops.getxattr	= sqfs_ll_op_getxattr;
+	sqfs_ll_ops.forget		= sqfs_ll_op_forget;
+   
+	/* PARSE ARGS */
+	args.argc = argc;
+	args.argv = argv;
+	args.allocated = 0;
+	
+	opts.progname = argv[0];
+	opts.image = NULL;
+	opts.mountpoint = 0;
 	if (fuse_opt_parse(&args, &opts, NULL, sqfs_ll_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 
-	char *mountpoint = NULL;
-	int mt, fg;
 	if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)
 		sqfs_usage(argv[0], true);
 	if (mountpoint == NULL)
 		sqfs_usage(argv[0], true);
 	
-	// OPEN FS
-	int err = 0;
-	int fd = open(opts.image, O_RDONLY);
+	/* OPEN FS */
+	err = 0;
+	fd = open(opts.image, O_RDONLY);
 	if (fd == -1) {
 		perror("Can't open squashfs image");
 		err = 1;
 	}
 
-	sqfs_ll ll;
 	if (!err) {
 		if (sqfs_ll_open(&ll, fd))
 			err = 1;
 	}
 	
-	// STARTUP FUSE
+	/* STARTUP FUSE */
 	if (!err) {
-		err = -1;
 		sqfs_ll_chan ch;
+		err = -1;
 		if (sqfs_ll_mount(&ch, mountpoint, &args) == SQFS_OK) {
 			struct fuse_session *se = fuse_lowlevel_new(&args,
 				&sqfs_ll_ops, sizeof(sqfs_ll_ops), &ll);	
@@ -512,7 +539,7 @@ int main(int argc, char *argv[]) {
 				if (sqfs_ll_daemonize(fg) != -1) {
 					if (fuse_set_signal_handlers(se) != -1) {
 						fuse_session_add_chan(se, ch.ch);
-						// FIXME: multithreading
+						/* FIXME: multithreading */
 						err = fuse_session_loop(se);
 						fuse_remove_signal_handlers(se);
 						#if HAVE_DECL_FUSE_SESSION_REMOVE_CHAN

@@ -64,7 +64,7 @@
 
 #define SQUASHFS_INVALID_FRAG		(0xffffffffU)
 #define SQUASHFS_INVALID_XATTR		(0xffffffffU)
-#define SQUASHFS_INVALID_BLK		(-1LL)
+#define SQUASHFS_INVALID_BLK		((int64_t)-1)
 
 /* Filesystem flags */
 #define SQUASHFS_NOI			0

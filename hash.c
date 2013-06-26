@@ -46,17 +46,19 @@ static sqfs_err sqfs_hash_add_internal(sqfs_hash *h, int doubling,
 static sqfs_err sqfs_hash_double(sqfs_hash *h) {
 	sqfs_hash_bucket **ob = h->buckets;
 	size_t oc = h->capacity;
-	
+	size_t i;
 	sqfs_err err;
+	
 	if ((err = sqfs_hash_init(h, h->value_size, oc * 2)))
 		return err;
 	
-	for (size_t i = 0; i < oc; ++i) {
+	for (i = 0; i < oc; ++i) {
 		sqfs_hash_bucket *b = ob[i];
 		while (b) {
+			sqfs_hash_bucket *n;
 			if (!err)
 				err = sqfs_hash_add_internal(h, 1, b->key, &b->value);
-			sqfs_hash_bucket *n = b->next;
+			n = b->next;
 			free(b);
 			b = n;
 		}
@@ -68,7 +70,7 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
 
 sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial) {
 	memset(h, 0, sizeof(*h));
-	if ((initial & (initial - 1))) // not power of two?
+	if ((initial & (initial - 1))) /* not power of two? */
 		return SQFS_ERR;
 	
 	h->buckets = calloc(initial, sizeof(sqfs_hash_bucket*));
@@ -81,7 +83,8 @@ sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial) {
 }
  
 void sqfs_hash_destroy(sqfs_hash *h) {
-	for (size_t i = 0; i < h->capacity; ++i) {
+	size_t i;
+	for (i = 0; i < h->capacity; ++i) {
 		sqfs_hash_bucket *b = h->buckets[i];
 		while (b) {
 			sqfs_hash_bucket *n = b->next;

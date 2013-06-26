@@ -84,14 +84,14 @@ struct sqfs_inode {
 void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 	int *max_minor);
 
-// Number of groups of size 'group' required to hold size 'total'
+/* Number of groups of size 'group' required to hold size 'total' */
 size_t sqfs_divceil(size_t total, size_t group);
 
 
 sqfs_err sqfs_init(sqfs *fs, int fd);
 void sqfs_destroy(sqfs *fs);
 
-// Ok to call these even on incompletely constructed filesystems
+/* Ok to call these even on incompletely constructed filesystems */
 void sqfs_version(sqfs *fs, int *major, int *minor);
 sqfs_compression_type sqfs_compression(sqfs *fs);
 
@@ -108,7 +108,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
 sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 	sqfs_block **block);
 
-// Don't dispose after getting block, it's in the cache
+/* Don't dispose after getting block, it's in the cache */
 sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block);
 sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, off_t pos,
 	uint32_t hdr, sqfs_block **block);
@@ -123,11 +123,11 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 mode_t sqfs_mode(int inode_type);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 
-// buf must have enough space for link contents, including null terminator
-// Get size from symlink_size field.
+/* buf must have enough space for link contents, including null terminator
+ * Get size from symlink_size field. */
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf);
 
-// Find inode_id by inode_num
+/* Find inode_id by inode_num */
 int sqfs_export_ok(sqfs *fs);
 sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i);
 

@@ -50,7 +50,8 @@ static void *sqfs_cache_entry(sqfs_cache *cache, size_t i) {
 
 void sqfs_cache_destroy(sqfs_cache *cache) {
 	if (cache->buf && cache->idxs) {
-		for (size_t i = 0; i < cache->count; ++i) {
+		size_t i;
+		for (i = 0; i < cache->count; ++i) {
 			if (cache->idxs[i] != SQFS_CACHE_IDX_INVALID)
 				cache->dispose(sqfs_cache_entry(cache, i));
 		}
@@ -60,7 +61,8 @@ void sqfs_cache_destroy(sqfs_cache *cache) {
 }
 
 void *sqfs_cache_get(sqfs_cache *cache, sqfs_cache_idx idx) {
-	for (size_t i = 0; i < cache->count; ++i) {
+	size_t i;
+	for (i = 0; i < cache->count; ++i) {
 		if (cache->idxs[i] == idx)
 			return sqfs_cache_entry(cache, i);
 	}

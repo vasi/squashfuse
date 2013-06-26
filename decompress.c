@@ -48,7 +48,7 @@ static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
 
 static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
 		void *out, size_t *outsz) {
-	// FIXME: Save stream state, to minimize setup time?
+	/* FIXME: Save stream state, to minimize setup time? */
 	uint64_t memlimit = UINT64_MAX;
 	size_t inpos = 0, outpos = 0;
 	lzma_ret err = lzma_stream_buffer_decode(&memlimit, 0, NULL, in, &inpos, insz,
@@ -102,8 +102,8 @@ char *sqfs_compression_name(sqfs_compression_type type) {
 }
 
 void sqfs_compression_supported(sqfs_compression_type *types) {
-	memset(types, SQFS_COMP_UNKNOWN, SQFS_COMP_MAX * sizeof(*types));
 	size_t i = 0;
+	memset(types, SQFS_COMP_UNKNOWN, SQFS_COMP_MAX * sizeof(*types));
 #ifdef HAVE_LZO_LZO1X_H
 	types[i++] = LZO_COMPRESSION;
 #endif

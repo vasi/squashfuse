@@ -53,6 +53,7 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 }
 
 sqfs_err sqfs_init(sqfs *fs, int fd) {
+	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
@@ -72,7 +73,7 @@ sqfs_err sqfs_init(sqfs *fs, int fd) {
 	if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
 		return SQFS_BADCOMP;
 	
-	sqfs_err err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
+	err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
 		sizeof(uint32_t), fs->sb.no_ids);
 	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
@@ -151,20 +152,22 @@ error:
 
 sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
 		sqfs_block **block) {
+	sqfs_err err = SQFS_OK;
+	uint16_t hdr;
+	bool compressed;
+	uint16_t size;
+	
 	*data_size = 0;
 	
-	uint16_t hdr;
 	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
 		return SQFS_ERR;
 	pos += sizeof(hdr);
 	*data_size += sizeof(hdr);
 	sqfs_swapin16(&hdr);
 	
-	bool compressed;
-	uint16_t size;
 	sqfs_md_header(hdr, &compressed, &size);
 	
-	sqfs_err err = sqfs_block_read(fs, pos, compressed, size,
+	err = sqfs_block_read(fs, pos, compressed, size,
 		SQUASHFS_METADATA_SIZE, block);
 	*data_size += size;
 	return err;
@@ -183,9 +186,10 @@ sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
 	sqfs_block_cache_entry *entry = sqfs_cache_get(
 		&fs->md_cache, *pos);
 	if (!entry) {
+		sqfs_err err = SQFS_OK;
 		entry = sqfs_cache_add(&fs->md_cache, *pos);
-		//fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos);
-		sqfs_err err = sqfs_md_block_read(fs, *pos,
+		/* fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos); */
+		err = sqfs_md_block_read(fs, *pos,
 			&entry->data_size, &entry->block);
 		if (err)
 			return err;
@@ -199,8 +203,9 @@ sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, off_t pos,
 		uint32_t hdr, sqfs_block **block) {
 	sqfs_block_cache_entry *entry = sqfs_cache_get(cache, pos);
 	if (!entry) {
+		sqfs_err err = SQFS_OK;
 		entry = sqfs_cache_add(cache, pos);
-		sqfs_err err = sqfs_data_block_read(fs, pos, hdr,
+		err = sqfs_data_block_read(fs, pos, hdr,
 			&entry->block);
 		if (err)
 			return err;
@@ -223,16 +228,17 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 	off_t pos = cur->block;
 	while (size > 0) {
 		sqfs_block *block;
+		size_t take;
 		sqfs_err err = sqfs_md_cache(fs, &pos, &block);
 		if (err)
 			return err;
 		
-		size_t take = block->size - cur->offset;
+		take = block->size - cur->offset;
 		if (take > size)
 			take = size;		
 		if (buf)
 			memcpy(buf, (char*)block->data + cur->offset, take);
-		// BLOCK CACHED, DON'T DISPOSE
+		/* BLOCK CACHED, DON'T DISPOSE */
 		
 		if (buf)
 			buf = (char*)buf + take;
@@ -264,10 +270,12 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
 }
 
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
+	sqfs_md_cursor cur;
+	sqfs_err err = SQFS_OK;
 	if (!S_ISLNK(sqfs_mode(inode->base.inode_type)))
 		return SQFS_ERR;
-	sqfs_md_cursor cur = inode->next;
-	sqfs_err err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
+	cur = inode->next;
+	err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
 	buf[inode->xtra.symlink_size] = '\0';
 	return err;
 }
@@ -277,11 +285,13 @@ int sqfs_export_ok(sqfs *fs) {
 }
 
 sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
+	uint64_t r;
+	sqfs_err err = SQFS_OK;
+	
 	if (!sqfs_export_ok(fs))
 		return SQFS_UNSUP;
 	
-	uint64_t r;
-	sqfs_err err = sqfs_table_get(&fs->export_table, fs, n - 1, &r);
+	err = sqfs_table_get(&fs->export_table, fs, n - 1, &r);
 	if (err)
 		return err;
 	sqfs_swapin64(&r);
@@ -289,9 +299,10 @@ sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
 	return SQFS_OK;
 }
 
-// Turn the internal format of a device number to our system's dev_t
-// It looks like rdev is just what the Linux kernel uses: 20 bit minor,
-// split in two around a 12 bit major
+/* Turn the internal format of a device number to our system's dev_t
+ * It looks like rdev is just what the Linux kernel uses: 20 bit minor,
+ * split in two around a 12 bit major
+ */
 static dev_t sqfs_decode_dev(uint32_t rdev) {
 	return sqfs_makedev((rdev >> 8) & 0xfff,
 		(rdev & 0xff) | ((rdev >> 12) & 0xfff00));
@@ -304,14 +315,16 @@ static dev_t sqfs_decode_dev(uint32_t rdev) {
 	sqfs_swapin_##_type##_inode(&x)
 
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
+	sqfs_md_cursor cur;
+	sqfs_err err = SQFS_OK;
+	
 	memset(inode, 0, sizeof(*inode));
 	inode->xattr = SQUASHFS_INVALID_XATTR;
 	
-	sqfs_md_cursor cur;
 	sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
 	inode->next = cur;
 	
-	sqfs_err err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
+	err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
 	if (err)
 		return err;
 	sqfs_swapin_base_inode(&inode->base);
@@ -365,7 +378,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 			inode->xtra.symlink_size = x.symlink_size;
 			
 			if (inode->base.inode_type == SQUASHFS_LSYMLINK_TYPE) {
-				// skip symlink target
+				/* skip symlink target */
 				cur = inode->next;
 				err = sqfs_md_read(fs, &cur, NULL, inode->xtra.symlink_size);
 				if (err)

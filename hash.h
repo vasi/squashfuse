@@ -42,7 +42,7 @@ typedef void *sqfs_hash_value;
 typedef struct sqfs_hash_bucket {
 	struct sqfs_hash_bucket *next;
 	sqfs_hash_key key;
-	char value[0];
+	char value[1]; /* extended to size */
 } sqfs_hash_bucket;
 
 typedef struct {

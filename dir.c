@@ -51,6 +51,8 @@ sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir) {
 }
 
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
+	struct squashfs_dir_entry entry;
+	
 	while (dir->header.count == 0) {
 		if (dir->remain <= 0) {
 			*err = SQFS_OK;
@@ -63,7 +65,6 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 		++(dir->header.count);
 	}
 	
-	struct squashfs_dir_entry entry;
 	if ((*err = sqfs_dir_md_read(dir, &entry, sizeof(entry))))
 		return NULL;
 	sqfs_swapin_dir_entry(&entry);
@@ -74,7 +75,7 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	
 	dir->entry.inode = ((uint64_t)dir->header.start_block << 16) +
 		entry.offset;
-	// entry.inode_number is signed
+	/* entry.inode_number is signed */
 	dir->entry.inode_number = dir->header.inode_number + (int16_t)entry.inode_number;
 	dir->entry.type = entry.type;
 	
@@ -83,17 +84,18 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 }
 
 sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
+	size_t skipped = 0;
+	sqfs_md_cursor cur = inode->next;
 	size_t count = inode->xtra.dir.idx_count;
+	
 	if (count == 0)
 		return SQFS_OK;
 	
-	sqfs_err err;
-	char cmp[SQUASHFS_NAME_LEN + 1];	
-	size_t skipped = 0;
-	
-	sqfs_md_cursor cur = inode->next;
 	while (count--) {
+		char cmp[SQUASHFS_NAME_LEN + 1];
 		struct squashfs_dir_index idx;
+		sqfs_err err;
+		
 		if ((err = sqfs_md_read(dir->fs, &cur, &idx, sizeof(idx))))
 			return err;
 		sqfs_swapin_dir_index(&idx);
@@ -137,19 +139,20 @@ sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
 }
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
-	char buf[MAXPATHLEN + 1];
+	sqfs_dir dir;
+	sqfs_dir_entry entry;
+	
+	char *name, buf[MAXPATHLEN + 1];
 	strncpy(buf, path, sizeof(buf) - 1);
 	path = buf;
 	
-	sqfs_dir dir;
-	sqfs_dir_entry entry;
 	while (*path) {
 		sqfs_err err = sqfs_opendir(fs, inode, &dir);
 		if (err)
 			return err;
 		
-		// Find next path component
-		char *name = path;
+		/* Find next path component */
+		name = path;
 		while (*path && *path != '/')
 			++path;
 		if (*path == '/')

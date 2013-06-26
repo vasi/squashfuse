@@ -27,12 +27,12 @@
 
 #include "common.h"
 
-// Really simplistic cache
-//  - Linear search
-//  - Linear eviction
-//  - No thread safety
-//  - Misses are caller's responsibility
-
+/* Really simplistic cache
+ *  - Linear search
+ *  - Linear eviction
+ *  - No thread safety
+ *  - Misses are caller's responsibility
+ */
 #define SQFS_CACHE_IDX_INVALID 0
 
 typedef uint64_t sqfs_cache_idx;
@@ -45,7 +45,7 @@ typedef struct {
 	sqfs_cache_dispose dispose;
 	
 	size_t size, count;
-	size_t next; // next block to evict
+	size_t next; /* next block to evict */
 } sqfs_cache;
 
 sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t size, size_t count,
