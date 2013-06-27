@@ -356,8 +356,6 @@ static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_none(req);
 }
 
-static struct fuse_lowlevel_ops sqfs_ll_ops;
-
 static void sqfs_usage(char *name, bool fuse_usage) {
 	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
@@ -486,6 +484,8 @@ int main(int argc, char *argv[]) {
 	int fd, err;
 	sqfs_ll ll;
 	
+	struct fuse_lowlevel_ops sqfs_ll_ops;
+	memset(&sqfs_ll_ops, 0, sizeof(sqfs_ll_ops));
 	sqfs_ll_ops.getattr		= sqfs_ll_op_getattr;
 	sqfs_ll_ops.opendir		= sqfs_ll_op_opendir;
 	sqfs_ll_ops.releasedir	= sqfs_ll_op_releasedir;
