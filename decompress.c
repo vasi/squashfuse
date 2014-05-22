@@ -76,6 +76,19 @@ static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
 #endif
 
 
+#ifdef HAVE_LZ4_H
+#include <lz4.h>
+static sqfs_err sqfs_decompressor_lz4(void *in, size_t insz,
+		void *out, size_t *outsz) {
+	int lz4out = LZ4_decompress_safe (in, out, insz, *outsz);
+	if (lz4out < 0)
+		return SQFS_ERR;
+	*outsz = lz4out;
+	return SQFS_OK;
+}
+#endif
+
+
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 	switch (type) {
 #ifdef HAVE_ZLIB_H
@@ -87,12 +100,15 @@ sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 #ifdef HAVE_LZO_LZO1X_H
 		case LZO_COMPRESSION: return &sqfs_decompressor_lzo;
 #endif
+#ifdef HAVE_LZ4_H
+		case LZ4_COMPRESSION: return &sqfs_decompressor_lz4;
+#endif
 		default: return NULL;
 	}
 }
 
 static char *const sqfs_compression_names[SQFS_COMP_MAX] = {
-	NULL, "zlib", "lzma", "lzo", "xz",
+	NULL, "zlib", "lzma", "lzo", "xz", "lz4",
 };
 
 char *sqfs_compression_name(sqfs_compression_type type) {
@@ -112,5 +128,8 @@ void sqfs_compression_supported(sqfs_compression_type *types) {
 #endif
 #ifdef HAVE_ZLIB_H
 	types[i++] = ZLIB_COMPRESSION;
+#endif
+#ifdef HAVE_LZ4_H
+	types[i++] = LZ4_COMPRESSION;
 #endif
 }

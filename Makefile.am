@@ -12,8 +12,8 @@ squashfuse_SOURCES = swap.c cache.c table.c dir.c file.c fs.c ll.c \
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
 	dir.h file.h decompress.h xattr.h squashfuse.h ll.h hash.h
 squashfuse_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
-	$(FUSE_CPPFLAGS)
-squashfuse_LDADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(FUSE_LIBS)
+	$(LZ4_CPPFLAGS) $(FUSE_CPPFLAGS)
+squashfuse_LDADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS) $(FUSE_LIBS)
 
 dist_man_MANS = squashfuse.1
 
