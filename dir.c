@@ -149,15 +149,15 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
 			return err;
 		
 		/* Find next path component */
-		while (*path == '/') // skip leading slashes
+		while (*path == '/') /* skip leading slashes */
 			++path;
 		name = path;
 		while (*path && *path != '/')
 			++path;
-		if (*path == '/') // null terminate the name
+		if (*path == '/') /* null terminate the name */
 			*path++ = '\0';
 		
-		if (*name == '\0') // we're done!
+		if (*name == '\0') /* we're done! */
 			break;
 		
 		err = sqfs_lookup_dir(&dir, name, &entry);
