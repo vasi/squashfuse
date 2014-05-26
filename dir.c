@@ -83,7 +83,10 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	return &dir->entry;
 }
 
-sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
+/* Internal versions use 'size' characters of 'name' to do the lookup */
+
+static sqfs_err sqfs_dir_ff_sz(sqfs_dir *dir, sqfs_inode *inode,
+		const char *name, size_t size) {
 	size_t skipped = 0;
 	sqfs_md_cursor cur = inode->next;
 	size_t count = inode->xtra.dir.idx_count;
@@ -104,7 +107,7 @@ sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
 			return err;
 		cmp[idx.size + 1] = '\0';
 		
-		if (strcmp(cmp, name) > 0)
+		if (strncmp(cmp, name, size) > 0)
 			break;
 		
 		skipped = idx.index;
@@ -116,12 +119,12 @@ sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
-		sqfs_dir_entry *entry) {
+static sqfs_err sqfs_lookup_dir_sz(sqfs_dir *dir,
+		const char *name, size_t size, sqfs_dir_entry *entry) {
 	sqfs_err err;
 	sqfs_dir_entry *dentry;
 	while ((dentry = sqfs_readdir(dir, &err))) {
-		if (strcmp(dentry->name, name) == 0) {
+		if (strncmp(dentry->name, name, size) == 0) {
 			*entry = *dentry;
 			entry->name = NULL;
 			return SQFS_OK;
@@ -130,19 +133,34 @@ sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 	return SQFS_ERR;
 }
 
-sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
-		const char *name, sqfs_dir_entry *entry) {
+static sqfs_err sqfs_lookup_dir_fast_sz(sqfs_dir *dir,
+		sqfs_inode *inode, const char *name, size_t size,
+		sqfs_dir_entry *entry) {
 	sqfs_err err;
-	if ((err = sqfs_dir_ff(dir, inode, name)))
+	if ((err = sqfs_dir_ff_sz(dir, inode, name, size)))
 		return err;
-	return sqfs_lookup_dir(dir, name, entry);
+	return sqfs_lookup_dir_sz(dir, name, size, entry);
 }
 
-sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
+sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name) {
+	return sqfs_dir_ff_sz(dir, inode, name, strlen(name));
+}
+sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
+		sqfs_dir_entry *entry) {
+	return sqfs_lookup_dir_sz(dir, name, strlen(name), entry);
+}
+sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
+		const char *name, sqfs_dir_entry *entry) {
+	return sqfs_lookup_dir_fast_sz(dir, inode, name, strlen(name), entry);
+}
+
+sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode,
+		const char *path) {
 	sqfs_dir dir;
 	sqfs_dir_entry entry;
 	
-	char *name;
+	const char *name;
+	size_t size;
 	while (*path) {
 		sqfs_err err = sqfs_opendir(fs, inode, &dir);
 		if (err)
@@ -151,13 +169,12 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
 		/* Find next path component */
 		while (*path == '/') /* skip leading slashes */
 			++path;
+		
 		name = path;
 		while (*path && *path != '/')
 			++path;
-		if (*path == '/') /* null terminate the name */
-			*path++ = '\0';
-		
-		if (*name == '\0') /* we're done! */
+		size = path - name;
+		if (size == 0) /* we're done */
 			break;
 		
 		err = sqfs_lookup_dir(&dir, name, &entry);

@@ -62,6 +62,6 @@ sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,
 	const char *name, sqfs_dir_entry *entry);
 
 /* 'path' will be modified, 'inode' replaced */
-sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path);
+sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path);
 
 #endif
