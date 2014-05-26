@@ -135,7 +135,10 @@ Details:
 	+ Versions: Kernel 2.4.20 or later, most distros since ~2004
 	+ Tested on:
 		- Debian / squeeze 6.0              / i386, ppc
-		- Ubuntu / Lucid 10.04, Natty 11.10 / amd64
+		- Ubuntu / Trusty	14.04			/ amd64
+		- Ubuntu / Precise	12.04			/ amd64
+		- Ubuntu / Natty	11.10			/ amd64
+		- Ubuntu / Lucid	10.04			/ amd64
 		- CentOS / 3.9                      / i386      / FUSE 2.5
 	+ Requirements: CONFIG_FUSE_FS kernel option
 	+ Packages:
