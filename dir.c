@@ -142,21 +142,23 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, char *path) {
 	sqfs_dir dir;
 	sqfs_dir_entry entry;
 	
-	char *name, buf[MAXPATHLEN + 1];
-	strncpy(buf, path, sizeof(buf) - 1);
-	path = buf;
-	
+	char *name;
 	while (*path) {
 		sqfs_err err = sqfs_opendir(fs, inode, &dir);
 		if (err)
 			return err;
 		
 		/* Find next path component */
+		while (*path == '/') // skip leading slashes
+			++path;
 		name = path;
 		while (*path && *path != '/')
 			++path;
-		if (*path == '/')
+		if (*path == '/') // null terminate the name
 			*path++ = '\0';
+		
+		if (*name == '\0') // we're done!
+			break;
 		
 		err = sqfs_lookup_dir(&dir, name, &entry);
 		if (err)
