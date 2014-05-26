@@ -177,7 +177,7 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode,
 		if (size == 0) /* we're done */
 			break;
 		
-		err = sqfs_lookup_dir(&dir, name, &entry);
+		err = sqfs_lookup_dir_fast_sz(&dir, inode, name, size, &entry);
 		if (err)
 			return err;
 		
