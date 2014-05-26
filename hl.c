@@ -50,7 +50,7 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 	sqfs_hl *hl = fuse_get_context()->private_data;
 	*fs = &hl->fs;
 	if (inode)
-		*inode = hl->root; // copy
+		*inode = hl->root; /* copy */
 
 	return path ? sqfs_lookup_path(*fs, inode, path) : SQFS_OK;
 }
