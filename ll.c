@@ -269,13 +269,8 @@ static void sqfs_ll_null_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
 	/* pass */
 }
 
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd) {
-	sqfs_err err = SQFS_OK;
-	memset(ll, 0, sizeof(*ll));
-	err = sqfs_init(&ll->fs, fd);
-	if (err)
-		return err;
-	
+sqfs_err sqfs_ll_init(sqfs_ll *ll) {
+	sqfs_err err = SQFS_OK;	
 	if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
 		err = sqfs_ll_ino64_init(ll);
 	} else if (sqfs_export_ok(&ll->fs)) {

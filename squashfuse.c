@@ -427,52 +427,26 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
-static sqfs_err sqfs_ll_open(sqfs_ll *ll, int fd) {
-	sqfs_err err = sqfs_ll_init(ll, fd);
-	sqfs *fs = &ll->fs;
-	switch (err) {
-		case SQFS_OK:
-			break;
-		case SQFS_BADFORMAT:
-			fprintf(stderr, "This doesn't look like a squashfs image.\n");
-			break;
-		case SQFS_BADVERSION: {
-			int major, minor, mj1, mn1, mj2, mn2;
-			sqfs_version(fs, &major, &minor);
-			sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
-			fprintf(stderr, "Squashfs version %d.%d detected, only version",
-				major, minor);
-			if (mj1 == mj2 && mn1 == mn2)
-				fprintf(stderr, " %d.%d", mj1, mn1);
+static sqfs_ll *sqfs_ll_open(const char *path) {
+	sqfs_ll *ll;
+	
+	ll = malloc(sizeof(*ll));
+	if (!ll) {
+		perror("Can't allocate memory");
+	} else {
+		memset(ll, 0, sizeof(*ll));
+	
+		if (sqfs_open_image(&ll->fs, path) == SQFS_OK) {
+			if (sqfs_ll_init(ll))
+				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else
-				fprintf(stderr, "s %d.%d to %d.%d", mj1, mn1, mj2, mn2);
-			fprintf(stderr, " supported.\n");
-			break;
+				return ll;
+			sqfs_destroy(&ll->fs);
 		}
-		case SQFS_BADCOMP: {
-			bool first = true;
-			int i;
-			sqfs_compression_type sup[SQFS_COMP_MAX],
-				comp = sqfs_compression(fs);
-			sqfs_compression_supported(sup);
-			fprintf(stderr, "Squashfs image uses %s compression, this version "
-				"supports only ", sqfs_compression_name(comp));
-			for (i = 0; i < SQFS_COMP_MAX; ++i) {
-				if (sup[i] == SQFS_COMP_UNKNOWN)
-					continue;
-				if (!first)
-					fprintf(stderr, ", ");
-				fprintf(stderr, "%s", sqfs_compression_name(sup[i]));
-				first = false;
-			}
-			fprintf(stderr, ".\n");
-			break;
-		}
-		default:
-			fprintf(stderr, "Something went wrong trying to read the squashfs "
-				"image.\n");
+		
+		free(ll);
 	}
-	return err;
+	return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -482,8 +456,8 @@ int main(int argc, char *argv[]) {
 	char *mountpoint = NULL;
 	int mt, fg;
 	
-	int fd, err;
-	sqfs_ll ll;
+	int err;
+	sqfs_ll *ll;
 	
 	struct fuse_lowlevel_ops sqfs_ll_ops;
 	memset(&sqfs_ll_ops, 0, sizeof(sqfs_ll_ops));
@@ -517,17 +491,7 @@ int main(int argc, char *argv[]) {
 		sqfs_usage(argv[0], true);
 	
 	/* OPEN FS */
-	err = 0;
-	fd = open(opts.image, O_RDONLY);
-	if (fd == -1) {
-		perror("Can't open squashfs image");
-		err = 1;
-	}
-
-	if (!err) {
-		if (sqfs_ll_open(&ll, fd))
-			err = 1;
-	}
+	err = !(ll = sqfs_ll_open(opts.image));
 	
 	/* STARTUP FUSE */
 	if (!err) {
@@ -535,7 +499,7 @@ int main(int argc, char *argv[]) {
 		err = -1;
 		if (sqfs_ll_mount(&ch, mountpoint, &args) == SQFS_OK) {
 			struct fuse_session *se = fuse_lowlevel_new(&args,
-				&sqfs_ll_ops, sizeof(sqfs_ll_ops), &ll);	
+				&sqfs_ll_ops, sizeof(sqfs_ll_ops), ll);	
 			if (se != NULL) {
 				if (sqfs_ll_daemonize(fg) != -1) {
 					if (fuse_set_signal_handlers(se) != -1) {
@@ -550,7 +514,7 @@ int main(int argc, char *argv[]) {
 				}
 				fuse_session_destroy(se);
 			}
-			sqfs_ll_destroy(&ll);
+			sqfs_ll_destroy(ll);
 			sqfs_ll_unmount(&ch, mountpoint);
 		}
 	}

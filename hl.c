@@ -47,21 +47,12 @@ struct sqfs_hl {
 
 static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 		const char *path) {
-	sqfs_err err = SQFS_OK;
 	sqfs_hl *hl = fuse_get_context()->private_data;
 	*fs = &hl->fs;
 	if (inode)
 		*inode = hl->root; // copy
 
-	// FIXME: Do a lookup without copying path? DOUBLE-COPY!!!!
-	if (path) {
-		char *mod = strdup(path);
-		if (!mod)
-			return SQFS_ERR;
-		err = sqfs_lookup_path(*fs, inode, mod);
-		free(mod);
-	}
-	return err;
+	return path ? sqfs_lookup_path(*fs, inode, path) : SQFS_OK;
 }
 
 
@@ -326,82 +317,25 @@ static int sqfs_hl_opt_proc(void *data, const char *arg, int key,
 }
 
 static sqfs_hl *sqfs_hl_open(const char *path) {
-	sqfs_err err;
 	sqfs_hl *hl;
-	sqfs *fs;
-	int fd;
-	
-	fd = open(path, O_RDONLY);
-	if (fd == -1) {
-		perror("Can't open squashfs image");
-		return NULL;
-	}
 	
 	hl = malloc(sizeof(*hl));
 	if (!hl) {
 		perror("Can't allocate memory");
-		close(fd);
-		return NULL;
-	}
-	memset(hl, 0, sizeof(*hl));
+	} else {
+		memset(hl, 0, sizeof(*hl));
 	
-	fs = &hl->fs;
-	err = sqfs_init(fs, fd);
-	switch (err) {
-		case SQFS_OK:
-			break;
-		case SQFS_BADFORMAT:
-			fprintf(stderr, "This doesn't look like a squashfs image.\n");
-			break;
-		case SQFS_BADVERSION: {
-			int major, minor, mj1, mn1, mj2, mn2;
-			sqfs_version(fs, &major, &minor);
-			sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
-			fprintf(stderr, "Squashfs version %d.%d detected, only version",
-				major, minor);
-			if (mj1 == mj2 && mn1 == mn2)
-				fprintf(stderr, " %d.%d", mj1, mn1);
+		if (sqfs_open_image(&hl->fs, path) == SQFS_OK) {
+			if (sqfs_inode_get(&hl->fs, &hl->root, hl->fs.sb.root_inode))
+				fprintf(stderr, "Can't find the root of this filesystem!\n");
 			else
-				fprintf(stderr, "s %d.%d to %d.%d", mj1, mn1, mj2, mn2);
-			fprintf(stderr, " supported.\n");
-			break;
+				return hl;
+			sqfs_destroy(&hl->fs);
 		}
-		case SQFS_BADCOMP: {
-			bool first = true;
-			int i;
-			sqfs_compression_type sup[SQFS_COMP_MAX],
-				comp = sqfs_compression(fs);
-			sqfs_compression_supported(sup);
-			fprintf(stderr, "Squashfs image uses %s compression, this version "
-				"supports only ", sqfs_compression_name(comp));
-			for (i = 0; i < SQFS_COMP_MAX; ++i) {
-				if (sup[i] == SQFS_COMP_UNKNOWN)
-					continue;
-				if (!first)
-					fprintf(stderr, ", ");
-				fprintf(stderr, "%s", sqfs_compression_name(sup[i]));
-				first = false;
-			}
-			fprintf(stderr, ".\n");
-			break;
-		}
-		default:
-			fprintf(stderr, "Something went wrong trying to read the squashfs "
-				"image.\n");
-	}
-	
-	if (!err) {
-		err = sqfs_inode_get(fs, &hl->root, fs->sb.root_inode);
-		if (err)
-			fprintf(stderr, "Can't find the root of this filesystem!\n");
-	}
-	
-	if (err) {
+		
 		free(hl);
-		close(fd);
-		return NULL;
 	}
-	return hl;
+	return NULL;
 }
 
 int main(int argc, char *argv[]) {

@@ -33,4 +33,7 @@
 /* Fill in a stat structure. Does not set st_ino */
 sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
 
+/* Open a filesystem and handle errors */
+sqfs_err sqfs_open_image(sqfs *fs, const char *image);
+
 #endif

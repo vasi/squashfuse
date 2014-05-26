@@ -49,7 +49,7 @@ struct sqfs_ll {
 	void (*ino_destroy)(sqfs_ll *ll);	
 };
 
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd);
+sqfs_err sqfs_ll_init(sqfs_ll *ll);
 void sqfs_ll_destroy(sqfs_ll *ll);
 
 
