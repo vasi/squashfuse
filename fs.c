@@ -272,7 +272,7 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
 	sqfs_md_cursor cur;
 	sqfs_err err = SQFS_OK;
-	if (!S_ISLNK(sqfs_mode(inode->base.inode_type)))
+	if (!S_ISLNK(inode->base.mode))
 		return SQFS_ERR;
 	cur = inode->next;
 	err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);

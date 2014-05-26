@@ -25,6 +25,7 @@
 #include "config.h"
 #include "ll.h"
 #include "hash.h"
+#include "nonstd.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -317,7 +318,7 @@ sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
 	uid_t id;
 	
 	memset(st, 0, sizeof(*st));
-	st->st_mode = inode->base.mode | sqfs_mode(inode->base.inode_type);
+	st->st_mode = inode->base.mode;
 	st->st_nlink = inode->nlink;
 	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
 	

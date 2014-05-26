@@ -190,7 +190,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	ll = fuse_req_userdata(req);
 	if (sqfs_ll_inode(ll, inode, ino)) {
 		fuse_reply_err(req, ENOENT);
-	} else if (!S_ISREG(sqfs_mode(inode->base.inode_type))) {
+	} else if (!S_ISREG(inode->base.mode)) {
 		fuse_reply_err(req, EISDIR);
 	} else {
 		fi->fh = (intptr_t)inode;
@@ -238,7 +238,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	if (!S_ISLNK(sqfs_mode(lli.inode.base.inode_type))) {
+	if (!S_ISLNK(lli.inode.base.mode)) {
 		fuse_reply_err(req, EINVAL);
 	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
 		fuse_reply_err(req, ENOMEM);

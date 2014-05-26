@@ -69,7 +69,7 @@ static sqfs_err sqfs_hl_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
 	uid_t id;
 	
 	memset(st, 0, sizeof(*st));
-	st->st_mode = inode->base.mode | sqfs_mode(inode->base.inode_type);
+	st->st_mode = inode->base.mode;
 	st->st_nlink = inode->nlink;
 	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
 	
@@ -180,7 +180,7 @@ static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
 		return -ENOENT;
 	}
 	
-	if (!S_ISREG(sqfs_mode(inode->base.inode_type))) {
+	if (!S_ISREG(inode->base.mode)) {
 		free(inode);
 		return -EISDIR;
 	}
@@ -216,7 +216,7 @@ static int sqfs_hl_op_readlink(const char *path, char *buf, size_t size) {
 	if (sqfs_hl_lookup(&fs, &inode, path))
 		return -ENOENT;
 	
-	if (!S_ISLNK(sqfs_mode(inode.base.inode_type))) {
+	if (!S_ISLNK(inode.base.mode)) {
 		return -EINVAL;
 	} else if (!(tmp = calloc(1, inode.xtra.symlink_size + 1))) {
 		return -ENOMEM;
