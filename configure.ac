@@ -4,6 +4,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+AM_PROG_AR
 LT_INIT
 
 # Compiler

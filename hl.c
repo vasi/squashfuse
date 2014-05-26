@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include <fuse.h>
+#include "fuseprivate.h"
 #include "squashfuse.h"
 #include "nonstd.h"
 
@@ -63,39 +64,6 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 	return err;
 }
 
-// FIXME: share
-static sqfs_err sqfs_hl_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
-	sqfs_err err = SQFS_OK;
-	uid_t id;
-	
-	memset(st, 0, sizeof(*st));
-	st->st_mode = inode->base.mode;
-	st->st_nlink = inode->nlink;
-	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
-	
-	if (S_ISREG(st->st_mode)) {
-		/* FIXME: do symlinks, dirs, etc have a size? */
-		st->st_size = inode->xtra.reg.file_size;
-		st->st_blocks = st->st_size / 512;
-	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
-		st->st_rdev = sqfs_makedev(inode->xtra.dev.major,
-			inode->xtra.dev.minor);
-	}
-	
-	st->st_blksize = fs->sb.block_size; /* seriously? */
-	
-	err = sqfs_id_get(fs, inode->base.uid, &id);
-	if (err)
-		return err;
-	st->st_uid = id;
-	err = sqfs_id_get(fs, inode->base.guid, &id);
-	st->st_gid = id;
-	if (err)
-		return err;
-	
-	return SQFS_OK;
-}
-
 
 static void sqfs_hl_op_destroy(void *user_data) {
 	sqfs_hl *hl = (sqfs_hl*)user_data;
@@ -113,7 +81,7 @@ static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
 	if (sqfs_hl_lookup(&fs, &inode, path))
 		return -ENOENT;
 	
-	if (sqfs_hl_stat(fs, &inode, st))
+	if (sqfs_stat(fs, &inode, st))
 		return -ENOENT;
 	
 	return 0;

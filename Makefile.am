@@ -5,7 +5,8 @@ if MAKE_EXPORT
 export COPYFILE_DISABLE = 1
 endif
 
-noinst_LTLIBRARIES = libsquashfuse.la
+noinst_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
+
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
 	decompress.c xattr.c hash.c \
 	nonstd-pread.c nonstd-stat.c \
@@ -15,15 +16,19 @@ libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS)
 libsquashfuse_la_LIBADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS)
 
+libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
+	fuseprivate.h
+
+
 bin_PROGRAMS = squashfuse squashfuse_hl
 
-squashfuse_SOURCES = ll.c squashfuse.c nonstd-daemon.c nonstd-enoattr.c nonstd-makedev.c
+squashfuse_SOURCES = ll.c squashfuse.c nonstd-daemon.c ll.h
 squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_LDADD = $(FUSE_LIBS) libsquashfuse.la
+squashfuse_LDADD = $(FUSE_LIBS) libsquashfuse.la libfuseprivate.la
 
-squashfuse_hl_SOURCES = hl.c nonstd-enoattr.c nonstd-makedev.c
+squashfuse_hl_SOURCES = hl.c
 squashfuse_hl_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_hl_LDADD = $(FUSE_LIBS) libsquashfuse.la
+squashfuse_hl_LDADD = $(FUSE_LIBS) libsquashfuse.la libfuseprivate.la
 
 
 dist_man_MANS = squashfuse.1

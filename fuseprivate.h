@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,49 +22,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_LL_H
-#define SQFS_LL_H
+#ifndef SQFS_FUSEPRIVATE_H
+#define SQFS_FUSEPRIVATE_H
 
-#include <fuse_lowlevel.h>
-
+#include <sys/stat.h>
 #include "squashfuse.h"
 
-typedef struct sqfs_ll sqfs_ll;
-struct sqfs_ll {
-	sqfs fs;
-	
-	/* Converting inodes between squashfs and fuse */
-	fuse_ino_t (*ino_fuse)(sqfs_ll *ll, sqfs_inode_id i);
-	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
-	
-	/* Register a new inode, returning the fuse ID for it */
-	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
-	void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
-	
-	/* Like register, but don't actually remember it */
-	fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
-	
-	/* Private data, and how to destroy it */
-	void *ino_data;
-	void (*ino_destroy)(sqfs_ll *ll);	
-};
+/* Common functions for FUSE high- and low-level clients */
 
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd);
-void sqfs_ll_destroy(sqfs_ll *ll);
-
-
-/* Get an inode from an sqfs_ll */
-sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i);
-
-/* Convenience function: Get both ll and inode, and handle errors */
-#define SQFS_FUSE_INODE_NONE 0
-typedef struct {
-	sqfs_ll *ll;
-	sqfs_inode inode;
-} sqfs_ll_i;
-sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
-
-
-int sqfs_ll_daemonize(int fg);
+/* Fill in a stat structure. Does not set st_ino */
+sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
 
 #endif

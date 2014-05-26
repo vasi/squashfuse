@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,49 +22,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_LL_H
-#define SQFS_LL_H
+#include <string.h>
 
-#include <fuse_lowlevel.h>
+#include "fuseprivate.h"
+#include "nonstd.h"
 
-#include "squashfuse.h"
-
-typedef struct sqfs_ll sqfs_ll;
-struct sqfs_ll {
-	sqfs fs;
+sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
+	sqfs_err err = SQFS_OK;
+	uid_t id;
 	
-	/* Converting inodes between squashfs and fuse */
-	fuse_ino_t (*ino_fuse)(sqfs_ll *ll, sqfs_inode_id i);
-	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
+	memset(st, 0, sizeof(*st));
+	st->st_mode = inode->base.mode;
+	st->st_nlink = inode->nlink;
+	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
 	
-	/* Register a new inode, returning the fuse ID for it */
-	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
-	void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
+	if (S_ISREG(st->st_mode)) {
+		/* FIXME: do symlinks, dirs, etc have a size? */
+		st->st_size = inode->xtra.reg.file_size;
+		st->st_blocks = st->st_size / 512;
+	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
+		st->st_rdev = sqfs_makedev(inode->xtra.dev.major,
+			inode->xtra.dev.minor);
+	}
 	
-	/* Like register, but don't actually remember it */
-	fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
+	st->st_blksize = fs->sb.block_size; /* seriously? */
 	
-	/* Private data, and how to destroy it */
-	void *ino_data;
-	void (*ino_destroy)(sqfs_ll *ll);	
-};
-
-sqfs_err sqfs_ll_init(sqfs_ll *ll, int fd);
-void sqfs_ll_destroy(sqfs_ll *ll);
-
-
-/* Get an inode from an sqfs_ll */
-sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i);
-
-/* Convenience function: Get both ll and inode, and handle errors */
-#define SQFS_FUSE_INODE_NONE 0
-typedef struct {
-	sqfs_ll *ll;
-	sqfs_inode inode;
-} sqfs_ll_i;
-sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
-
-
-int sqfs_ll_daemonize(int fg);
-
-#endif
+	err = sqfs_id_get(fs, inode->base.uid, &id);
+	if (err)
+		return err;
+	st->st_uid = id;
+	err = sqfs_id_get(fs, inode->base.guid, &id);
+	st->st_gid = id;
+	if (err)
+		return err;
+	
+	return SQFS_OK;
+}

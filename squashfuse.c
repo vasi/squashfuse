@@ -37,6 +37,7 @@
 #include "ll.h"
 #include "squashfuse.h"
 #include "nonstd.h"
+#include "fuseprivate.h"
 
 static const double SQFS_TIMEOUT = DBL_MAX;
 
@@ -47,7 +48,7 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	if (sqfs_ll_stat(lli.ll, &lli.inode, &st)) {
+	if (sqfs_stat(&lli.ll->fs, &lli.inode, &st)) {
 		fuse_reply_err(req, ENOENT);
 	} else {
 		st.st_ino = ino;
@@ -160,7 +161,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 	} else {
 		struct fuse_entry_param fentry;
 		memset(&fentry, 0, sizeof(fentry));
-		if (sqfs_ll_stat(lli.ll, &inode, &fentry.attr)) {
+		if (sqfs_stat(&lli.ll->fs, &inode, &fentry.attr)) {
 			fuse_reply_err(req, EIO);
 		} else {
 			fentry.attr_timeout = fentry.entry_timeout = SQFS_TIMEOUT;
