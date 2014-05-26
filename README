@@ -57,7 +57,8 @@ Many operating systems and architectures are supported by squashfuse. For more d
 
 Runtime requirements:
 - FUSE 2.5 or later
-- At least one of the following compression libraries: zlib, lzo2, xz/liblzma
+- At least one of the following compression libraries: zlib, lzo2, xz/liblzma,
+	lz4
 - (optional) libattr, for better extended attribute support on Linux
 
 Build requirements:
@@ -83,7 +84,7 @@ To unmount an existing mount (Mac/BSD): umount MOUNTPOINT
 
 Features
 --------
-- zlib, LZO and LZMA2 compression
+- zlib, LZO, LZMA2 and LZ4 compression
 - Fast directory lookup
 - Fast seeking within files
 - Sparse file support
@@ -140,7 +141,7 @@ Details:
 	+ Packages:
 		- apt-get
 			Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev
-				liblzma-dev libattr1-dev pkg-config
+				liblzma-dev liblz4-dev libattr1-dev pkg-config
 			Runtime: libfuse2 zlib1g liblzo2-2 liblzma2
 
 * Mac OS X
@@ -159,21 +160,25 @@ Details:
 		- All package managers require the full Xcode for FUSE,
 			not just command-line tools.
 		- MacPorts
-			port install lzo2 liblzma zlib fuse4x
+			port install lzo2 liblzma zlib lz4 fuse4x
 		- Fink
 			fink install automake1.11 libtool2
 			fink install lzo2 liblzma5 fuse4x-dev fuse4x-shlibs pkgconfig
 		- Homebrew
-			brew install lzo xz fuse4x
+			brew install lzo xz lz4 fuse4x
 			# follow instructions from `brew info fuse4x-kext'
-	+ Configure: If using a package manager, use --with-lzo=/wherever
-	+ Notes: OS X uses a different naming scheme for extended attributes, so
-		they may not be very useful
+	+ Configure: If using a package manager, use --with-lzo=/wherever and/or
+		--with-lzo=/wherever
+	+ Notes:
+		- OS X uses a different naming scheme for extended attributes, so
+			they may not be very useful
+		- LZ4 often builds a dynamic liblz4 with a bad install_name on OS X.
+			Either link statically, or use install_name_tool to correct it.
 
 * FreeBSD
 	+ Versions: FreeBSD 6.0 and later
 	+ Tested on: FreeBSD 9.0 / amd64
-	+ Packages: From ports or packages: fusefs-libs fusefs-kmod lzo2
+	+ Packages: From ports or packages: fusefs-libs fusefs-kmod lzo2 lz4
 	+ Notes: FreeBSD FUSE doesn't support extended attributes
 
 * NetBSD
