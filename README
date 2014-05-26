@@ -99,7 +99,7 @@ Missing features:
 
 Known bugs
 ----------
-- On 32-bit platforms, squashfuse will use more memory, possibly much more, due to a quirk in the FUSE API. For at least certain squashfs archives, this will be fixed in a future release.
+- In a rare situation, squashfuse will use more memory, possibly much more, due to a quirk in the FUSE API. This only happens on 32-bit platforms with a large inode cache, when mounting squashfs archives created with "-no-exports".
 
 
 Platform support
