@@ -269,14 +269,23 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf) {
+sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 	sqfs_md_cursor cur;
 	sqfs_err err = SQFS_OK;
 	if (!S_ISLNK(inode->base.mode))
 		return SQFS_ERR;
+
+	size_t want = inode->xtra.symlink_size;
+	if (!buf) {
+		*size = want;
+		return SQFS_OK;
+	}
+
+	if (want > *size - 1)
+		want = *size - 1;
 	cur = inode->next;
-	err = sqfs_md_read(fs, &cur, buf, inode->xtra.symlink_size);
-	buf[inode->xtra.symlink_size] = '\0';
+	err = sqfs_md_read(fs, &cur, buf, want);
+	buf[want] = '\0';
 	return err;
 }
 

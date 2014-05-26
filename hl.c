@@ -166,27 +166,17 @@ static int sqfs_hl_op_read(const char *path, char *buf, size_t size,
 	return osize;
 }
 
-// FIXME: Make sqfs_readlink take a size
 static int sqfs_hl_op_readlink(const char *path, char *buf, size_t size) {
-	char *tmp;
 	sqfs *fs;
 	sqfs_inode inode;
-	
 	if (sqfs_hl_lookup(&fs, &inode, path))
 		return -ENOENT;
 	
 	if (!S_ISLNK(inode.base.mode)) {
 		return -EINVAL;
-	} else if (!(tmp = calloc(1, inode.xtra.symlink_size + 1))) {
-		return -ENOMEM;
-	} else if (sqfs_readlink(fs, &inode, tmp)) {
-		free(tmp);
+	} else if (sqfs_readlink(fs, &inode, buf, &size)) {
 		return -EIO;
-	}
-	
-	strncpy(buf, tmp, size);
-	free(tmp);
-	buf[size - 1] = '\0';
+	}	
 	return 0;
 }
 

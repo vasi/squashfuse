@@ -235,15 +235,18 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	char *dst;
+	size_t size;
 	sqfs_ll_i lli;
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
 	if (!S_ISLNK(lli.inode.base.mode)) {
 		fuse_reply_err(req, EINVAL);
-	} else if (!(dst = calloc(1, lli.inode.xtra.symlink_size + 1))) {
+	} else if (sqfs_readlink(&lli.ll->fs, &lli.inode, NULL, &size)) {
+		fuse_reply_err(req, EIO);
+	} else if (!(dst = malloc(size + 1))) {
 		fuse_reply_err(req, ENOMEM);
-	} else if (sqfs_readlink(&lli.ll->fs, &lli.inode, dst)) {
+	} else if (sqfs_readlink(&lli.ll->fs, &lli.inode, dst, &size)) {
 		fuse_reply_err(req, EIO);
 		free(dst);
 	} else {

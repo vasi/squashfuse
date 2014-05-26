@@ -125,9 +125,9 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 mode_t sqfs_mode(int inode_type);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id);
 
-/* buf must have enough space for link contents, including null terminator
- * Get size from symlink_size field. */
-sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf);
+/* Puts up to *size characters of the link name into buf. Always null-
+ * terminates the buffer. Pass null as buf to have the size returned. */
+sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
 
 /* Find inode_id by inode_num */
 int sqfs_export_ok(sqfs *fs);
