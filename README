@@ -147,26 +147,27 @@ Details:
 * Mac OS X
 	+ Versions: Mac OS X 10.4 and later
 	+ Tested on:
+		- 10.9 Lion         / x86_64 / OSXFUSE
 		- 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE
 		- 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x
 		- 10.5 Leopard      / ppc    / MacFUSE
 		- 10.4 Tiger        / i386   / MacFUSE
 	+ Requirements
 		- Command-line developer tools
-		- fuse4x, OSXFUSE or MacFUSE: http://fuse4x.org/,
-			http://osxfuse.github.com/, http://code.google.com/p/macfuse/
+		- OSXFUSE, fuse4x or MacFUSE: http://osxfuse.github.com/,
+			http://fuse4x.org/, http://code.google.com/p/macfuse/
 	+ Packages:
 		- Not necessary just to build a basic zlib-supporting squashfuse.
 		- All package managers require the full Xcode for FUSE,
 			not just command-line tools.
 		- MacPorts
-			port install lzo2 liblzma zlib lz4 fuse4x
+			port install lzo2 liblzma zlib lz4 osxfuse
 		- Fink
 			fink install automake1.11 libtool2
-			fink install lzo2 liblzma5 fuse4x-dev fuse4x-shlibs pkgconfig
+			fink install lzo2 liblzma5 osxfuse-dev osxfuse-shlibs pkgconfig
 		- Homebrew
-			brew install lzo xz lz4 fuse4x
-			# follow instructions from `brew info fuse4x-kext'
+			brew install lzo xz lz4 osxfuse
+			# follow instructions from `brew info osxfuse'
 	+ Configure: If using a package manager, use --with-lzo=/wherever and/or
 		--with-lzo=/wherever
 	+ Notes:
