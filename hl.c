@@ -78,7 +78,8 @@ static sqfs_err sqfs_hl_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
 		st->st_size = inode->xtra.reg.file_size;
 		st->st_blocks = st->st_size / 512;
 	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
-		st->st_rdev = inode->xtra.dev;
+		st->st_rdev = sqfs_makedev(inode->xtra.dev.major,
+			inode->xtra.dev.minor);
 	}
 	
 	st->st_blksize = fs->sb.block_size; /* seriously? */

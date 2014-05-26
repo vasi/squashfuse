@@ -303,9 +303,9 @@ sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
  * It looks like rdev is just what the Linux kernel uses: 20 bit minor,
  * split in two around a 12 bit major
  */
-static dev_t sqfs_decode_dev(uint32_t rdev) {
-	return sqfs_makedev((rdev >> 8) & 0xfff,
-		(rdev & 0xff) | ((rdev >> 12) & 0xfff00));
+static void sqfs_decode_dev(sqfs_inode *i, uint32_t rdev) {
+	i->xtra.dev.major = (rdev >> 8) & 0xfff;
+	i->xtra.dev.minor = (rdev & 0xff) | ((rdev >> 12) & 0xfff00);
 }
 
 #define INODE_TYPE(_type) \
@@ -394,14 +394,14 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 		case SQUASHFS_CHRDEV_TYPE: {
 			INODE_TYPE(dev);
 			inode->nlink = x.nlink;
-			inode->xtra.dev = sqfs_decode_dev(x.rdev);
+			sqfs_decode_dev(inode, x.rdev);
 			break;
 		}
 		case SQUASHFS_LBLKDEV_TYPE:
 		case SQUASHFS_LCHRDEV_TYPE: {
 			INODE_TYPE(ldev);
 			inode->nlink = x.nlink;
-			inode->xtra.dev = sqfs_decode_dev(x.rdev);
+			sqfs_decode_dev(inode, x.rdev);
 			inode->xattr = x.xattr;
 			break;
 		}

@@ -63,7 +63,9 @@ struct sqfs_inode {
 	sqfs_md_cursor next;
 	
 	union {
-		dev_t dev;
+		struct {
+			int major, minor;
+		} dev;
 		size_t symlink_size;
 		struct {
 			uint64_t start_block;
