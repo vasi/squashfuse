@@ -1,10 +1,14 @@
 *.inc
 squashfuse
+squashfuse_hl
 *.dSYM
 *.o
+*.lo
+*.la
 
 *.tar.gz
 
+.libs
 .deps
 Makefile
 Makefile.in
