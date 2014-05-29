@@ -1,4 +1,4 @@
-*.inc
+/*.inc
 squashfuse
 squashfuse_hl
 *.dSYM

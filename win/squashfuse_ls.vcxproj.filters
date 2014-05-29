@@ -16,6 +16,9 @@
     <Filter Include="Windows headers">
       <UniqueIdentifier>{f4b08648-a690-4a35-a6d4-96d10e7d8d3e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Windows sources">
+      <UniqueIdentifier>{f19971b9-3994-424b-8a01-0c2c582f4fa0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\squashfuse_ls.c">
@@ -98,5 +101,13 @@
     <ClInclude Include="squashfs_fs.h">
       <Filter>Windows headers</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="swap.h.inc">
+      <Filter>Windows headers</Filter>
+    </None>
+    <None Include="swap.c.inc">
+      <Filter>Windows sources</Filter>
+    </None>
   </ItemGroup>
 </Project>

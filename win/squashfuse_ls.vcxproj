@@ -107,6 +107,10 @@
     <ClInclude Include="squashfs_fs.h" />
     <ClInclude Include="win32.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="swap.c.inc" />
+    <None Include="swap.h.inc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
