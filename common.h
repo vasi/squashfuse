@@ -27,6 +27,11 @@
 
 #include "config.h"
 
+#ifdef _WIN32
+	#include <win32.h>
+#else
+#endif
+
 #include <stdint.h>
 #include <sys/types.h>
 

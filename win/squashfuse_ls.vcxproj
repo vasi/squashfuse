@@ -105,6 +105,7 @@
     <ClInclude Include="..\table.h" />
     <ClInclude Include="..\xattr.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="win32.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

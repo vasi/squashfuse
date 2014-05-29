@@ -95,5 +95,8 @@
     <ClInclude Include="config.h">
       <Filter>Windows headers</Filter>
     </ClInclude>
+    <ClInclude Include="win32.h">
+      <Filter>Windows headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
