@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include <stdbool.h>
-#include <sys/param.h>
 
 #include "squashfs_fs.h"
 
