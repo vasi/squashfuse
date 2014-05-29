@@ -29,11 +29,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-sqfs_err sqfs_table_init(sqfs_table *table, int fd, sq_off_t start, size_t each,
+sqfs_err sqfs_table_init(sqfs_table *table, sq_fd_t fd, sq_off_t start, size_t each,
 		size_t count) {
-	int i;
+	size_t i;
 	size_t nblocks, bread;
 	
 	if (count == 0)
