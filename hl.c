@@ -230,40 +230,23 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
 		) {
 	sqfs *fs;
 	sqfs_inode inode;
-	sqfs_xattr x;
-	bool found;
-	size_t vsize;
-	char *buf = NULL;
+	size_t real = size;
 
-	if (sqfs_hl_lookup(&fs, &inode, path))
-		return -ENOENT;
-	
-	if (sqfs_xattr_open(fs, &inode, &x))
-		return -EIO;
 #ifdef FUSE_XATTR_POSITION
 	if (position != 0) /* We don't support resource forks */
 		return -EINVAL;
 #endif
-	if (sqfs_xattr_find(&x, name, &found))
-		return -EIO;
-	if (!found)
-		return -sqfs_enoattr();
-	if (sqfs_xattr_value_size(&x, &vsize))
-		return -EIO;
-	if (!size)
-		return vsize;
-	if (!(buf = malloc(vsize)))
-		return -ENOMEM;
-	if (sqfs_xattr_value(&x, buf)) {
-		free(buf);
-		return -EIO;
-	}
+
+	if (sqfs_hl_lookup(&fs, &inode, path))
+		return -ENOENT;
 	
-	if (size > vsize)
-		size = vsize;
-	memcpy(value, buf, size);
-	free(buf);
-	return size;
+	if ((sqfs_xattr_lookup(fs, &inode, name, value, &real)))
+		return -EIO;
+	if (real == 0)
+		return -sqfs_enoattr();
+	if (size != 0 && size < real)
+		return -ERANGE;
+	return real;
 }
 
 static void sqfs_hl_usage(char *name, bool fuse_usage) {

@@ -317,38 +317,32 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 		, uint32_t position
 #endif
 		) {
-	sqfs_xattr x;
-	bool found;
-	size_t vsize;
-	char *buf = NULL;
-	
 	sqfs_ll_i lli;
+	char *buf = NULL;
+	size_t real = size;
+
+#ifdef FUSE_XATTR_POSITION
+	if (position != 0) { /* We don't support resource forks */
+		fuse_reply_err(req, EINVAL);
+		return;
+	}
+#endif
+	
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
-	if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
-		fuse_reply_err(req, EIO);
-#ifdef FUSE_XATTR_POSITION
-	} else if (position != 0) { /* We don't support resource forks */
-		fuse_reply_err(req, EINVAL);
-#endif
-	} else if (sqfs_xattr_find(&x, name, &found)) {
-		fuse_reply_err(req, EIO);
-	} else if (!found) {
-		fuse_reply_err(req, sqfs_enoattr());
-	} else if (sqfs_xattr_value_size(&x, &vsize)) {
-		fuse_reply_err(req, EIO);
-	} else if (!size) {
-		fuse_reply_xattr(req, vsize);
-	} else if (vsize > size) {
-		fuse_reply_err(req, ERANGE);
-	} else if (!(buf = malloc(vsize))) {
+	if (!(buf = malloc(size)))
 		fuse_reply_err(req, ENOMEM);
-	} else if (sqfs_xattr_value(&x, buf)) {
+	else if (sqfs_xattr_lookup(&lli.ll->fs, &lli.inode, name, buf, &real))
 		fuse_reply_err(req, EIO);
-	} else {
-		fuse_reply_buf(req, buf, vsize);
-	}
+	else if (real == 0)
+		fuse_reply_err(req, sqfs_enoattr());
+	else if (size == 0)
+		fuse_reply_xattr(req, real);
+	else if (size < real)
+		fuse_reply_err(req, ERANGE);
+	else
+		fuse_reply_buf(req, buf, real);
 	free(buf);
 }
 

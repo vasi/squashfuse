@@ -240,3 +240,33 @@ done:
 	free(cmp);
 	return err;
 }
+
+sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
+		void *buf, size_t *size) {
+	sqfs_err err = SQFS_OK;
+	
+	sqfs_xattr xattr;
+	if ((err = sqfs_xattr_open(fs, inode, &xattr)))
+		return err;
+	
+	bool found = false;
+	if ((err = sqfs_xattr_find(&xattr, name, &found)))
+		return err;
+	if (!found) {
+		*size = 0;
+		return err;
+	}
+	
+	size_t real;
+	if ((err = sqfs_xattr_value_size(&xattr, &real)))
+		return err;
+	
+	if (buf && *size >= real) {
+		if ((err = sqfs_xattr_value(&xattr, buf)))
+			return err;
+	}
+	
+	*size = real;
+	return err;
+}
+

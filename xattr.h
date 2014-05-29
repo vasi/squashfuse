@@ -61,9 +61,16 @@ sqfs_err sqfs_xattr_read(sqfs_xattr *x);
 size_t sqfs_xattr_name_size(sqfs_xattr *x);
 sqfs_err sqfs_xattr_name(sqfs_xattr *x, char *name, bool prefix);
 sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size);
+/* Yield first 'size' bytes */
 sqfs_err sqfs_xattr_value(sqfs_xattr *x, void *buf);
 
 /* Find an xattr entry */
 sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found);
+
+/* Helper to find an xattr value on an inode.
+   Returns in 'size' the size of the xattr, if found, or zero if not found.
+   Does not touch 'buf' if it's not big enough. */
+sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
+	void *buf, size_t *size);
 
 #endif
