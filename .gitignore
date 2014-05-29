@@ -15,7 +15,7 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 build-aux
-config.*
+/config.*
 configure
 libtool
 stamp-h1
