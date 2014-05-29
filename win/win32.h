@@ -27,4 +27,6 @@
 
 #include "squashfs_fs.h" /* Windows-specific version */
 
+typedef unsigned short sq_mode_t;
+
 #endif
