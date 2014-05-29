@@ -25,5 +25,6 @@
 #ifndef SQFS_WIN32_H
 #define SQFS_WIN32_H
 
+#include "squashfs_fs.h" /* Windows-specific version */
 
 #endif

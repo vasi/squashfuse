@@ -80,9 +80,6 @@
     <ClInclude Include="..\nonstd-internal.h">
       <Filter>Common headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\squashfs_fs.h">
-      <Filter>Common headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\squashfuse.h">
       <Filter>Common headers</Filter>
     </ClInclude>
@@ -96,6 +93,9 @@
       <Filter>Windows headers</Filter>
     </ClInclude>
     <ClInclude Include="win32.h">
+      <Filter>Windows headers</Filter>
+    </ClInclude>
+    <ClInclude Include="squashfs_fs.h">
       <Filter>Windows headers</Filter>
     </ClInclude>
   </ItemGroup>
