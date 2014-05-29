@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <stdbool.h>
 #include <sys/param.h>
 
 #include "squashfs_fs.h"
@@ -36,13 +37,14 @@ typedef struct {
 	sqfs_inode_num inode_number;
 	int type;
 	char *name;
+	off_t offset, next_offset;
 } sqfs_dir_entry;
 
 typedef struct {
 	sqfs *fs;
 	
 	sqfs_md_cursor cur;
-	size_t remain;
+	size_t total, remain;
 	struct squashfs_dir_header header;
 	
 	char name[SQUASHFS_NAME_LEN+1];
@@ -53,9 +55,10 @@ sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir);
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err);
 
 /* Fast forward in a directory to find a given file */
-sqfs_err sqfs_dir_ff(sqfs_dir *dir, sqfs_inode *inode, const char *name);
+sqfs_err sqfs_dir_ff_offset(sqfs_dir *dir, sqfs_inode *inode, off_t off,
+	bool *found);
 
-/* For lookup functions, returned entry will have no name field */
+/* For lookup name functions, returned entry will have no name field */
 sqfs_err sqfs_lookup_dir(sqfs_dir *dir, const char *name,
 	sqfs_dir_entry *entry);
 sqfs_err sqfs_lookup_dir_fast(sqfs_dir *dir, sqfs_inode *inode,

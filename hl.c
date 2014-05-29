@@ -80,44 +80,65 @@ static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
 
 static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
 	sqfs *fs;
-	sqfs_inode inode;
-	sqfs_dir *dir;
+	sqfs_inode *inode;
+	sqfs_dir dir;
 	
-	if (sqfs_hl_lookup(&fs, &inode, path))
-		return -ENOENT;
-	
-	dir = malloc(sizeof(*dir));
-	if (!dir)
+	inode = malloc(sizeof(*inode));
+	if (!inode)
 		return -ENOMEM;
-	if (sqfs_opendir(fs, &inode, dir)) {
-		free(dir);
+	
+	if (sqfs_hl_lookup(&fs, inode, path)) {
+		free(inode);
+		return -ENOENT;
+	}
+		
+	if (sqfs_opendir(fs, inode, &dir)) {
+		free(inode);
 		return -ENOTDIR;
 	}
-	fi->fh = (intptr_t)dir;
+	
+	fi->fh = (intptr_t)inode;
 	return 0;
 }
 
 static int sqfs_hl_op_releasedir(const char *path,
 		struct fuse_file_info *fi) {
-	free((sqfs_dir*)(intptr_t)fi->fh);
+	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	return 0;
 }
 
-// FIXME: Use offsets??
 static int sqfs_hl_op_readdir(const char *path, void *buf,
 		fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	sqfs_err err;
+	sqfs *fs;
+	sqfs_inode *inode;
+	sqfs_dir dir;
 	sqfs_dir_entry *dentry;
 	struct stat st;
-	sqfs_dir *dir = (sqfs_dir*)(intptr_t)fi->fh;
+	bool found;
+	
+	sqfs_hl_lookup(&fs, NULL, NULL);
+	inode = (sqfs_inode*)(intptr_t)fi->fh;
+	
+	fprintf(stderr, "readdir: off = %lld\n", offset);
+	
+	if (sqfs_opendir(fs, inode, &dir))
+		return -ENOTDIR;
+	
+	if (sqfs_dir_ff_offset(&dir, inode, offset, &found))
+		return -EINVAL;
+	if (!found)
+		return 0;
+	dentry = &dir.entry;
 	
 	memset(&st, 0, sizeof(st));
-	
-	while ((dentry = sqfs_readdir(dir, &err))) {
+	do {
 		st.st_mode = sqfs_mode(dentry->type);
-		filler(buf, dentry->name, &st, 0);
-	}
+		fprintf(stderr, "   %s\n", dentry->name);
+		if (filler(buf, dentry->name, &st, dentry->next_offset))
+			return 0;
+	} while ((dentry = sqfs_readdir(&dir, &err)));
 	if (err)
 		return -EIO;
 	return 0;
