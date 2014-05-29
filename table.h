@@ -34,7 +34,7 @@ typedef struct {
 	uint64_t *blocks;
 } sqfs_table;
 
-sqfs_err sqfs_table_init(sqfs_table *table, int fd, off_t start, size_t each,
+sqfs_err sqfs_table_init(sqfs_table *table, int fd, sq_off_t start, size_t each,
 	size_t count);
 void sqfs_table_destroy(sqfs_table *table);
 

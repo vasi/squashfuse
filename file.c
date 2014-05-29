@@ -109,11 +109,11 @@ sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
-		off_t *size, void *buf) {
+sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sq_off_t start,
+		sq_off_t *size, void *buf) {
 	sqfs_err err = SQFS_OK;
 	
-	off_t file_size;
+	sq_off_t file_size;
 	size_t block_size;
 	sqfs_blocklist bl;
 	
@@ -250,7 +250,7 @@ sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 }
 
 sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
-		sqfs_blocklist *bl, off_t start) {
+		sqfs_blocklist *bl, sq_off_t start) {
 	size_t block, metablock, skipped;
 	sqfs_blockidx_entry *blockidx, **bp;
 	sqfs_cache_idx idx;

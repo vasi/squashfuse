@@ -114,7 +114,7 @@ void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
 	*size = hdr & ~SQUASHFS_COMPRESSED_BIT_BLOCK;
 }
 
-sqfs_err sqfs_block_read(sqfs *fs, off_t pos, bool compressed,
+sqfs_err sqfs_block_read(sqfs *fs, sq_off_t pos, bool compressed,
 		uint32_t size, size_t outsize, sqfs_block **block) {
 	sqfs_err err = SQFS_ERR;
 	if (!(*block = malloc(sizeof(**block))))
@@ -150,7 +150,7 @@ error:
 	return err;
 }
 
-sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
+sqfs_err sqfs_md_block_read(sqfs *fs, sq_off_t pos, size_t *data_size,
 		sqfs_block **block) {
 	sqfs_err err = SQFS_OK;
 	uint16_t hdr;
@@ -173,7 +173,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, off_t pos, size_t *data_size,
 	return err;
 }
 
-sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
+sqfs_err sqfs_data_block_read(sqfs *fs, sq_off_t pos, uint32_t hdr,
 		sqfs_block **block) {
 	bool compressed;
 	uint32_t size;
@@ -182,7 +182,7 @@ sqfs_err sqfs_data_block_read(sqfs *fs, off_t pos, uint32_t hdr,
 		fs->sb.block_size, block);
 }
 
-sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
+sqfs_err sqfs_md_cache(sqfs *fs, sq_off_t *pos, sqfs_block **block) {
 	sqfs_block_cache_entry *entry = sqfs_cache_get(
 		&fs->md_cache, *pos);
 	if (!entry) {
@@ -199,7 +199,7 @@ sqfs_err sqfs_md_cache(sqfs *fs, off_t *pos, sqfs_block **block) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, off_t pos,
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sq_off_t pos,
 		uint32_t hdr, sqfs_block **block) {
 	sqfs_block_cache_entry *entry = sqfs_cache_get(cache, pos);
 	if (!entry) {
@@ -219,13 +219,13 @@ void sqfs_block_dispose(sqfs_block *block) {
 	free(block);
 }
 
-void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, off_t base) {
+void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sq_off_t base) {
 	cur->block = (id >> 16) + base;
 	cur->offset = id & 0xffff;
 }
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
-	off_t pos = cur->block;
+	sq_off_t pos = cur->block;
 	while (size > 0) {
 		sqfs_block *block;
 		size_t take;

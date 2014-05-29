@@ -58,8 +58,8 @@ void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode, sqfs_blocklist *bl);
 sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl);
 
 
-sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, off_t start,
-	off_t *size, void *buf);
+sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sq_off_t start,
+	sq_off_t *size, void *buf);
 
 
 typedef struct {
@@ -74,6 +74,6 @@ sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 
 /* Get a blocklist fast-forwarded to the correct location */
 sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
-	sqfs_blocklist *bl, off_t start);
+	sqfs_blocklist *bl, sq_off_t start);
 
 #endif

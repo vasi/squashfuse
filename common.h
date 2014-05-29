@@ -32,6 +32,7 @@
 #else
 	typedef mode_t sq_mode_t;
 	typedef uid_t sq_id_t;
+	typedef off_t sq_off_t;
 #endif
 
 #include <stdint.h>
@@ -59,7 +60,7 @@ typedef struct {
 } sqfs_block;
 
 typedef struct {
-	off_t block;
+	sq_off_t block;
 	size_t offset;
 } sqfs_md_cursor;
 
