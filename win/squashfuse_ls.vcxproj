@@ -41,9 +41,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -76,7 +78,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\cache.c" />
+    <ClCompile Include="..\decompress.c" />
+    <ClCompile Include="..\dir.c" />
+    <ClCompile Include="..\file.c" />
+    <ClCompile Include="..\fs.c" />
+    <ClCompile Include="..\hash.c" />
+    <ClCompile Include="..\nonstd-pread.c" />
     <ClCompile Include="..\squashfuse_ls.c" />
+    <ClCompile Include="..\swap.c" />
+    <ClCompile Include="..\table.c" />
+    <ClCompile Include="..\xattr.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\cache.h" />
+    <ClInclude Include="..\common.h" />
+    <ClInclude Include="..\decompress.h" />
+    <ClInclude Include="..\dir.h" />
+    <ClInclude Include="..\file.h" />
+    <ClInclude Include="..\hash.h" />
+    <ClInclude Include="..\nonstd-internal.h" />
+    <ClInclude Include="..\nonstd.h" />
+    <ClInclude Include="..\squashfs_fs.h" />
+    <ClInclude Include="..\squashfuse.h" />
+    <ClInclude Include="..\swap.h" />
+    <ClInclude Include="..\table.h" />
+    <ClInclude Include="..\xattr.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
