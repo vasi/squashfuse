@@ -323,46 +323,6 @@ static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_none(req);
 }
 
-static void sqfs_usage(char *name, bool fuse_usage) {
-	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
-	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
-		name ? name : PACKAGE_NAME);
-	if (fuse_usage) {
-		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
-		fuse_opt_add_arg(&args, ""); /* progname */
-		fuse_opt_add_arg(&args, "-ho");
-		fprintf(stderr, "\n");
-		fuse_parse_cmdline(&args, NULL, NULL, NULL);
-	}
-	exit(-2);
-}
-
-typedef struct {
-	char *progname;
-	const char *image;
-	int mountpoint;
-} sqfs_ll_opts;
-
-static int sqfs_ll_opt_proc(void *data, const char *arg, int key,
-		struct fuse_args *outargs) {
-	sqfs_ll_opts *opts = (sqfs_ll_opts*)data;
-	if (key == FUSE_OPT_KEY_NONOPT) {
-		if (opts->mountpoint) {
-			return -1; /* Too many args */
-		} else if (opts->image) {
-			opts->mountpoint = 1;
-			return 1;
-		} else {
-			opts->image = arg;
-			return 0;
-		}
-	} else if (key == FUSE_OPT_KEY_OPT) {
-		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
-			sqfs_usage(opts->progname, true);
-	}
-	return 1; /* Keep */
-}
-
 
 /* Helpers to abstract out FUSE 2.5 vs 2.6+ differences */
 
@@ -417,7 +377,7 @@ static sqfs_ll *sqfs_ll_open(const char *path) {
 
 int main(int argc, char *argv[]) {
 	struct fuse_args args;
-	sqfs_ll_opts opts;
+	sqfs_opts opts;
 	
 	char *mountpoint = NULL;
 	int mt, fg;
@@ -448,7 +408,7 @@ int main(int argc, char *argv[]) {
 	opts.progname = argv[0];
 	opts.image = NULL;
 	opts.mountpoint = 0;
-	if (fuse_opt_parse(&args, &opts, NULL, sqfs_ll_opt_proc) == -1)
+	if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 
 	if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)

@@ -221,46 +221,6 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
 	return real;
 }
 
-static void sqfs_hl_usage(char *name, bool fuse_usage) {
-	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
-	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
-		name ? name : PACKAGE_NAME);
-	if (fuse_usage) {
-		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
-		fuse_opt_add_arg(&args, ""); /* progname */
-		fuse_opt_add_arg(&args, "-ho");
-		fprintf(stderr, "\n");
-		fuse_parse_cmdline(&args, NULL, NULL, NULL);
-	}
-	exit(-2);
-}
-
-typedef struct {
-	char *progname;
-	const char *image;
-	int mountpoint;
-} sqfs_hl_opts;
-
-static int sqfs_hl_opt_proc(void *data, const char *arg, int key,
-		struct fuse_args *outargs) {
-	sqfs_hl_opts *opts = (sqfs_hl_opts*)data;
-	if (key == FUSE_OPT_KEY_NONOPT) {
-		if (opts->mountpoint) {
-			return -1; /* Too many args */
-		} else if (opts->image) {
-			opts->mountpoint = 1;
-			return 1;
-		} else {
-			opts->image = arg;
-			return 0;
-		}
-	} else if (key == FUSE_OPT_KEY_OPT) {
-		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
-			sqfs_hl_usage(opts->progname, true);
-	}
-	return 1; /* Keep */
-}
-
 static sqfs_hl *sqfs_hl_open(const char *path) {
 	sqfs_hl *hl;
 	
@@ -285,8 +245,7 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
 
 int main(int argc, char *argv[]) {
 	struct fuse_args args;
-	sqfs_hl_opts opts;
-	
+	sqfs_opts opts;
 	sqfs_hl *hl;
 	
 	struct fuse_operations sqfs_hl_ops;
@@ -303,8 +262,7 @@ int main(int argc, char *argv[]) {
 	sqfs_hl_ops.readlink	= sqfs_hl_op_readlink;
 	sqfs_hl_ops.listxattr	= sqfs_hl_op_listxattr;
 	sqfs_hl_ops.getxattr	= sqfs_hl_op_getxattr;
-   
-	/* PARSE ARGS */
+  
 	args.argc = argc;
 	args.argv = argv;
 	args.allocated = 0;
@@ -312,8 +270,10 @@ int main(int argc, char *argv[]) {
 	opts.progname = argv[0];
 	opts.image = NULL;
 	opts.mountpoint = 0;
-	if (fuse_opt_parse(&args, &opts, NULL, sqfs_hl_opt_proc) == -1)
-		sqfs_hl_usage(argv[0], true);
+	if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
+		sqfs_usage(argv[0], true);
+	if (!opts.image)
+		sqfs_usage(argv[0], true);
 	
 	hl = sqfs_hl_open(opts.image);
 	if (!hl)

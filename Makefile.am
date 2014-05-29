@@ -18,17 +18,19 @@ libsquashfuse_la_LIBADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS)
 
 libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
 	fuseprivate.h
+libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
+libfuseprivate_la_LIBADD = $(FUSE_LIBS)
 
 
 bin_PROGRAMS = squashfuse squashfuse_hl
 
 squashfuse_SOURCES = ll.c squashfuse.c nonstd-daemon.c ll.h
 squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_LDADD = $(FUSE_LIBS) libsquashfuse.la libfuseprivate.la
+squashfuse_LDADD = libsquashfuse.la libfuseprivate.la
 
 squashfuse_hl_SOURCES = hl.c
 squashfuse_hl_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_hl_LDADD = $(FUSE_LIBS) libsquashfuse.la libfuseprivate.la
+squashfuse_hl_LDADD = libsquashfuse.la libfuseprivate.la
 
 
 dist_man_MANS = squashfuse.1

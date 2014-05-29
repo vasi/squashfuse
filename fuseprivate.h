@@ -39,5 +39,16 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image);
 /* Populate an xattr list. Return an errno value. */
 int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
 
+/* Print a usage string */
+void sqfs_usage(char *progname, bool fuse_usage);
+
+/* Parse command-line arguments */
+typedef struct {
+	char *progname;
+	const char *image;
+	int mountpoint;
+} sqfs_opts;
+int sqfs_opt_proc(void *data, const char *arg, int key,
+	struct fuse_args *outargs);
 
 #endif
