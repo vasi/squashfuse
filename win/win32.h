@@ -39,5 +39,6 @@ typedef uint32_t sq_id_t; /* Internal uids/gids are 32-bits */
 
 typedef SSIZE_T ssize_t;
 typedef DWORD64 sq_off_t;
+typedef HANDLE sq_fd_t;
 
 #endif

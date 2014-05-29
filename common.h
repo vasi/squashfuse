@@ -33,6 +33,7 @@
 	typedef mode_t sq_mode_t;
 	typedef uid_t sq_id_t;
 	typedef off_t sq_off_t;
+	typedef int sq_fd_t;
 #endif
 
 #include <stdint.h>

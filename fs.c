@@ -52,7 +52,7 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, int fd) {
+sqfs_err sqfs_init(sqfs *fs, sq_fd_t fd) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
