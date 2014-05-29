@@ -120,9 +120,7 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 	
 	sqfs_hl_lookup(&fs, NULL, NULL);
 	inode = (sqfs_inode*)(intptr_t)fi->fh;
-	
-	fprintf(stderr, "readdir: off = %lld\n", offset);
-	
+		
 	if (sqfs_opendir(fs, inode, &dir))
 		return -ENOTDIR;
 	
@@ -135,7 +133,6 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 	memset(&st, 0, sizeof(st));
 	do {
 		st.st_mode = sqfs_mode(dentry->type);
-		fprintf(stderr, "   %s\n", dentry->name);
 		if (filler(buf, dentry->name, &st, dentry->next_offset))
 			return 0;
 	} while ((dentry = sqfs_readdir(&dir, &err)));

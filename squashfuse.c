@@ -58,83 +58,90 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	sqfs_ll_i lli;
-	sqfs_dir *dir;
+	sqfs_ll_i *lli;
+	sqfs_dir dir;
 	
 	fi->fh = (intptr_t)NULL;
 	
-	if (sqfs_ll_iget(req, &lli, ino))
-		return;
-	
-	dir = malloc(sizeof(sqfs_dir));
-	if (!dir) {
+	lli = malloc(sizeof(*lli));
+	if (!lli) {
 		fuse_reply_err(req, ENOMEM);
-	} else {
-		if (sqfs_opendir(&lli.ll->fs, &lli.inode, dir)) {
+		return;
+	}
+	
+	if (sqfs_ll_iget(req, lli, ino) == SQFS_OK) {
+		if (sqfs_opendir(&lli->ll->fs, &lli->inode, &dir)) {
 			fuse_reply_err(req, ENOTDIR);
 		} else {
-			fi->fh = (intptr_t)dir;
+			fi->fh = (intptr_t)lli;
 			fuse_reply_open(req, fi);
 			return;
 		}
-		free(dir);
 	}
+	free(lli);
 }
 
 static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	free((sqfs_dir*)(intptr_t)fi->fh);
+	free((sqfs_ll_i*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); /* yes, this is necessary */
 }
 
-static void sqfs_ll_add_direntry(fuse_req_t req, const char *name,
-		const struct stat *st, off_t off) {
-	size_t bsize;
-	char *buf;
-	
+static size_t sqfs_ll_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
+		const char *name, const struct stat *st, off_t off) {
 	#if HAVE_DECL_FUSE_ADD_DIRENTRY
-		bsize = fuse_add_direntry(req, NULL, 0, name, st, 0);
+		return fuse_add_direntry(req, buf, bufsize, name, st, off);
 	#else
-		bsize = fuse_dirent_size(strlen(name));
+		size_t esize = fuse_dirent_size(strlen(name));
+		if (bufsize >= esize)
+			fuse_add_dirent(buf, name, st, off);
+		return esize;
 	#endif
-	
-	buf = malloc(bsize);
-	if (!buf) {
-		fuse_reply_err(req, ENOMEM);
-	} else {
-		#if HAVE_DECL_FUSE_ADD_DIRENTRY
-			fuse_add_direntry(req, buf, bsize, name, st, off + bsize);
-		#else
-			fuse_add_dirent(buf, name, st, off + bsize);
-		#endif
-		fuse_reply_buf(req, buf, bsize);
-		free(buf);
-	}
 }
-
-/* TODO: More efficient to return multiple entries at a time? */
 static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
-	sqfs_ll_i lli;
-	sqfs_dir *dir;
-	sqfs_dir_entry *entry;
-	sqfs_err err = SQFS_OK;
+	sqfs_err sqerr;
+	sqfs_dir dir;
+	sqfs_dir_entry *dentry;
+	size_t esize;
+	struct stat st;
+	bool found;
 	
-	sqfs_ll_iget(req, &lli, SQFS_FUSE_INODE_NONE);
+	char *buf = NULL, *bufpos = NULL;
+	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
+	int err = 0;
 	
-	dir = (sqfs_dir*)(intptr_t)fi->fh;
-	entry = sqfs_readdir(dir, &err);
-	if (err) {
-		fuse_reply_err(req, EIO);
-	} else if (!entry) {
-		fuse_reply_buf(req, NULL, 0);
-	} else {
-		struct stat st;
+	if (sqfs_opendir(&lli->ll->fs, &lli->inode, &dir))
+		err = ENOTDIR;
+	if (!err && sqfs_dir_ff_offset(&dir, &lli->inode, off, &found))
+		err = EINVAL;
+	if (!err && found && !(bufpos = buf = malloc(size)))
+		err = ENOMEM;
+	
+	if (!err && found) {
 		memset(&st, 0, sizeof(st));
-		st.st_ino = lli.ll->ino_fuse_num(lli.ll, entry);
-		st.st_mode = sqfs_mode(entry->type);
-		sqfs_ll_add_direntry(req, entry->name, &st, off);
+		dentry = &dir.entry;
+		do {
+			st.st_ino = lli->ll->ino_fuse_num(lli->ll, dentry);
+			st.st_mode = sqfs_mode(dentry->type);
+		
+			esize = sqfs_ll_add_direntry(req, bufpos, size, dentry->name, &st,
+				dentry->next_offset);
+			if (esize > size)
+				break;
+		
+			bufpos += esize;
+			size -= esize;
+		} while ((dentry = sqfs_readdir(&dir, &sqerr)));
+		if (sqerr)
+			err = EIO;
 	}
+	
+	if (err)
+		fuse_reply_err(req, err);
+	else
+		fuse_reply_buf(req, buf, bufpos - buf);
+	free(buf);
 }
 
 static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
