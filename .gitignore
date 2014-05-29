@@ -19,3 +19,9 @@ config.*
 configure
 libtool
 stamp-h1
+
+win/Debug
+win/Release
+*.sdf
+*.opensdf
+*.suo
