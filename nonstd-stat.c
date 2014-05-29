@@ -29,6 +29,7 @@
 
 #include <sys/stat.h>
 
+#include "common.h"
 #include "squashfs_fs.h"
 
 /* S_IF* are not standard */

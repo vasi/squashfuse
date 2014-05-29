@@ -30,4 +30,9 @@
 typedef unsigned short sq_mode_t;
 typedef uint32_t sq_id_t; /* Internal uids/gids are 32-bits */
 
+#define S_IFIFO 0010000
+#define S_IFBLK 0060000
+#define S_IFLNK 0120000
+#define S_IFSOCK 0140000
+
 #endif
