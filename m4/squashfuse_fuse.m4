@@ -32,7 +32,7 @@ AC_DEFUN([SQ_CHECK_FUSE],[
 		do
 			SQ_SAVE_FLAGS
 			AS_IF([test "x$sq_lib" = x],,[LIBS="$LIBS -l$sq_lib"])
-			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_lowlevel_new])],[
+			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_get_context])],[
 				AS_IF([test "x$sq_lib" = x],[sq_lib_out="already present"],
 					[sq_lib_out="-l$sq_lib"])
 				AS_VAR_SET([sq_cv_lib],[$sq_lib_out])
@@ -47,7 +47,10 @@ AC_DEFUN([SQ_CHECK_FUSE],[
 	AS_IF([test "x$sq_fuse_ok" = "xno"],,[
 		AS_VAR_PUSHDEF([sq_cv_hdr],[sq_cv_header_fuse_""$CPPFLAGS])
 		AC_CACHE_CHECK([for FUSE header],[sq_cv_hdr],[
-			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>])],
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+					#include <fuse.h>
+					#include <fuse_opt.h>
+				])],
 				[AS_VAR_SET([sq_cv_hdr],[yes])],
 				[AS_VAR_SET([sq_cv_hdr],[no])]
 			)
@@ -163,6 +166,27 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		[AC_MSG_FAILURE([Can't find FUSE])])
 ])
 
+# SQ_FUSE_API_LOWLEVEL
+#
+# Check if we have the low-level FUSE API available
+AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
+	SQ_SAVE_FLAGS
+	LIBS="$LIBS $FUSE_LIBS"
+	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
+	
+	sq_fuse_lowlevel="low-level"
+	AC_CHECK_DECL([fuse_lowlevel_new],,[sq_fuse_lowlevel=],
+		[#include <fuse_lowlevel.h>])
+	AC_CHECK_FUNC([fuse_lowlevel_new],,[sq_fuse_lowlevel=])
+	AM_CONDITIONAL([HAVE_FUSE_LOWLEVEL],
+		[test "x$sq_fuse_lowlevel" = xlow-level])
+	
+	AS_IF([test "x$sq_fuse_lowlevel" = x],
+		[AC_MSG_WARN([The low-level FUSE API is not available, will only compile squashfuse_hl])])
+	
+	SQ_RESTORE_FLAGS
+])
+
 # SQ_FUSE_API_VERSION
 #
 # Check various things that are different in different versions of FUSE
@@ -171,27 +195,31 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 	LIBS="$LIBS $FUSE_LIBS"
 	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
-	AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
-		[#include <fuse_lowlevel.h>])
-	AS_IF([test "x$found_dirent" = xyes],,
-		[AC_MSG_FAILURE([No way to add directory entries])])
+	AS_IF([test "x$sq_fuse_lowlevel" = xyes],[
+		AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
+			[#include <fuse_lowlevel.h>])
+		AS_IF([test "x$found_dirent" = xyes],,
+			[AC_MSG_FAILURE([No way to add directory entries])])
 
-	AC_CHECK_DECLS([fuse_daemonize],,
-		[SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[(void)daemon;])],
-		[#include <fuse_lowlevel.h>])
+		AC_CHECK_DECLS([fuse_daemonize],,
+			[SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[(void)daemon;])],
+			[#include <fuse_lowlevel.h>])
 
-	AC_CHECK_DECLS([fuse_session_remove_chan],,,[#include <fuse_lowlevel.h>])
+		AC_CHECK_DECLS([fuse_session_remove_chan],,,
+			[#include <fuse_lowlevel.h>])
 	
-	AC_CACHE_CHECK([for two-argument fuse_unmount],
-			[sq_cv_decl_fuse_unmount_two_arg],[
-		AC_LINK_IFELSE([
-			AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[fuse_unmount(0,0)])],
-			[sq_cv_decl_fuse_unmount_two_arg=yes],
-			[sq_cv_decl_fuse_unmount_two_arg=no])
-	])
-	AS_IF([test "x$sq_cv_decl_fuse_unmount_two_arg" = xyes],[
-		AC_DEFINE([HAVE_NEW_FUSE_UNMOUNT],1,
-				[Define if we have two-argument fuse_unmount])
+		AC_CACHE_CHECK([for two-argument fuse_unmount],
+				[sq_cv_decl_fuse_unmount_two_arg],[
+			AC_LINK_IFELSE(
+				[AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],
+					[fuse_unmount(0,0)])],
+				[sq_cv_decl_fuse_unmount_two_arg=yes],
+				[sq_cv_decl_fuse_unmount_two_arg=no])
+		])
+		AS_IF([test "x$sq_cv_decl_fuse_unmount_two_arg" = xyes],[
+			AC_DEFINE([HAVE_NEW_FUSE_UNMOUNT],1,
+					[Define if we have two-argument fuse_unmount])
+		])
 	])
 	
 	SQ_RESTORE_FLAGS
@@ -207,8 +235,8 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
 	
 	AC_CACHE_CHECK([for position argument to FUSE xattr operations],
 		[sq_cv_decl_fuse_xattr_position],[
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],[
-				struct fuse_lowlevel_ops ops;
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse.h>],[
+				struct fuse_operations ops;
 				ops.getxattr(0, 0, 0, 0, 0);
 			])],
 			[sq_cv_decl_fuse_xattr_position=yes],

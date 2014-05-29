@@ -34,6 +34,7 @@ AS_IF([test "x$sq_decompressors" = x],
 
 # FUSE
 SQ_FIND_FUSE
+SQ_FUSE_API_LOWLEVEL
 SQ_FUSE_API_VERSION
 SQ_FUSE_API_XATTR_POSITION
 
@@ -49,3 +50,4 @@ AC_OUTPUT
 
 AS_ECHO()
 AS_ECHO(["Compression support:$sq_decompressors"])
+AS_ECHO(["FUSE API support: high-level $sq_fuse_lowlevel"])
