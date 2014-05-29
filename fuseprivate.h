@@ -36,4 +36,8 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
 /* Open a filesystem and handle errors */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image);
 
+/* Populate an xattr list. Return an errno value. */
+int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
+
+
 #endif

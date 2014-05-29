@@ -255,52 +255,21 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	}
 }
 
-static int sqfs_ll_listxattr_real(sqfs_xattr *x, char *buf, size_t *size) {
-	size_t count = 0;
-	
-	while (x->remain) {
-		size_t n;
-		if (sqfs_xattr_read(x))
-			 return EIO;
-		n = sqfs_xattr_name_size(x);
-		count += n + 1;
-		
-		if (buf) {
-			if (count > *size)
-				return ERANGE;
-			if (sqfs_xattr_name(x, buf, true))
-				return EIO;
-			buf += n;
-			*buf++ = '\0';
-		}
-	}
-	*size = count;
-	return 0;
-}
-
 static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	sqfs_ll_i lli;
-	sqfs_xattr x;
 	char *buf;
 	int ferr;
 	
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 
-	if (sqfs_xattr_open(&lli.ll->fs, &lli.inode, &x)) {
-		fuse_reply_err(req, EIO);
+	buf = NULL;
+	if (size && !(buf = malloc(size))) {
+		fuse_reply_err(req, ENOMEM);
 		return;
 	}
 	
-	buf = NULL;
-	if (size) {
-		if (!(buf = malloc(size))) {
-			fuse_reply_err(req, ENOMEM);
-			return;
-		}
-	}
-	
-	ferr = sqfs_ll_listxattr_real(&x, buf, &size);
+	ferr = sqfs_listxattr(&lli.ll->fs, &lli.inode, buf, &size);
 	if (ferr) {
 		fuse_reply_err(req, ferr);
 	} else if (buf) {

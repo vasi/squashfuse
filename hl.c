@@ -180,43 +180,15 @@ static int sqfs_hl_op_readlink(const char *path, char *buf, size_t size) {
 	return 0;
 }
 
-// FIXME: share
-static int sqfs_hl_listxattr_real(sqfs_xattr *x, char *buf, size_t *size) {
-	size_t count = 0;
-	
-	while (x->remain) {
-		size_t n;
-		if (sqfs_xattr_read(x))
-			 return EIO;
-		n = sqfs_xattr_name_size(x);
-		count += n + 1;
-		
-		if (buf) {
-			if (count > *size)
-				return ERANGE;
-			if (sqfs_xattr_name(x, buf, true))
-				return EIO;
-			buf += n;
-			*buf++ = '\0';
-		}
-	}
-	*size = count;
-	return 0;
-}
-
 static int sqfs_hl_op_listxattr(const char *path, char *buf, size_t size) {
 	sqfs *fs;
 	sqfs_inode inode;
-	sqfs_xattr x;
 	int ferr;
 	
 	if (sqfs_hl_lookup(&fs, &inode, path))
 		return -ENOENT;
 
-	if (sqfs_xattr_open(fs, &inode, &x))
-		return -EIO;
-	
-	ferr = sqfs_hl_listxattr_real(&x, buf, &size);
+	ferr = sqfs_listxattr(fs, &inode, buf, &size);
 	if (ferr)
 		return -ferr;
 	return size;
