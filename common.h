@@ -31,6 +31,7 @@
 	#include <win32.h>
 #else
 	typedef mode_t sq_mode_t;
+	typedef uid_t sq_id_t;
 #endif
 
 #include <stdint.h>

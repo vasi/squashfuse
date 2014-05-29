@@ -28,5 +28,6 @@
 #include "squashfs_fs.h" /* Windows-specific version */
 
 typedef unsigned short sq_mode_t;
+typedef uint32_t sq_id_t; /* Internal uids/gids are 32-bits */
 
 #endif

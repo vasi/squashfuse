@@ -259,13 +259,13 @@ size_t sqfs_divceil(size_t total, size_t group) {
 	return q;
 }
 
-sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, uid_t *id) {
+sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sq_id_t *id) {
 	uint32_t rid;
 	sqfs_err err = sqfs_table_get(&fs->id_table, fs, idx, &rid);
 	if (err)
 		return err;
 	sqfs_swapin32(&rid);
-	*id = (uid_t)rid;
+	*id = (sq_id_t)rid;
 	return SQFS_OK;
 }
 
