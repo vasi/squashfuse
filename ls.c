@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "traverse.h"
 #include "squashfuse.h"
 #include "dir.h"
 
@@ -129,6 +130,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ls_path path;
 	sqfs_dir_entry dentry;
 	sqfs_name namebuf;
+	sqfs_traverse trv;
 	sqfs fs;
 
 	sqfs_fd_t file;
@@ -149,29 +151,43 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "squashfuse init error: %d\n", err);
 		exit(-1);
 	}
-
-	sqfs_ls_path_init(&path, &fs);
-	sqfs_ls_path_push(&path, fs.sb.root_inode, NULL);
-
-	sqfs_dentry_init(&dentry, namebuf);
-	while (path.size > 0) {
-		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
-		bool has_next = sqfs_dir_next(&fs, &dir->dir, &dentry, &err);
-		if (err)
-			die("sqfs_dir_next error");
-
-		if (has_next) {
-			const char *name = sqfs_dentry_name(&dentry);
-			sqfs_ls_path_print(&path, '/', name); // FIXME: separator
-			if (S_ISDIR(sqfs_dentry_mode(&dentry)))
-				sqfs_ls_path_push(&path, sqfs_dentry_inode(&dentry), name);
-		} else {
-			sqfs_ls_path_pop(&path);
-		}
+	
+	if ((err = sqfs_traverse_open(&trv, &fs, fs.sb.root_inode)))
+		die("sqfs_traverse_open error");
+	while (sqfs_traverse_next(&trv, &err)) {
+		if (!trv.dir_end)
+			printf("%s\n", sqfs_dentry_name(&trv.entry));
 	}
-
-	sqfs_ls_path_destroy(&path);
+	if (err)
+		die("sqfs_traverse_next error");
+	sqfs_traverse_close(&trv);
+	
 	close(file);
-
 	return 0;
 }
+	
+// 	sqfs_ls_path_init(&path, &fs);
+// 	sqfs_ls_path_push(&path, fs.sb.root_inode, NULL);
+// 
+// 	sqfs_dentry_init(&dentry, namebuf);
+// 	while (path.size > 0) {
+// 		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
+// 		bool has_next = sqfs_dir_next(&fs, &dir->dir, &dentry, &err);
+// 		if (err)
+// 			die("sqfs_dir_next error");
+// 
+// 		if (has_next) {
+// 			const char *name = sqfs_dentry_name(&dentry);
+// 			sqfs_ls_path_print(&path, '/', name); // FIXME: separator
+// 			if (S_ISDIR(sqfs_dentry_mode(&dentry)))
+// 				sqfs_ls_path_push(&path, sqfs_dentry_inode(&dentry), name);
+// 		} else {
+// 			sqfs_ls_path_pop(&path);
+// 		}
+// 	}
+// 
+// 	sqfs_ls_path_destroy(&path);
+// 	close(file);
+// 
+// 	return 0;
+// }

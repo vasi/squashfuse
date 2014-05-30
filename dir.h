@@ -83,6 +83,7 @@ sqfs_mode_t			sqfs_dentry_mode				(sqfs_dir_entry *entry);
 sqfs_inode_id		sqfs_dentry_inode				(sqfs_dir_entry *entry);
 sqfs_inode_num	sqfs_dentry_inode_num		(sqfs_dir_entry *entry);
 size_t					sqfs_dentry_name_size		(sqfs_dir_entry *entry);
+bool						sqfs_dentry_is_dir			(sqfs_dir_entry *entry);
 
 /* Yields the name of this directory entry, or NULL if the dir_entry structure
    was initialized without a name buffer. Name will be nul-terminated. */

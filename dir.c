@@ -114,6 +114,11 @@ const char *sqfs_dentry_name(sqfs_dir_entry *entry) {
 	return entry->name;
 }
 
+bool sqfs_dentry_is_dir(sqfs_dir_entry *entry) {
+	return S_ISDIR(sqfs_dentry_mode(entry));
+}
+
+
 
 bool sqfs_dir_next(sqfs *fs, sqfs_dir *dir, sqfs_dir_entry *entry,
 		sqfs_err *err) {
