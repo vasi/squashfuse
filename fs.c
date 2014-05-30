@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #define DATA_CACHED_BLKS 1
 #define FRAG_CACHED_BLKS 3
@@ -252,8 +251,8 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 	return SQFS_OK;
 }
 
-size_t sqfs_divceil(size_t total, size_t group) {
-	size_t q = total / group;
+size_t sqfs_divceil(uint64_t total, size_t group) {
+	size_t q = (size_t)(total / group);
 	if (total % group)
 		q += 1;
 	return q;
@@ -270,12 +269,13 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sq_id_t *id) {
 }
 
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
+	size_t want;
 	sqfs_md_cursor cur;
 	sqfs_err err = SQFS_OK;
 	if (!S_ISLNK(inode->base.mode))
 		return SQFS_ERR;
 
-	size_t want = inode->xtra.symlink_size;
+	want = inode->xtra.symlink_size;
 	if (!buf) {
 		*size = want;
 		return SQFS_OK;

@@ -87,7 +87,7 @@ void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 	int *max_minor);
 
 /* Number of groups of size 'group' required to hold size 'total' */
-size_t sqfs_divceil(size_t total, size_t group);
+size_t sqfs_divceil(uint64_t total, size_t group);
 
 
 sqfs_err sqfs_init(sqfs *fs, sq_fd_t fd);
