@@ -47,12 +47,21 @@ struct sqfs_hl {
 
 static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 		const char *path) {
+	bool found;
+	
 	sqfs_hl *hl = fuse_get_context()->private_data;
 	*fs = &hl->fs;
 	if (inode)
 		*inode = hl->root; /* copy */
 
-	return path ? sqfs_lookup_path(*fs, inode, path) : SQFS_OK;
+	if (path) {
+		sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found);
+		if (err)
+			return err;
+		if (!found)
+			return SQFS_ERR;
+	}
+	return SQFS_OK;
 }
 
 
@@ -81,7 +90,6 @@ static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
 static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
 	sqfs *fs;
 	sqfs_inode *inode;
-	sqfs_dir dir;
 	
 	inode = malloc(sizeof(*inode));
 	if (!inode)
@@ -92,7 +100,7 @@ static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
 		return -ENOENT;
 	}
 		
-	if (sqfs_opendir(fs, inode, &dir)) {
+	if (!S_ISDIR(inode->base.mode)) {
 		free(inode);
 		return -ENOTDIR;
 	}
@@ -114,28 +122,24 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 	sqfs *fs;
 	sqfs_inode *inode;
 	sqfs_dir dir;
-	sqfs_dir_entry *dentry;
+	sqfs_name namebuf;
+	sqfs_dir_entry entry;
 	struct stat st;
-	bool found;
 	
 	sqfs_hl_lookup(&fs, NULL, NULL);
 	inode = (sqfs_inode*)(intptr_t)fi->fh;
 		
-	if (sqfs_opendir(fs, inode, &dir))
-		return -ENOTDIR;
-	
-	if (sqfs_dir_ff_offset(&dir, inode, offset, &found))
+	if (sqfs_dir_open(fs, inode, &dir, offset))
 		return -EINVAL;
-	if (!found)
-		return 0;
-	dentry = &dir.entry;
 	
 	memset(&st, 0, sizeof(st));
-	do {
-		st.st_mode = sqfs_mode(dentry->type);
-		if (filler(buf, dentry->name, &st, dentry->next_offset))
+	sqfs_dentry_init(&entry, namebuf);
+	while (sqfs_dir_next(fs, &dir, &entry, &err)) {
+		sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
+		st.st_mode = sqfs_dentry_mode(&entry);
+		if (filler(buf, sqfs_dentry_name(&entry), &st, doff))
 			return 0;
-	} while ((dentry = sqfs_readdir(&dir, &err)));
+	}
 	if (err)
 		return -EIO;
 	return 0;

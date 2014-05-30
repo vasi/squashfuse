@@ -61,7 +61,7 @@ static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 }
 
 static fuse_ino_t sqfs_ll_ino64_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-	return sqfs_ll_ino64_fuse(ll, e->inode);
+	return sqfs_ll_ino64_fuse(ll, sqfs_dentry_inode(e));
 }
 
 static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
@@ -153,23 +153,24 @@ static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 }
 
 static fuse_ino_t sqfs_ll_ino32_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-	return sqfs_ll_ino32_num2fuse(ll, e->inode_number);
+	return sqfs_ll_ino32_num2fuse(ll, sqfs_dentry_inode_num(e));
 }
 
 static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 	sqfs_ll_inode_map *map = ll->ino_data;
 	
-	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, e->inode_number);
+	sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache,
+		sqfs_dentry_inode_num(e));
 	if (ie) {
 		++ie->refcount;
 	} else {
 		sqfs_err err = SQFS_OK;
-		sqfs_inode_id i = e->inode;
+		sqfs_inode_id i = sqfs_dentry_inode(e);
 		sqfs_ll_inode_entry nie;
 		nie.ino_hi = INODE_HI(i);
 		nie.ino_lo = INODE_LO(i);
 		nie.refcount = 1;
-		err = sqfs_hash_add(&map->icache, e->inode_number, &nie);
+		err = sqfs_hash_add(&map->icache, sqfs_dentry_inode_num(e), &nie);
 		if (err)
 			return FUSE_INODE_NONE;
 	}

@@ -59,7 +59,6 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i *lli;
-	sqfs_dir dir;
 	
 	fi->fh = (intptr_t)NULL;
 	
@@ -70,7 +69,7 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 	}
 	
 	if (sqfs_ll_iget(req, lli, ino) == SQFS_OK) {
-		if (sqfs_opendir(&lli->ll->fs, &lli->inode, &dir)) {
+		if (!S_ISDIR(lli->inode.base.mode)) {
 			fuse_reply_err(req, ENOTDIR);
 		} else {
 			fi->fh = (intptr_t)lli;
@@ -102,37 +101,35 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
 	sqfs_err sqerr;
 	sqfs_dir dir;
-	sqfs_dir_entry *dentry;
+	sqfs_name namebuf;
+	sqfs_dir_entry entry;
 	size_t esize;
 	struct stat st;
-	bool found;
 	
 	char *buf = NULL, *bufpos = NULL;
 	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
 	int err = 0;
 	
-	if (sqfs_opendir(&lli->ll->fs, &lli->inode, &dir))
-		err = ENOTDIR;
-	if (!err && sqfs_dir_ff_offset(&dir, &lli->inode, off, &found))
+	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
 		err = EINVAL;
-	if (!err && found && !(bufpos = buf = malloc(size)))
+	if (!err && !(bufpos = buf = malloc(size)))
 		err = ENOMEM;
 	
-	if (!err && found) {
+	if (!err) {
 		memset(&st, 0, sizeof(st));
-		dentry = &dir.entry;
-		do {
-			st.st_ino = lli->ll->ino_fuse_num(lli->ll, dentry);
-			st.st_mode = sqfs_mode(dentry->type);
+		sqfs_dentry_init(&entry, namebuf);
+		while (sqfs_dir_next(&lli->ll->fs, &dir, &entry, &sqerr)) {
+			st.st_ino = lli->ll->ino_fuse_num(lli->ll, &entry);
+			st.st_mode = sqfs_dentry_mode(&entry);
 		
-			esize = sqfs_ll_add_direntry(req, bufpos, size, dentry->name, &st,
-				dentry->next_offset);
+			esize = sqfs_ll_add_direntry(req, bufpos, size, sqfs_dentry_name(&entry),
+				&st, sqfs_dentry_next_offset(&entry));
 			if (esize > size)
 				break;
 		
 			bufpos += esize;
 			size -= esize;
-		} while ((dentry = sqfs_readdir(&dir, &sqerr)));
+		}
 		if (sqerr)
 			err = EIO;
 	}
@@ -147,23 +144,33 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 		const char *name) {
 	sqfs_ll_i lli;
-	sqfs_dir dir;
+	sqfs_err sqerr;
+	sqfs_name namebuf;
 	sqfs_dir_entry entry;
+	bool found;
 	sqfs_inode inode;
 	
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
 	
-	if (sqfs_opendir(&lli.ll->fs, &lli.inode, &dir)) {
+	if (!S_ISDIR(lli.inode.base.mode)) {
 		fuse_reply_err(req, ENOTDIR);
 		return;
 	}
-	if (sqfs_lookup_dir_fast(&dir, &lli.inode, name, &entry)) {
+	
+	sqfs_dentry_init(&entry, namebuf);
+	sqerr = sqfs_dir_lookup(&lli.ll->fs, &lli.inode, name, strlen(name), &entry,
+		&found);
+	if (sqerr) {
+		fuse_reply_err(req, EIO);
+		return;
+	}
+	if (!found) {
 		fuse_reply_err(req, ENOENT);
 		return;
 	}
 	
-	if (sqfs_inode_get(&lli.ll->fs, &inode, entry.inode)) {
+	if (sqfs_inode_get(&lli.ll->fs, &inode, sqfs_dentry_inode(&entry))) {
 		fuse_reply_err(req, ENOENT);
 	} else {
 		struct fuse_entry_param fentry;

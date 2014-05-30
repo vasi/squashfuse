@@ -97,7 +97,7 @@ static sqfs_ls_dir *sqfs_ls_path_expand(sqfs_ls_path *path) {
 }
 
 static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id,
-		char *name) {
+		const char *name) {
 	sqfs_inode inode;
 	sqfs_ls_dir *dir;
 
@@ -105,8 +105,8 @@ static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id,
 		die("sqfs_inode_get error");
 
 	dir = sqfs_ls_path_expand(path);
-	if (sqfs_opendir(path->fs, &inode, &dir->dir))
-		die("sqfs_opendir error");
+	if (sqfs_dir_open(path->fs, &inode, &dir->dir, 0))
+		die("sqfs_dir_open error");
 	
 	dir->name = NULL;
 	if (name && !(dir->name = strdup(name)))
@@ -114,7 +114,7 @@ static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id,
 }
 
 // FIXME: Character encoding? Wide chars on Windows?
-void sqfs_ls_path_print(sqfs_ls_path *path, char sep, char *name) {
+void sqfs_ls_path_print(sqfs_ls_path *path, char sep, const char *name) {
 	size_t i;
 	for (i = 0; i < path->size; ++i) {
 		sqfs_ls_dir *dir = &path->dirs[i];
@@ -127,6 +127,8 @@ void sqfs_ls_path_print(sqfs_ls_path *path, char sep, char *name) {
 int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
 	sqfs_ls_path path;
+	sqfs_dir_entry dentry;
+	sqfs_name namebuf;
 	sqfs fs;
 
 	sqfs_fd_t file;
@@ -151,17 +153,18 @@ int main(int argc, char *argv[]) {
 	sqfs_ls_path_init(&path, &fs);
 	sqfs_ls_path_push(&path, fs.sb.root_inode, NULL);
 
+	sqfs_dentry_init(&dentry, namebuf);
 	while (path.size > 0) {
-		sqfs_dir_entry *dentry;
 		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
-		dentry = sqfs_readdir(&dir->dir, &err);
+		bool has_next = sqfs_dir_next(&fs, &dir->dir, &dentry, &err);
 		if (err)
-			die("sqfs_readdir error");
+			die("sqfs_dir_next error");
 
-		if (dentry) {
-			sqfs_ls_path_print(&path, '/', dentry->name); // FIXME: separator
-			if (S_ISDIR(sqfs_mode(dentry->type)))
-				sqfs_ls_path_push(&path, dentry->inode, dentry->name);
+		if (has_next) {
+			const char *name = sqfs_dentry_name(&dentry);
+			sqfs_ls_path_print(&path, '/', name); // FIXME: separator
+			if (S_ISDIR(sqfs_dentry_mode(&dentry)))
+				sqfs_ls_path_push(&path, sqfs_dentry_inode(&dentry), name);
 		} else {
 			sqfs_ls_path_pop(&path);
 		}
