@@ -30,10 +30,10 @@
 #ifdef _WIN32
 	#include <win32.h>
 #else
-	typedef mode_t sq_mode_t;
-	typedef uid_t sq_id_t;
-	typedef off_t sq_off_t;
-	typedef int sq_fd_t;
+	typedef mode_t sqfs_mode_t;
+	typedef uid_t sqfs_id_t;
+	typedef off_t sqfs_off_t;
+	typedef int sqfs_fd_t;
 #endif
 
 #include <stdint.h>
@@ -61,7 +61,7 @@ typedef struct {
 } sqfs_block;
 
 typedef struct {
-	sq_off_t block;
+	sqfs_off_t block;
 	size_t offset;
 } sqfs_md_cursor;
 

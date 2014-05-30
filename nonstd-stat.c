@@ -33,7 +33,7 @@
 #include "squashfs_fs.h"
 
 /* S_IF* are not standard */
-sq_mode_t sqfs_mode(int inode_type) {
+sqfs_mode_t sqfs_mode(int inode_type) {
 	switch (inode_type) {
 		case SQUASHFS_DIR_TYPE:
 		case SQUASHFS_LDIR_TYPE:

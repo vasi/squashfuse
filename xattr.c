@@ -52,7 +52,7 @@ typedef enum {
 } sqfs_xattr_curs;
 
 sqfs_err sqfs_xattr_init(sqfs *fs) {
-	sq_off_t start = fs->sb.xattr_id_table_start;
+	sqfs_off_t start = fs->sb.xattr_id_table_start;
 	size_t bread;
 	if (start == SQUASHFS_INVALID_BLK)
 		return SQFS_OK;

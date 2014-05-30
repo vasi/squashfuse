@@ -34,7 +34,7 @@ static sqfs_err sqfs_dir_md_read(sqfs_dir *dir, void *buf, size_t size) {
 	return sqfs_md_read(dir->fs, &dir->cur, buf, size);
 }
 
-static sq_off_t sqfs_dir_offset(const sqfs_dir *dir) {
+static sqfs_off_t sqfs_dir_offset(const sqfs_dir *dir) {
 	return dir->total - dir->remain;
 }
 
@@ -56,7 +56,7 @@ sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir) {
 
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 	struct squashfs_dir_entry entry;
-	sq_off_t offset = -1;
+	sqfs_off_t offset = -1;
 	
 	while (dir->header.count == 0) {
 		offset = sqfs_dir_offset(dir);
@@ -100,7 +100,7 @@ sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err) {
 /* Finds the next directory header for a given 'name', if non-null, or an
    'offset'. */
 static sqfs_err sqfs_dir_ff_header(sqfs_dir *dir, sqfs_inode *inode,
-		const char *name, size_t namesize, sq_off_t offset) {
+		const char *name, size_t namesize, sqfs_off_t offset) {
 	size_t skipped = 0;
 	sqfs_md_cursor cur = inode->next;
 	size_t count = inode->xtra.dir.idx_count;
@@ -138,7 +138,7 @@ static sqfs_err sqfs_dir_ff_header(sqfs_dir *dir, sqfs_inode *inode,
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_dir_ff_offset(sqfs_dir *dir, sqfs_inode *inode, sq_off_t off,
+sqfs_err sqfs_dir_ff_offset(sqfs_dir *dir, sqfs_inode *inode, sqfs_off_t off,
 		bool *found) {
 	sqfs_err err;
 	sqfs_dir_entry *dentry;

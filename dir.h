@@ -36,7 +36,7 @@ typedef struct {
 	sqfs_inode_num inode_number;
 	int type;
 	char *name;
-	sq_off_t offset, next_offset;
+	sqfs_off_t offset, next_offset;
 } sqfs_dir_entry;
 
 typedef struct {
@@ -54,7 +54,7 @@ sqfs_err sqfs_opendir(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir);
 sqfs_dir_entry *sqfs_readdir(sqfs_dir *dir, sqfs_err *err);
 
 /* Fast forward in a directory to find a given file */
-sqfs_err sqfs_dir_ff_offset(sqfs_dir *dir, sqfs_inode *inode, sq_off_t off,
+sqfs_err sqfs_dir_ff_offset(sqfs_dir *dir, sqfs_inode *inode, sqfs_off_t off,
 	bool *found);
 
 /* For lookup name functions, returned entry will have no name field */

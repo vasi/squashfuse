@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-sqfs_err sqfs_table_init(sqfs_table *table, sq_fd_t fd, sq_off_t start, size_t each,
+sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start, size_t each,
 		size_t count) {
 	size_t i;
 	size_t nblocks, bread;
@@ -69,7 +69,7 @@ sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
 	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
 		off = pos % SQUASHFS_METADATA_SIZE;
 	
-	sq_off_t bpos = table->blocks[bnum];
+	sqfs_off_t bpos = table->blocks[bnum];
 	if (sqfs_md_cache(fs, &bpos, &block))
 		return SQFS_ERR;
 	

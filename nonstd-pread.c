@@ -30,7 +30,7 @@
 #ifdef _WIN32
 
 #include <win32.h>
-ssize_t sqfs_pread(HANDLE file, void *buf, size_t count, sq_off_t off) {
+ssize_t sqfs_pread(HANDLE file, void *buf, size_t count, sqfs_off_t off) {
 	DWORD bread;
 	OVERLAPPED ov = { 0 };
 	ov.Offset = (DWORD)off;
@@ -45,7 +45,7 @@ ssize_t sqfs_pread(HANDLE file, void *buf, size_t count, sq_off_t off) {
 
 #include <unistd.h>
 
-ssize_t sqfs_pread(sq_fd_t fd, void *buf, size_t count, sq_off_t off) {
+ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off) {
 	return pread(fd, buf, count, off);
 }
 
