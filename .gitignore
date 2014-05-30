@@ -1,6 +1,7 @@
 /*.inc
 squashfuse
 squashfuse_hl
+squashfuse_ls
 *.dSYM
 *.o
 *.lo

@@ -22,11 +22,14 @@ libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 libfuseprivate_la_LIBADD = $(FUSE_LIBS)
 
 
-bin_PROGRAMS = squashfuse_hl
+bin_PROGRAMS = squashfuse_hl squashfuse_ls
+
 squashfuse_hl_SOURCES = hl.c
 squashfuse_hl_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_hl_LDADD = libsquashfuse.la libfuseprivate.la
 
+squashfuse_ls_SOURCES = ls.c
+squashfuse_ls_LDADD = libsquashfuse.la
 
 if HAVE_FUSE_LOWLEVEL
 bin_PROGRAMS += squashfuse

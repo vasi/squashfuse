@@ -23,17 +23,18 @@
 * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "squashfuse.h"
 #include "dir.h"
 
 #define PROGNAME "squashfuse_ls"
 
-// FIXME: wchar?
-// FIXME: progname
-static void sqfs_ls_usage() {
+static void usage() {
 	fprintf(stderr, "%s (c) 2013 Dave Vasilevsky\n\n", PROGNAME);
 	fprintf(stderr, "Usage: %s ARCHIVE\n", PROGNAME);
 	exit(-2);
@@ -86,15 +87,17 @@ static void sqfs_ls_path_destroy(sqfs_ls_path *path) {
 
 static sqfs_ls_dir *sqfs_ls_path_expand(sqfs_ls_path *path) {
 	if (path->size == path->capacity) {
-		path->capacity = path->capacity ? (path->capacity * 3 / 2) : 8;
-		if (!(path->dirs = realloc(path->dirs, path->capacity * sizeof(path->dirs[0]))))
+		path->capacity = path->size ? (path->size * 3 / 2) : 8;
+		path->dirs = realloc(path->dirs, path->capacity * sizeof(path->dirs[0]));
+		if (!path->dirs)
 			die("Out of memory");
 	}
 	path->size++;
 	return sqfs_ls_path_top(path);
 }
 
-static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id, char *name) {
+static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id,
+		char *name) {
 	sqfs_inode inode;
 	sqfs_ls_dir *dir;
 
@@ -106,11 +109,11 @@ static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id, char *
 		die("sqfs_opendir error");
 	
 	dir->name = NULL;
-	if (name && !(dir->name = _strdup(name))) // FIXME: _strdup???
+	if (name && !(dir->name = strdup(name)))
 		die("Out of memory");
 }
 
-// FIXME: Unicode?
+// FIXME: Character encoding? Wide chars on Windows?
 void sqfs_ls_path_print(sqfs_ls_path *path, char sep, char *name) {
 	size_t i;
 	for (i = 0; i < path->size; ++i) {
@@ -121,28 +124,24 @@ void sqfs_ls_path_print(sqfs_ls_path *path, char sep, char *name) {
 	printf("%s\n", name);
 }
 
-
-int wmain(int argc, wchar_t *argv[]) {
+int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
 	sqfs_ls_path path;
 	sqfs fs;
 
 	sqfs_fd_t file;
-	TCHAR *image;
+	char *image;
 
 	if (argc != 2)
-		sqfs_ls_usage();
+		usage();
 	image = argv[1];
 
-	// FIXME: Cross-platform
-	file = CreateFile(image, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (file == INVALID_HANDLE_VALUE) {
-		// FIXME: Better error handling
-		fprintf(stderr, "CreateFile error: %d\n", GetLastError());
-		exit(-1);
-	}
-
 	// FIXME: Use sqfs_open_image()...
+	// FIXME: WIN32 API
+	file = open(image, O_RDONLY);
+	if (file == -1)
+		die("open error");
+
 	err = sqfs_init(&fs, file);
 	if (err) {
 		fprintf(stderr, "squashfuse init error: %d\n", err);
@@ -156,7 +155,7 @@ int wmain(int argc, wchar_t *argv[]) {
 		sqfs_dir_entry *dentry;
 		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
 		dentry = sqfs_readdir(&dir->dir, &err);
-			if (err)
+		if (err)
 			die("sqfs_readdir error");
 
 		if (dentry) {
@@ -169,7 +168,7 @@ int wmain(int argc, wchar_t *argv[]) {
 	}
 
 	sqfs_ls_path_destroy(&path);
-	CloseHandle(file);
+	close(file);
 
 	return 0;
 }
