@@ -67,11 +67,12 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 }
 
 size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode) {
-	uint64_t size = inode->xtra.reg.file_size, block = fs->sb.block_size;
+	uint64_t size = inode->xtra.reg.file_size;
+	size_t block = fs->sb.block_size;
 	if (inode->xtra.reg.frag_idx == SQUASHFS_INVALID_FRAG) {
 		return sqfs_divceil(size, block);
 	} else {
-		return size / block;
+		return (size_t)(size / block);
 	}
 }
 
@@ -159,7 +160,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sq_off_t start,
 			
 			data_off = 0;
 			if (bl.input_size == 0) { /* Hole! */
-				data_size = file_size - bl.pos;
+				data_size = (size_t)(file_size - bl.pos);
 				if (data_size > block_size)
 					data_size = block_size;
 			} else {
@@ -173,7 +174,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sq_off_t start,
 		
 		take = data_size - read_off;
 		if (take > *size)
-			take = *size;
+			take = (size_t)(*size);
 		if (block) {
 			memcpy(buf, (char*)block->data + data_off + read_off, take);
 			/* BLOCK CACHED, DON'T DISPOSE */
@@ -232,7 +233,7 @@ sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 		sqfs_err err = SQFS_OK;
 		if (bl.cur.offset < sizeof(sqfs_blocklist_entry) && !first) {
 			blockidx[i].data_block = bl.block + bl.input_size;
-			blockidx[i++].md_block = bl.cur.block - fs->sb.inode_table_start;
+			blockidx[i++].md_block = (uint32_t)(bl.cur.block - fs->sb.inode_table_start);
 		}
 		first = false;
 		
@@ -256,7 +257,7 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 	sqfs_cache_idx idx;
 	
 	sqfs_blocklist_init(fs, inode, bl);
-	block = start / fs->sb.block_size;
+	block = (size_t)(start / fs->sb.block_size);
 	if (block > bl->remain) { /* fragment */
 		bl->remain = 0;
 		return SQFS_OK;
