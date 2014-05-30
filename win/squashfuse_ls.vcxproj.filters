@@ -36,9 +36,6 @@
     <ClCompile Include="..\cache.c">
       <Filter>Common sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\decompress.c">
-      <Filter>Common sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\dir.c">
       <Filter>Common sources</Filter>
     </ClCompile>
@@ -55,6 +52,15 @@
       <Filter>Common sources</Filter>
     </ClCompile>
     <ClCompile Include="..\nonstd-stat.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="tinfl.c">
+      <Filter>Windows sources</Filter>
+    </ClCompile>
+    <ClCompile Include="win_decompress.c">
+      <Filter>Windows sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\decompress.c">
       <Filter>Common sources</Filter>
     </ClCompile>
   </ItemGroup>
