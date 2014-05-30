@@ -57,11 +57,11 @@
     <ClCompile Include="tinfl.c">
       <Filter>Windows sources</Filter>
     </ClCompile>
-    <ClCompile Include="win_decompress.c">
-      <Filter>Windows sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\decompress.c">
       <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="win_decompress.c.inc">
+      <Filter>Windows sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

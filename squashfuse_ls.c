@@ -86,7 +86,7 @@ static void sqfs_ls_path_destroy(sqfs_ls_path *path) {
 
 static sqfs_ls_dir *sqfs_ls_path_expand(sqfs_ls_path *path) {
 	if (path->size == path->capacity) {
-		path->capacity = path->size ? (path->size * 3 / 2) : 8;
+		path->capacity = path->capacity ? (path->capacity * 3 / 2) : 8;
 		if (!(path->dirs = realloc(path->dirs, path->capacity * sizeof(path->dirs[0]))))
 			die("Out of memory");
 	}
@@ -105,8 +105,8 @@ static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id, char *
 	if (sqfs_opendir(path->fs, &inode, &dir->dir))
 		die("sqfs_opendir error");
 	
-	dir->name = name ? _strdup(name) : NULL; // FIXME: _strdup???
-	if (!dir->name)
+	dir->name = NULL;
+	if (name && !(dir->name = _strdup(name))) // FIXME: _strdup???
 		die("Out of memory");
 }
 
@@ -156,7 +156,7 @@ int wmain(int argc, wchar_t *argv[]) {
 		sqfs_dir_entry *dentry;
 		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
 		dentry = sqfs_readdir(&dir->dir, &err);
-		if (err)
+			if (err)
 			die("sqfs_readdir error");
 
 		if (dentry) {

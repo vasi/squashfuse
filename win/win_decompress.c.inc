@@ -48,3 +48,4 @@ static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
 	*outsz = bytes;
 	return SQFS_OK;
 }
+#define CAN_DECOMPRESS_ZLIB 1

@@ -91,7 +91,7 @@
     <ClCompile Include="..\table.c" />
     <ClCompile Include="..\xattr.c" />
     <ClCompile Include="tinfl.c" />
-    <ClCompile Include="win_decompress.c" />
+    <ClCompile Include="win_decompress.c.inc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cache.h" />
