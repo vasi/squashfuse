@@ -195,7 +195,7 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 	LIBS="$LIBS $FUSE_LIBS"
 	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
-	AS_IF([test "x$sq_fuse_lowlevel" = xyes],[
+	AS_IF([test "x$sq_fuse_lowlevel" = xlow-level],[
 		AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
 			[#include <fuse_lowlevel.h>])
 		AS_IF([test "x$found_dirent" = xyes],,

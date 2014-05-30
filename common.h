@@ -30,6 +30,7 @@
 #ifdef _WIN32
 	#include <win32.h>
 #else
+	#include <sys/stat.h>
 	typedef mode_t sqfs_mode_t;
 	typedef uid_t sqfs_id_t;
 	typedef off_t sqfs_off_t;
