@@ -32,12 +32,16 @@
 typedef struct {
 	bool dir_end;
 	sqfs_dir_entry entry;
+	char *path;
 	
 	/* private */
 	sqfs *fs;
 	sqfs_name namebuf;
 	bool descend;
-	sqfs_stack dirs;
+	sqfs_stack stack;
+	
+	size_t path_size, path_cap;
+	size_t path_last_size;
 } sqfs_traverse;
 
 /* Begin a recursive traversal of a filesystem tree.

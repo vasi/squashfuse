@@ -28,15 +28,22 @@
 
 #include <stdlib.h>
 
+
+typedef struct {
+	sqfs_dir dir;
+	size_t name_size;
+} sqfs_traverse_level;
+
+
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
 		sqfs_inode *inode) {
 	sqfs_err err;
-	sqfs_dir *dir;
+	sqfs_traverse_level *level;
 	
-	if ((err = sqfs_stack_push(&trv->dirs, &dir)))
+	if ((err = sqfs_stack_push(&trv->stack, &level)))
 		return err;
 	
-	if ((err = sqfs_dir_open(trv->fs, inode, dir, 0)))
+	if ((err = sqfs_dir_open(trv->fs, inode, &level->dir, 0)))
 		return err;
 	
 	trv->descend = false;
@@ -54,7 +61,7 @@ static sqfs_err sqfs_traverse_descend(sqfs_traverse *trv, sqfs_inode_id iid) {
 }
 
 static void sqfs_traverse_ascend(sqfs_traverse *trv) {
-	sqfs_stack_pop(&trv->dirs);
+	sqfs_stack_pop(&trv->stack);
 }
 
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
@@ -63,7 +70,8 @@ sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
 	
 	trv->fs = fs;
 	sqfs_dentry_init(&trv->entry, trv->namebuf);
-	if ((err = sqfs_stack_init(&trv->dirs, sizeof(sqfs_dir), 0, NULL)))
+	err = sqfs_stack_init(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
+	if (err)
 		return err;
 	
 	if ((err = sqfs_traverse_descend_inode(trv, inode))) {
@@ -85,13 +93,13 @@ sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid) {
 }
 
 void sqfs_traverse_close(sqfs_traverse *trv) {
-	sqfs_stack_destroy(&trv->dirs);
+	sqfs_stack_destroy(&trv->stack);
 }
 
 bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
-	sqfs_dir *dir;
+	sqfs_traverse_level *level;
 	
-	if (sqfs_stack_size(&trv->dirs) == 0)
+	if (sqfs_stack_size(&trv->stack) == 0)
 		return false;
 	
 	/* Descend into a directory, if we must */
@@ -102,9 +110,9 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 	}
 	
 	/* Check if there's another dir entry */
-	if ((*err = sqfs_stack_top(&trv->dirs, &dir)))
+	if ((*err = sqfs_stack_top(&trv->stack, &level)))
 		return false;
-	if (!sqfs_dir_next(trv->fs, dir, &trv->entry, err)) {
+	if (!sqfs_dir_next(trv->fs, &level->dir, &trv->entry, err)) {
 		if (*err)
 			return false;
 		
