@@ -24,15 +24,16 @@
 */
 #include "squashfuse.h"
 
+#include <fcntl.h>
+#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
 
 
 #define PROGNAME "squashfuse_ls"
 
 #define ERR_MISC	(-1)
-#define ERR_USAGE (-2)
+#define ERR_USAGE	(-2)
 #define ERR_OPEN	(-3)
 
 static void usage() {
@@ -46,8 +47,6 @@ static void die(const char *msg) {
 	exit(ERR_MISC);
 }
 
-
-// FIXME: Character encoding? Wide chars on Windows?
 int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
 	sqfs_traverse trv;
@@ -64,8 +63,9 @@ int main(int argc, char *argv[]) {
 	if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))
 		die("sqfs_traverse_open error");
 	while (sqfs_traverse_next(&trv, &err)) {
-		if (!trv.dir_end)
+		if (!trv.dir_end) {
 			printf("%s\n", trv.path);
+		}
 	}
 	if (err)
 		die("sqfs_traverse_next error");
