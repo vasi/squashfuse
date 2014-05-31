@@ -84,11 +84,14 @@
     <ClCompile Include="..\file.c" />
     <ClCompile Include="..\fs.c" />
     <ClCompile Include="..\hash.c" />
+    <ClCompile Include="..\ls.c" />
     <ClCompile Include="..\nonstd-pread.c" />
     <ClCompile Include="..\nonstd-stat.c" />
-    <ClCompile Include="..\squashfuse_ls.c" />
+    <ClCompile Include="..\stack.c" />
     <ClCompile Include="..\swap.c" />
     <ClCompile Include="..\table.c" />
+    <ClCompile Include="..\traverse.c" />
+    <ClCompile Include="..\util.c" />
     <ClCompile Include="..\xattr.c" />
     <ClCompile Include="tinfl.c" />
     <ClCompile Include="win_decompress.c.inc" />
@@ -99,20 +102,24 @@
     <ClInclude Include="..\decompress.h" />
     <ClInclude Include="..\dir.h" />
     <ClInclude Include="..\file.h" />
+    <ClInclude Include="..\fs.h" />
     <ClInclude Include="..\hash.h" />
     <ClInclude Include="..\nonstd-internal.h" />
     <ClInclude Include="..\nonstd.h" />
+    <ClInclude Include="..\squashfs_fs.h" />
     <ClInclude Include="..\squashfuse.h" />
+    <ClInclude Include="..\stack.h" />
     <ClInclude Include="..\swap.h" />
     <ClInclude Include="..\table.h" />
+    <ClInclude Include="..\traverse.h" />
+    <ClInclude Include="..\util.h" />
     <ClInclude Include="..\xattr.h" />
     <ClInclude Include="config.h" />
-    <ClInclude Include="squashfs_fs.h" />
     <ClInclude Include="win32.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="swap.c.inc" />
-    <None Include="swap.h.inc" />
+    <None Include="..\swap.c.inc" />
+    <None Include="..\swap.h.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

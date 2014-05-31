@@ -25,10 +25,9 @@
 #ifndef SQFS_WIN32_H
 #define SQFS_WIN32_H
 
-#include "squashfs_fs.h" /* Windows-specific version */
-
 #include <Windows.h>
 #include <sys/stat.h>
+#include <stdint.h>
 
 #define S_IFIFO 0010000
 #define S_IFBLK 0060000

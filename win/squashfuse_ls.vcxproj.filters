@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\squashfuse_ls.c">
-      <Filter>Common sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\swap.c">
       <Filter>Common sources</Filter>
     </ClCompile>
@@ -62,6 +59,18 @@
     </ClCompile>
     <ClCompile Include="win_decompress.c.inc">
       <Filter>Windows sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\util.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\traverse.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\stack.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ls.c">
+      <Filter>Common sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,16 +116,28 @@
     <ClInclude Include="win32.h">
       <Filter>Windows headers</Filter>
     </ClInclude>
-    <ClInclude Include="squashfs_fs.h">
-      <Filter>Windows headers</Filter>
+    <ClInclude Include="..\squashfs_fs.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\traverse.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fs.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\stack.h">
+      <Filter>Common headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="swap.h.inc">
-      <Filter>Windows headers</Filter>
+    <None Include="..\swap.h.inc">
+      <Filter>Common headers</Filter>
     </None>
-    <None Include="swap.c.inc">
-      <Filter>Windows sources</Filter>
+    <None Include="..\swap.c.inc">
+      <Filter>Common sources</Filter>
     </None>
   </ItemGroup>
 </Project>
