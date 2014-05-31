@@ -38,6 +38,7 @@
 #include "fuseprivate.h"
 #include "squashfuse.h"
 #include "nonstd.h"
+#include "util.h"
 
 typedef struct sqfs_hl sqfs_hl;
 struct sqfs_hl {

@@ -8,10 +8,11 @@ endif
 noinst_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
 
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
-	decompress.c xattr.c hash.c stack.c traverse.c \
+	decompress.c xattr.c hash.c stack.c traverse.c util.c \
 	nonstd-pread.c nonstd-stat.c \
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
-	dir.h file.h decompress.h xattr.h squashfuse.h hash.h stack.h traverse.h
+	dir.h file.h decompress.h xattr.h squashfuse.h hash.h stack.h traverse.h \
+	util.h
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS)
 libsquashfuse_la_LIBADD = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS)

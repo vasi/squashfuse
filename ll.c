@@ -38,6 +38,7 @@
 #include "squashfuse.h"
 #include "nonstd.h"
 #include "fuseprivate.h"
+#include "util.h"
 
 static const double SQFS_TIMEOUT = DBL_MAX;
 

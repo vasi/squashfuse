@@ -29,21 +29,25 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "traverse.h"
 #include "squashfuse.h"
-#include "dir.h"
+#include "traverse.h"
+#include "util.h"
 
 #define PROGNAME "squashfuse_ls"
+
+#define ERR_MISC	(-1)
+#define ERR_USAGE (-2)
+#define ERR_OPEN	(-3)
 
 static void usage() {
 	fprintf(stderr, "%s (c) 2013 Dave Vasilevsky\n\n", PROGNAME);
 	fprintf(stderr, "Usage: %s ARCHIVE\n", PROGNAME);
-	exit(-2);
+	exit(ERR_USAGE);
 }
 
 static void die(const char *msg) {
 	fprintf(stderr, "%s\n", msg);
-	exit(-1);
+	exit(ERR_MISC);
 }
 
 
@@ -52,39 +56,25 @@ int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
 	sqfs_traverse trv;
 	sqfs fs;
-
-	sqfs_fd_t file;
 	char *image;
 
 	if (argc != 2)
 		usage();
 	image = argv[1];
 
-	// FIXME: Use sqfs_open_image()...
-	// FIXME: WIN32 API
-	file = open(image, O_RDONLY);
-	if (file == -1)
-		die("open error");
-
-	err = sqfs_init(&fs, file);
-	if (err) {
-		fprintf(stderr, "squashfuse init error: %d\n", err);
-		exit(-1);
-	}
+	if ((err = sqfs_open_image(&fs, image)))
+		exit(ERR_OPEN);
 	
 	if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))
 		die("sqfs_traverse_open error");
 	while (sqfs_traverse_next(&trv, &err)) {
-		if (!trv.dir_end) {
+		if (!trv.dir_end)
 			printf("%s\n", trv.path);
-			if (strcmp(trv.path, "usr/share/man") == 0)
-				sqfs_traverse_prune(&trv);
-		}
 	}
 	if (err)
 		die("sqfs_traverse_next error");
 	sqfs_traverse_close(&trv);
 	
-	close(file);
+	close(fs.fd);
 	return 0;
 }

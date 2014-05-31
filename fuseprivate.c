@@ -68,65 +68,6 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
 	return SQFS_OK;
 }
 
-sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
-	sqfs_err err;
-	int fd;
-
-	fd = open(image, O_RDONLY);
-	if (fd == -1) {
-		perror("Can't open squashfs image");
-		return SQFS_ERR;
-	}
-
-	err = sqfs_init(fs, fd);
-	switch (err) {
-		case SQFS_OK:
-			break;
-		case SQFS_BADFORMAT:
-			fprintf(stderr, "This doesn't look like a squashfs image.\n");
-			break;
-		case SQFS_BADVERSION: {
-			int major, minor, mj1, mn1, mj2, mn2;
-			sqfs_version(fs, &major, &minor);
-			sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
-			fprintf(stderr, "Squashfs version %d.%d detected, only version",
-				major, minor);
-			if (mj1 == mj2 && mn1 == mn2)
-				fprintf(stderr, " %d.%d", mj1, mn1);
-			else
-				fprintf(stderr, "s %d.%d to %d.%d", mj1, mn1, mj2, mn2);
-			fprintf(stderr, " supported.\n");
-			break;
-		}
-		case SQFS_BADCOMP: {
-			bool first = true;
-			int i;
-			sqfs_compression_type sup[SQFS_COMP_MAX],
-				comp = sqfs_compression(fs);
-			sqfs_compression_supported(sup);
-			fprintf(stderr, "Squashfs image uses %s compression, this version "
-				"supports only ", sqfs_compression_name(comp));
-			for (i = 0; i < SQFS_COMP_MAX; ++i) {
-				if (sup[i] == SQFS_COMP_UNKNOWN)
-					continue;
-				if (!first)
-					fprintf(stderr, ", ");
-				fprintf(stderr, "%s", sqfs_compression_name(sup[i]));
-				first = false;
-			}
-			fprintf(stderr, ".\n");
-			break;
-		}
-		default:
-			fprintf(stderr, "Something went wrong trying to read the squashfs "
-				"image.\n");
-	}
-
-	if (err)
-		close(fd);
-	return err;
-}
-
 int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 	sqfs_xattr x;
 	size_t count = 0;
