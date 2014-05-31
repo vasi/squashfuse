@@ -69,7 +69,7 @@ static sqfs_err sqfs_stack_grow(sqfs_stack *s) {
 }
 
 
-sqfs_err sqfs_stack_init(sqfs_stack *s, size_t vsize, size_t initial,
+sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
 		sqfs_stack_free_t freer) {
 	s->value_size = vsize;
 	s->freer = freer;
@@ -78,12 +78,16 @@ sqfs_err sqfs_stack_init(sqfs_stack *s, size_t vsize, size_t initial,
 	return sqfs_stack_capacity(s, initial);
 }
 
+void sqfs_stack_init(sqfs_stack *s) {
+	s->items = NULL;
+	s->capacity = 0;
+}
+
 void sqfs_stack_destroy(sqfs_stack *s) {
 	while (sqfs_stack_pop(s))
 		; /* pass */
 	free(s->items);
-	s->items = NULL;
-	s->capacity = 0;
+	sqfs_stack_init(s);
 }
 
 sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout) {

@@ -39,7 +39,10 @@ typedef struct {
 	sqfs_stack_free_t freer;
 } sqfs_stack;
 
-sqfs_err sqfs_stack_init(sqfs_stack *s, size_t vsize, size_t initial,
+/* Ensures the struct is in a safe state */
+void sqfs_stack_init(sqfs_stack *s);
+
+sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
 	sqfs_stack_free_t freer);
 void sqfs_stack_destroy(sqfs_stack *s);
 

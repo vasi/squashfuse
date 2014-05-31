@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 		die("sqfs_traverse_open error");
 	while (sqfs_traverse_next(&trv, &err)) {
 		if (!trv.dir_end)
-			printf("%s\n", sqfs_dentry_name(&trv.entry));
+			printf("%s\n", trv.path);
 	}
 	if (err)
 		die("sqfs_traverse_next error");

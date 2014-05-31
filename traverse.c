@@ -27,14 +27,50 @@
 #include "squashfuse.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 
+#define PATH_SEPARATOR "/"
+
+/* Default initial capacity of trv.path */
+#define DEFAULT_PATH_CAP 32
+
+/* The struct stored in trv.stack */
 typedef struct {
 	sqfs_dir dir;
 	size_t name_size;
 } sqfs_traverse_level;
 
 
+/* Path manipulation functions */
+static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
+		const char *str, size_t size) {
+	size_t need = trv->path_size + size;
+	if (need > trv->path_cap) {
+		char *next_path;
+		size_t next_cap = trv->path_cap;
+		while (need > next_cap)
+			next_cap *= 2;
+		
+		if (!(next_path = realloc(trv->path, next_cap)))
+			return SQFS_ERR;
+		
+		trv->path = next_path;
+		trv->path_cap = next_cap;
+	}
+	
+	strncat(trv->path + trv->path_size - 1, str, size);
+	trv->path_size = need;
+	return SQFS_OK;
+}
+
+static void sqfs_traverse_path_remove(sqfs_traverse *trv, size_t size) {
+	trv->path_size -= size;
+	trv->path[trv->path_size - 1] = '\0';
+}
+
+
+/* Helpers to grow and shrink the dir stack */
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
 		sqfs_inode *inode) {
 	sqfs_err err;
@@ -45,6 +81,13 @@ static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
 	
 	if ((err = sqfs_dir_open(trv->fs, inode, &level->dir, 0)))
 		return err;
+	level->name_size = trv->path_last_size;
+	
+	if (trv->path_last_size) {
+		if ((err = sqfs_traverse_path_add(trv, PATH_SEPARATOR, 1)))
+		return err;
+	}
+	trv->path_last_size = 0;
 	
 	trv->descend = false;
 	return err;
@@ -60,25 +103,53 @@ static sqfs_err sqfs_traverse_descend(sqfs_traverse *trv, sqfs_inode_id iid) {
 	return sqfs_traverse_descend_inode(trv, &inode);
 }
 
-static void sqfs_traverse_ascend(sqfs_traverse *trv) {
+static sqfs_err sqfs_traverse_ascend(sqfs_traverse *trv) {
+	sqfs_err err;
+	sqfs_traverse_level *level;
+	
+	if ((err = sqfs_stack_top(&trv->stack, &level)))
+		return err;
+	
+	sqfs_traverse_path_remove(trv, trv->path_last_size);
+	if (level->name_size > 0)
+		sqfs_traverse_path_remove(trv, 1); /* separator */
+	
+	trv->path_last_size = level->name_size;
+		
 	sqfs_stack_pop(&trv->stack);
+	return SQFS_OK;
 }
+
 
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
 		sqfs_inode *inode) {
 	sqfs_err err;
 	
+	sqfs_stack_init(&trv->stack);
+	trv->path = NULL;
 	trv->fs = fs;
-	sqfs_dentry_init(&trv->entry, trv->namebuf);
-	err = sqfs_stack_init(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
-	if (err)
-		return err;
 	
-	if ((err = sqfs_traverse_descend_inode(trv, inode))) {
-		sqfs_traverse_close(trv);
-		return err;
+	trv->path_cap = DEFAULT_PATH_CAP;
+	if (!(trv->path = malloc(trv->path_cap))) {
+		err = SQFS_ERR;
+		goto error;
 	}
+	trv->path[0] = '\0';
+	trv->path_size = 1;
+	trv->path_last_size = 0;
 	
+	sqfs_dentry_init(&trv->entry, trv->namebuf);
+	err = sqfs_stack_create(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
+	if (err)
+		goto error;
+	
+	if ((err = sqfs_traverse_descend_inode(trv, inode)))
+		goto error;
+	
+	return SQFS_OK;
+	
+error:
+	sqfs_traverse_close(trv);
 	return err;
 }
 
@@ -94,6 +165,7 @@ sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid) {
 
 void sqfs_traverse_close(sqfs_traverse *trv) {
 	sqfs_stack_destroy(&trv->stack);
+	free(trv->path);
 }
 
 bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
@@ -117,12 +189,20 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 			return false;
 		
 		/* We're done with this directory */
-		sqfs_traverse_ascend(trv);
+		if ((*err = sqfs_traverse_ascend(trv)))
+			return false;
 		trv->dir_end = true;
 		return true;
 	}
 	
-	/* We have a valid directory entry */
+	/* We have a valid entry */
+	sqfs_traverse_path_remove(trv, trv->path_last_size);
+	trv->path_last_size = sqfs_dentry_name_size(&trv->entry);
+	*err = sqfs_traverse_path_add(trv, sqfs_dentry_name(&trv->entry),
+		trv->path_last_size);
+	if (*err)
+		return false;
+	
 	trv->dir_end = false;
 	if (sqfs_dentry_is_dir(&trv->entry))
 		trv->descend = true;
@@ -130,7 +210,6 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 }
 
 sqfs_err sqfs_traverse_skip(sqfs_traverse *trv) {
-	sqfs_traverse_ascend(trv);
-	return SQFS_OK;
+	return sqfs_traverse_ascend(trv);
 }
 
