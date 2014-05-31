@@ -49,6 +49,6 @@ endif
 # Handle generation of swap include files
 CLEANFILES = swap.h.inc swap.c.inc
 EXTRA_DIST += swap.h.inc swap.c.inc
-$(libsquashfusa_OBJECTS): swap.h.inc
+$(libsquashfuse_la_OBJECTS): swap.h.inc
 swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
