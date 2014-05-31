@@ -73,6 +73,8 @@ static void sqfs_traverse_path_remove_name(sqfs_traverse *trv);
 static void sqfs_traverse_path_remove_sep(sqfs_traverse *trv);
 /* Set the size of the last path component */
 static void sqfs_traverse_path_set_name_size(sqfs_traverse *trv, size_t size);
+/* Add nul-terminator */
+static void sqfs_traverse_path_terminate(sqfs_traverse *trv);
 
 /* Descend into new directories, and ascend back */
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
@@ -211,6 +213,10 @@ static sqfs_err sqfs_traverse_path_init(sqfs_traverse *trv) {
 	return SQFS_OK;
 }
 
+static void sqfs_traverse_path_terminate(sqfs_traverse *trv) {
+	trv->path[trv->path_size - 1] = '\0';
+}
+
 static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
 		const char *str, size_t size) {
 	size_t need = trv->path_size + size;
@@ -227,8 +233,9 @@ static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
 		trv->path_cap = next_cap;
 	}
 	
-	strncat(trv->path + trv->path_size - 1, str, size);
+	memcpy(trv->path + trv->path_size - 1, str, size);
 	trv->path_size = need;
+	sqfs_traverse_path_terminate(trv);
 	return SQFS_OK;
 }
 
@@ -238,7 +245,7 @@ static void sqfs_traverse_path_remove(sqfs_traverse *trv, size_t size) {
 	else
 		trv->path_size = 1; /* only nul terminator left */
 	
-	trv->path[trv->path_size - 1] = '\0';
+	sqfs_traverse_path_terminate(trv);
 }
 
 static sqfs_err sqfs_traverse_path_add_name(sqfs_traverse *trv) {
