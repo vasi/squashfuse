@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 
 #define PROGNAME "squashfuse_ls"
@@ -71,6 +71,6 @@ int main(int argc, char *argv[]) {
 		die("sqfs_traverse_next error");
 	sqfs_traverse_close(&trv);
 	
-	close(fs.fd);
+	sqfs_fd_close(fs.fd);
 	return 0;
 }

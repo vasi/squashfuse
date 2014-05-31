@@ -94,7 +94,6 @@
     <ClCompile Include="..\util.c" />
     <ClCompile Include="..\xattr.c" />
     <ClCompile Include="tinfl.c" />
-    <ClCompile Include="win_decompress.c.inc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cache.h" />
@@ -120,6 +119,7 @@
   <ItemGroup>
     <None Include="..\swap.c.inc" />
     <None Include="..\swap.h.inc" />
+    <None Include="win_decompress.c.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

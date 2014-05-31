@@ -57,9 +57,6 @@
     <ClCompile Include="..\decompress.c">
       <Filter>Common sources</Filter>
     </ClCompile>
-    <ClCompile Include="win_decompress.c.inc">
-      <Filter>Windows sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\util.c">
       <Filter>Common sources</Filter>
     </ClCompile>
@@ -138,6 +135,9 @@
     </None>
     <None Include="..\swap.c.inc">
       <Filter>Common sources</Filter>
+    </None>
+    <None Include="win_decompress.c.inc">
+      <Filter>Windows sources</Filter>
     </None>
   </ItemGroup>
 </Project>

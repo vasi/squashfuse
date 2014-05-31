@@ -26,21 +26,53 @@
 
 #include "fs.h"
 
-#include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+	#include <win32.h>
+	
+	sqfs_err sqfs_fd_open(const char *path, sqfs_fd_t *fd, bool print) {
+		*fd = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (*fd != INVALID_HANDLE_VALUE)
+			return SQFS_OK;
+
+		// FIXME: Better error handling
+		if (print)
+			fprintf(stderr, "CreateFile error: %d\n", GetLastError());
+		return SQFS_ERR;
+	}
+
+	void sqfs_fd_close(sqfs_fd_t fd) {
+		CloseHandle(fd);
+	}
+#else
+	#include <fcntl.h>
+	#include <unistd.h>
+
+	sqfs_err sqfs_fd_open(const char *path, sqfs_fd_t *fd, bool print) {
+		*fd = open(path, O_RDONLY);
+		if (*fd != -1)
+			return SQFS_OK;
+
+		if (print)
+			perror("Can't open squashfs image");
+		return SQFS_ERR;
+	}
+
+	void sqfs_fd_close(sqfs_fd_t fd) {
+		close(fd);
+	}
+#endif
+
 
 /* TODO: WIN32 implementation of open/close */
 /* TODO: i18n of error messages */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
 	sqfs_err err;
-	int fd;
+	sqfs_fd_t fd;
 
-	fd = open(image, O_RDONLY);
-	if (fd == -1) {
-		perror("Can't open squashfs image");
-		return SQFS_ERR;
-	}
+	if ((err = sqfs_fd_open(image, &fd, stderr)))
+		return err;
 
 	err = sqfs_init(fs, fd);
 	switch (err) {
@@ -87,7 +119,7 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
 	}
 
 	if (err)
-		close(fd);
+		sqfs_fd_close(fd);
 	return err;
 }
 
