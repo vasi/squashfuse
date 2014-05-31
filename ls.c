@@ -25,7 +25,6 @@
 #include "squashfuse.h"
 
 #include <fcntl.h>
-#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 
