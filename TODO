@@ -15,13 +15,18 @@ Build system
 		Support specifying SDK, arch, universal builds
 		Why don't builds on Lion with 10.4 SDK work?
 	Test suite?
+	Fully process squashfs_fs.h direct from kernel
+		Remove [0] lines for Windows
+		Add __le## for many OSes
+		Remove function macros
+		Redefine INVALID_BLK
+		etc...
 
 Features
 	Design a good API for libsquashfuse
 	Use better error codes, error reporting, sanity checks
 	Support/emulate non-namespaced xattrs, for OS X
 	Write a clone of unsquashfs using libsquashfuse?
-	Write a squashfuse-highlevel?
 	squashfs 3 and earlier support?
 	LZMA1 compression?
 
@@ -30,7 +35,7 @@ Performance
 		Caches, blockidx aren't thread safe
 		Use a thread pool? Or one thread per request?
 		Read metadata (eg: UIDs) in parallel?
-	Stack space: readdir uses too much
+		How do we get FUSE to do multi-threading? On some OSes it just doesn't
 	Byte swapping
 		Use platform-specific optimizations (eg: libkern/OSByteOrder.h)
 		Also arch-specific
