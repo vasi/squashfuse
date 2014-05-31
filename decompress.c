@@ -29,7 +29,7 @@
 #include <string.h>
 
 #if _WIN32
-	#include "win_decompress.c.inc"
+	#include "win_decompress.c"
 #endif
 
 
