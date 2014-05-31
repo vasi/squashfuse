@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 	
-	if ((err = sqfs_traverse_open(&trv, &fs, fs.sb.root_inode)))
+	if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))
 		die("sqfs_traverse_open error");
 	while (sqfs_traverse_next(&trv, &err)) {
 		if (!trv.dir_end) {

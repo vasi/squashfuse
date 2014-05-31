@@ -41,7 +41,7 @@
  * Both 1 and 2 are guaranteed not to be used by sqfs, due to inode size
  */
 static fuse_ino_t sqfs_ll_ino64_fuse(sqfs_ll *ll, sqfs_inode_id i) {
-	if (i == ll->fs.sb.root_inode) {
+	if (i == sqfs_inode_root(&ll->fs)) {
 		return FUSE_ROOT_ID;
 	} else if (i == 0) {
 		return 2;
@@ -52,7 +52,7 @@ static fuse_ino_t sqfs_ll_ino64_fuse(sqfs_ll *ll, sqfs_inode_id i) {
 
 static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	if (i == FUSE_ROOT_ID) {
-		return ll->fs.sb.root_inode;
+		return sqfs_inode_root(&ll->fs);
 	} else if (i == 2) {
 		return 0;
 	} else {
@@ -143,7 +143,7 @@ static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	sqfs_ll_inode_entry *ie;
 	
 	if (i == FUSE_ROOT_ID)
-		return ll->fs.sb.root_inode;
+		return sqfs_inode_root(&ll->fs);
 	
 	map = ll->ino_data;
 	n = sqfs_ll_ino32_fuse2num(ll, i);
@@ -202,7 +202,7 @@ static void sqfs_ll_ino32_destroy(sqfs_ll *ll) {
 static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 	sqfs_inode inode;
 	sqfs_ll_inode_map *map;
-	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
+	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, sqfs_inode_root(&ll->fs));
 	if (err)
 		return err;
 		
@@ -234,7 +234,7 @@ static sqfs_inode_id sqfs_ll_ino32exp_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	sqfs_err err = SQFS_OK;
 	
 	if (i == FUSE_ROOT_ID)
-		return ll->fs.sb.root_inode;
+		return sqfs_inode_root(&ll->fs);
 	
 	n = sqfs_ll_ino32_fuse2num(ll, i);
 	err = sqfs_export_inode(&ll->fs, n, &ret);
@@ -248,7 +248,7 @@ static void sqfs_ll_ino32exp_destroy(sqfs_ll *ll) {
 static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
 	sqfs_inode inode;
 	sqfs_ll_inode_map *map;
-	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, ll->fs.sb.root_inode);
+	sqfs_err err = sqfs_inode_get(&ll->fs, &inode, sqfs_inode_root(&ll->fs));
 	if (err)
 		return err;
 		

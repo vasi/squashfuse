@@ -308,6 +308,10 @@ sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
 	return SQFS_OK;
 }
 
+sqfs_inode_id sqfs_inode_root(sqfs *fs) {
+	return fs->sb.root_inode;
+}
+
 /* Turn the internal format of a device number to our system's dev_t
  * It looks like rdev is just what the Linux kernel uses: 20 bit minor,
  * split in two around a 12 bit major
