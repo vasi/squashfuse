@@ -1,1 +1,1 @@
-/* Dummy for Windows */
+/* Dummy file for Windows */
