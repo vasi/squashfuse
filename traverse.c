@@ -39,8 +39,6 @@
 enum {
 	/* These states may be set on entry to sqfs_traverse_next(), with real
 	   work to do. */
-	TRAVERSE_GET_ENTRY,		/* Initial state: look for another entry
-											   * at the same level. */
 	TRAVERSE_DESCEND,		 	/* Descend into the current entry (a dir) */
 	TRAVERSE_NAME_REMOVE, /* Remove the name from the end of the stored path */
 	
@@ -49,8 +47,9 @@ enum {
 	TRAVERSE_FINISHED,
 	
 	/* Internal */
+	TRAVERSE_ASCEND,			/* Done with a directory, ascend a level */
 	TRAVERSE_NAME_ADD,		/* Add a name to the end of the stored path */
-	TRAVERSE_ASCEND				/* Done with a directory, ascend a level */
+	TRAVERSE_GET_ENTRY		/* Get the next entry at the same level */
 } sqfs_traverse_state;
 
 /* The struct stored in trv.stack */
@@ -96,16 +95,16 @@ sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
 	sqfs_traverse_init(trv);	
 	if ((err = sqfs_traverse_path_init(trv)))
 		goto error;
-	
-	trv->fs = fs;
-		
 	err = sqfs_stack_create(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
 	if (err)
 		goto error;
+	
+	trv->fs = fs;
 	if ((err = sqfs_traverse_descend_inode(trv, inode)))
 		goto error;
 	
-	trv->state = TRAVERSE_GET_ENTRY;
+	sqfs_traverse_path_set_name_size(trv, 0); /* The root has no name */
+	trv->state = TRAVERSE_NAME_REMOVE;
 	return SQFS_OK;
 	
 error:
@@ -198,9 +197,6 @@ error:
 }
 
 sqfs_err sqfs_traverse_prune(sqfs_traverse *trv) {
-	if (trv->state != TRAVERSE_DESCEND)
-		return SQFS_ERR; /* We're not descending into anything right now! */
-	
 	trv->state = TRAVERSE_NAME_REMOVE;
 	return SQFS_OK;
 }

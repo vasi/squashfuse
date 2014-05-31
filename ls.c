@@ -52,7 +52,6 @@ int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
 	sqfs_traverse trv;
 	sqfs fs;
-	size_t i, level;
 
 	sqfs_fd_t file;
 	char *image;
@@ -73,24 +72,15 @@ int main(int argc, char *argv[]) {
 		exit(-1);
 	}
 	
-	
 	if ((err = sqfs_traverse_open(&trv, &fs, fs.sb.root_inode)))
 		die("sqfs_traverse_open error");
-	level = 0;
 	while (sqfs_traverse_next(&trv, &err)) {
-		if (trv.dir_end) {
-			--level;
-		} else {
-			for (i = 0; i < level; ++i)
-				printf("   ");
-			printf("%s\n", sqfs_dentry_name(&trv.entry));
-			if (sqfs_dentry_is_dir(&trv.entry))
-				++level;
+		if (!trv.dir_end) {
+			printf("%s\n", trv.path);
+			if (strcmp(trv.path, "usr/share/man") == 0)
+				sqfs_traverse_prune(&trv);
 		}
-		// if (!trv.dir_end)
-		// 	printf("%s\n", trv.path);
 	}
-	printf("level: %zu\n", level);
 	if (err)
 		die("sqfs_traverse_next error");
 	sqfs_traverse_close(&trv);
