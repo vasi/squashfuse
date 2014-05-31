@@ -46,90 +46,10 @@ static void die(const char *msg) {
 	exit(-1);
 }
 
-// FIXME: Simple traversal API?
-typedef struct sqfs_ls_dir sqfs_ls_dir;
-struct sqfs_ls_dir {
-	char *name;
-	sqfs_dir dir;
-};
-
-typedef struct sqfs_ls_path sqfs_ls_path;
-struct sqfs_ls_path {
-	sqfs *fs;
-	size_t capacity, size;
-	sqfs_ls_dir *dirs;
-};
-
-
-static void sqfs_ls_path_init(sqfs_ls_path *path, sqfs *fs) {
-	path->fs = fs;
-	path->size = path->capacity = 0;
-	path->dirs = NULL;
-}
-
-static sqfs_ls_dir *sqfs_ls_path_top(sqfs_ls_path *path) {
-	return &path->dirs[path->size - 1];
-}
-
-static void sqfs_ls_path_pop(sqfs_ls_path *path) {
-	if (path->size == 0)
-		return;
-
-	free(sqfs_ls_path_top(path)->name);
-	path->size--;
-}
-
-static void sqfs_ls_path_destroy(sqfs_ls_path *path) {
-	while (path->size)
-		sqfs_ls_path_pop(path);
-	free(path->dirs);
-	path->dirs = NULL;
-}
-
-static sqfs_ls_dir *sqfs_ls_path_expand(sqfs_ls_path *path) {
-	if (path->size == path->capacity) {
-		path->capacity = path->size ? (path->size * 3 / 2) : 8;
-		path->dirs = realloc(path->dirs, path->capacity * sizeof(path->dirs[0]));
-		if (!path->dirs)
-			die("Out of memory");
-	}
-	path->size++;
-	return sqfs_ls_path_top(path);
-}
-
-static void sqfs_ls_path_push(sqfs_ls_path *path, sqfs_inode_id inode_id,
-		const char *name) {
-	sqfs_inode inode;
-	sqfs_ls_dir *dir;
-
-	if (sqfs_inode_get(path->fs, &inode, inode_id))
-		die("sqfs_inode_get error");
-
-	dir = sqfs_ls_path_expand(path);
-	if (sqfs_dir_open(path->fs, &inode, &dir->dir, 0))
-		die("sqfs_dir_open error");
-	
-	dir->name = NULL;
-	if (name && !(dir->name = strdup(name)))
-		die("Out of memory");
-}
 
 // FIXME: Character encoding? Wide chars on Windows?
-void sqfs_ls_path_print(sqfs_ls_path *path, char sep, const char *name) {
-	size_t i;
-	for (i = 0; i < path->size; ++i) {
-		sqfs_ls_dir *dir = &path->dirs[i];
-		if (dir->name)
-			printf("%s%c", dir->name, sep);
-	}
-	printf("%s\n", name);
-}
-
 int main(int argc, char *argv[]) {
 	sqfs_err err = SQFS_OK;
-	sqfs_ls_path path;
-	sqfs_dir_entry dentry;
-	sqfs_name namebuf;
 	sqfs_traverse trv;
 	sqfs fs;
 
@@ -165,29 +85,3 @@ int main(int argc, char *argv[]) {
 	close(file);
 	return 0;
 }
-	
-// 	sqfs_ls_path_init(&path, &fs);
-// 	sqfs_ls_path_push(&path, fs.sb.root_inode, NULL);
-// 
-// 	sqfs_dentry_init(&dentry, namebuf);
-// 	while (path.size > 0) {
-// 		sqfs_ls_dir *dir = sqfs_ls_path_top(&path);
-// 		bool has_next = sqfs_dir_next(&fs, &dir->dir, &dentry, &err);
-// 		if (err)
-// 			die("sqfs_dir_next error");
-// 
-// 		if (has_next) {
-// 			const char *name = sqfs_dentry_name(&dentry);
-// 			sqfs_ls_path_print(&path, '/', name); // FIXME: separator
-// 			if (S_ISDIR(sqfs_dentry_mode(&dentry)))
-// 				sqfs_ls_path_push(&path, sqfs_dentry_inode(&dentry), name);
-// 		} else {
-// 			sqfs_ls_path_pop(&path);
-// 		}
-// 	}
-// 
-// 	sqfs_ls_path_destroy(&path);
-// 	close(file);
-// 
-// 	return 0;
-// }
