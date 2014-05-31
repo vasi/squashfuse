@@ -25,7 +25,7 @@
 #ifndef SQFS_UTIL_H
 #define SQFS_UTIL_H
 
-#include "squashfuse.h"
+#include "common.h"
 
 /* Open a filesystem and print errors to stderr. */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image);

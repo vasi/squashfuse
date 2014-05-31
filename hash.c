@@ -26,7 +26,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 static sqfs_err sqfs_hash_add_internal(sqfs_hash *h, int doubling,
 		sqfs_hash_key k, sqfs_hash_value v) {

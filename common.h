@@ -27,18 +27,18 @@
 
 #include "config.h"
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
+
 #ifdef _WIN32
 	#include <win32.h>
 #else
-	#include <sys/stat.h>
 	typedef mode_t sqfs_mode_t;
 	typedef uid_t sqfs_id_t;
 	typedef off_t sqfs_off_t;
 	typedef int sqfs_fd_t;
 #endif
-
-#include <stdint.h>
-#include <sys/types.h>
 
 typedef enum {
 	SQFS_OK,

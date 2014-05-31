@@ -29,8 +29,6 @@
 
 #include "squashfs_fs.h"
 
-#include <stdbool.h>
-
 
 /* Initialize xattr handling for this fs */
 sqfs_err sqfs_xattr_init(sqfs *fs);

@@ -24,8 +24,9 @@
  */
 #include "xattr.h"
 
-#include "squashfuse.h"
+#include "fs.h"
 #include "nonstd.h"
+#include "swap.h"
 
 #include <string.h>
 #include <stdlib.h>

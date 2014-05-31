@@ -22,23 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
+#include "squashfuse.h"
+#include "fuseprivate.h"
+
+#include "nonstd.h"
 
 #include <errno.h>
-#include <fcntl.h>
-#include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
 
-#include <fuse.h>
-#include "fuseprivate.h"
-#include "squashfuse.h"
-#include "nonstd.h"
-#include "util.h"
 
 typedef struct sqfs_hl sqfs_hl;
 struct sqfs_hl {

@@ -27,8 +27,6 @@
 
 #include "common.h"
 
-#include <stdbool.h>
-
 typedef void (*sqfs_stack_free_t)(void *v);
 
 typedef struct {

@@ -25,8 +25,11 @@
 #ifndef SQFS_FUSEPRIVATE_H
 #define SQFS_FUSEPRIVATE_H
 
-#include <sys/stat.h>
 #include "squashfuse.h"
+
+#include <fuse.h>
+
+#include <sys/stat.h>
 
 /* Common functions for FUSE high- and low-level clients */
 

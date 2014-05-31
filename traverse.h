@@ -26,8 +26,9 @@
 #define SQFS_TRAVERSE_H
 
 #include "common.h"
-#include "stack.h"
+
 #include "dir.h"
+#include "stack.h"
 
 typedef struct {
 	bool dir_end;

@@ -24,7 +24,7 @@
  */
 #include "traverse.h"
 
-#include "squashfuse.h"
+#include "fs.h"
 
 #include <stdlib.h>
 #include <string.h>

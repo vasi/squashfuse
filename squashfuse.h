@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,118 +22,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_SWAPFUSE_H
-#define SQFS_SWAPFUSE_H
+#ifndef SQFS_SQUASHFUSE_H
+#define SQFS_SQUASHFUSE_H
 
-#include "common.h"
-
-#include "cache.h"
-#include "decompress.h"
 #include "dir.h"
 #include "file.h"
-#include "squashfs_fs.h"
-#include "swap.h"
-#include "table.h"
+#include "fs.h"
+#include "traverse.h"
+#include "util.h"
 #include "xattr.h"
-
-#include <stdbool.h>
-
-struct sqfs {
-	sqfs_fd_t fd;
-	struct squashfs_super_block sb;
-	sqfs_table id_table;
-	sqfs_table frag_table;
-	sqfs_table export_table;
-	sqfs_cache md_cache;
-	sqfs_cache data_cache;
-	sqfs_cache frag_cache;
-	sqfs_cache blockidx;
-	sqfs_decompressor decompressor;
-	
-	struct squashfs_xattr_id_table xattr_info;
-	sqfs_table xattr_table;
-};
-
-typedef uint32_t sqfs_xattr_idx;
-struct sqfs_inode {
-	struct squashfs_base_inode base;
-	int nlink;
-	sqfs_xattr_idx xattr;
-	
-	sqfs_md_cursor next;
-	
-	union {
-		struct {
-			int major, minor;
-		} dev;
-		size_t symlink_size;
-		struct {
-			uint64_t start_block;
-			uint64_t file_size;
-			uint32_t frag_idx;
-			uint32_t frag_off;
-		} reg;
-		struct {
-			uint32_t start_block;
-			uint16_t offset;
-			uint32_t dir_size;
-			uint16_t idx_count;
-			uint32_t parent_inode;
-		} dir;
-	} xtra;
-};
-
-void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
-	int *max_minor);
-
-/* Number of groups of size 'group' required to hold size 'total' */
-size_t sqfs_divceil(uint64_t total, size_t group);
-
-
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd);
-void sqfs_destroy(sqfs *fs);
-
-/* Ok to call these even on incompletely constructed filesystems */
-void sqfs_version(sqfs *fs, int *major, int *minor);
-sqfs_compression_type sqfs_compression(sqfs *fs);
-
-
-void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size);
-void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
-
-sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed, uint32_t size,
-	size_t outsize, sqfs_block **block);
-void sqfs_block_dispose(sqfs_block *block);
-
-sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t pos, size_t *data_size,
-	sqfs_block **block);
-sqfs_err sqfs_data_block_read(sqfs *fs, sqfs_off_t pos, uint32_t hdr,
-	sqfs_block **block);
-
-/* Don't dispose after getting block, it's in the cache */
-sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block);
-sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
-	uint32_t hdr, sqfs_block **block);
-
-void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sqfs_off_t base);
-
-sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
-
-
-sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
-
-sqfs_mode_t sqfs_mode(int inode_type);
-sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sqfs_id_t *id);
-
-/* Puts up to *size characters of the link name into buf. Always null-
- * terminates the buffer. Pass null as buf to have the size returned. */
-sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
-
-/* Find inode_id by inode_num */
-int sqfs_export_ok(sqfs *fs);
-sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i);
-
-/* Find the root inode */
-sqfs_inode_id sqfs_inode_root(sqfs *fs);
 
 #endif

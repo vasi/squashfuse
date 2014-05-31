@@ -24,7 +24,7 @@
  */
 #include "decompress.h"
 
-#include "squashfuse.h"
+#include "squashfs_fs.h"
 
 #include <string.h>
 

@@ -24,7 +24,7 @@
  */
 #include "cache.h"
 
-#include "squashfuse.h"
+#include "fs.h"
 
 #include <stdlib.h>
 

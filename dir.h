@@ -27,8 +27,6 @@
 
 #include "common.h"
 
-#include <stdbool.h>
-
 #include "squashfs_fs.h"
 
 typedef struct {

@@ -24,13 +24,13 @@
  */
 #include "file.h"
 
-#include <stddef.h>
+#include "fs.h"
+#include "swap.h"
+#include "table.h"
+
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "squashfuse.h"
 
 sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
 		uint32_t idx) {

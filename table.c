@@ -24,8 +24,10 @@
  */
 #include "table.h"
 
-#include "squashfuse.h"
+#include "fs.h"
 #include "nonstd.h"
+#include "squashfs_fs.h"
+#include "swap.h"
 
 #include <stdlib.h>
 #include <string.h>

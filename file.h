@@ -27,10 +27,9 @@
 
 #include "common.h"
 
-#include <stdbool.h>
+#include "squashfs_fs.h"
 
 #include "cache.h"
-#include "squashfs_fs.h"
 
 sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
 	uint32_t idx);

@@ -27,8 +27,6 @@
 
 #include "common.h"
 
-#include <sys/types.h>
-
 typedef struct {
 	size_t each;
 	uint64_t *blocks;

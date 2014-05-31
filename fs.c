@@ -22,15 +22,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "squashfuse.h"
+#include "fs.h"
 
+#include "file.h"
 #include "nonstd.h"
+#include "swap.h"
+#include "xattr.h"
 
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
 
 #define DATA_CACHED_BLKS 1
 #define FRAG_CACHED_BLKS 3
