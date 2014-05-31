@@ -34,8 +34,9 @@ typedef struct {
 	sqfs_dir_entry entry;
 	char *path;
 	
+	
 	/* private */
-	int state;
+	int state;	
 	sqfs *fs;
 	sqfs_name namebuf;
 	sqfs_stack stack;
@@ -61,7 +62,7 @@ void sqfs_traverse_close(sqfs_traverse *trv);
    Returns false if there are no more items. */
 bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err);
 
-/* Skip the rest of the current directory. No dir_end will be returned */
-sqfs_err sqfs_traverse_skip(sqfs_traverse *trv);
+/* Don't recurse into the directory just returned. */
+sqfs_err sqfs_traverse_prune(sqfs_traverse *trv);
 
 #endif
