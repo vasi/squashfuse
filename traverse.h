@@ -35,9 +35,9 @@ typedef struct {
 	char *path;
 	
 	/* private */
+	int state;
 	sqfs *fs;
 	sqfs_name namebuf;
-	bool descend;
 	sqfs_stack stack;
 	
 	size_t path_size, path_cap;
