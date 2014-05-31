@@ -37,12 +37,19 @@
 
 
 enum {
+	/* These states may be set on entry to sqfs_traverse_next(), with real
+	   work to do. */
 	TRAVERSE_GET_ENTRY,
-	TRAVERSE_NAME_ADD,
-	TRAVERSE_NAME_REMOVE,
 	TRAVERSE_DESCEND,
-	TRAVERSE_ASCEND,
-	TRAVERSE_FINISHED
+	TRAVERSE_NAME_REMOVE,
+	
+	/* End states */
+	TRAVERSE_ERROR,
+	TRAVERSE_FINISHED,
+	
+	/* Internal */
+	TRAVERSE_NAME_ADD,
+	TRAVERSE_ASCEND
 } sqfs_traverse_state;
 
 /* The struct stored in trv.stack */
@@ -52,7 +59,11 @@ typedef struct {
 } sqfs_traverse_level;
 
 
+/* Make our structure safe */
+static void sqfs_traverse_init(sqfs_traverse *trv);
+
 /* Path manipulation functions */
+static sqfs_err sqfs_traverse_path_init(sqfs_traverse *trv);
 static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
 	const char *str, size_t size);
 static sqfs_err sqfs_traverse_path_add_name(sqfs_traverse *trv);
@@ -70,24 +81,24 @@ static sqfs_err sqfs_traverse_descend(sqfs_traverse *trv, sqfs_inode_id iid);
 static sqfs_err sqfs_traverse_ascend(sqfs_traverse *trv);
 
 
+static void sqfs_traverse_init(sqfs_traverse *trv) {
+	sqfs_dentry_init(&trv->entry, trv->namebuf);
+	sqfs_stack_init(&trv->stack);
+	trv->state = TRAVERSE_ERROR;
+	trv->path = NULL;
+}
+
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
 		sqfs_inode *inode) {
 	sqfs_err err;
 	
-	sqfs_stack_init(&trv->stack);
-	trv->path = NULL;
+	sqfs_traverse_init(trv);
+	
+	if ((err = sqfs_traverse_path_init(trv)))
+		goto error;
+	
 	trv->fs = fs;
 	
-	trv->path_cap = TRAVERSE_DEFAULT_PATH_CAP;
-	if (!(trv->path = malloc(trv->path_cap))) {
-		err = SQFS_ERR;
-		goto error;
-	}
-	trv->path[0] = '\0';
-	trv->path_size = 1;
-	trv->path_last_size = 0;
-	
-	sqfs_dentry_init(&trv->entry, trv->namebuf);
 	err = sqfs_stack_create(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
 	if (err)
 		goto error;
@@ -95,6 +106,7 @@ sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
 	if ((err = sqfs_traverse_descend_inode(trv, inode)))
 		goto error;
 	
+	trv->state = TRAVERSE_GET_ENTRY;
 	return SQFS_OK;
 	
 error:
@@ -115,6 +127,7 @@ sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid) {
 void sqfs_traverse_close(sqfs_traverse *trv) {
 	sqfs_stack_destroy(&trv->stack);
 	free(trv->path);
+	sqfs_traverse_init(trv);
 }
 
 
@@ -122,15 +135,16 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 	sqfs_traverse_level *level;
 	bool found;
 	
+	*err = SQFS_OK;
 	while (true) {
 		switch (trv->state) {
 			case TRAVERSE_GET_ENTRY:
 				if ((*err = sqfs_stack_top(&trv->stack, &level)))
-					return false;
+					goto error;
 				
 				found = sqfs_dir_next(trv->fs, &level->dir, &trv->entry, err);
 				if (*err)
-					return false;
+					goto error;
 				if (found)
 					trv->state = TRAVERSE_NAME_ADD;
 				else
@@ -139,7 +153,7 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 			
 			case TRAVERSE_NAME_ADD:
 				if ((*err = sqfs_traverse_path_add_name(trv)))
-					return false;
+					goto error;
 				if (sqfs_dentry_is_dir(&trv->entry))
 					trv->state = TRAVERSE_DESCEND;
 				else
@@ -155,13 +169,13 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 			case TRAVERSE_DESCEND:
 				*err = sqfs_traverse_descend(trv, sqfs_dentry_inode(&trv->entry));
 				if (*err)
-					return false;
+					goto error;
 				trv->state = TRAVERSE_GET_ENTRY;
 				break;
 			
 			case TRAVERSE_ASCEND:
 				if ((*err = sqfs_traverse_ascend(trv)))
-					return false;
+					goto error;
 				if (sqfs_stack_size(&trv->stack) > 0) {
 					trv->dir_end = true;
 					trv->state = TRAVERSE_NAME_REMOVE;
@@ -172,8 +186,16 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 			
 			case TRAVERSE_FINISHED:
 				return false;
+			
+			case TRAVERSE_ERROR:
+				*err = SQFS_ERR;
+				goto error;
 		}
 	}
+	
+error:
+	trv->state = TRAVERSE_ERROR;
+	return false;
 }
 
 sqfs_err sqfs_traverse_skip(sqfs_traverse *trv) {
@@ -181,6 +203,15 @@ sqfs_err sqfs_traverse_skip(sqfs_traverse *trv) {
 	return SQFS_OK;
 }
 
+
+static sqfs_err sqfs_traverse_path_init(sqfs_traverse *trv) {
+	trv->path_cap = TRAVERSE_DEFAULT_PATH_CAP;
+	if (!(trv->path = malloc(trv->path_cap)))
+		return SQFS_ERR;
+	trv->path[0] = '\0';
+	trv->path_size = 1; /* includes nul-terminator */
+	return SQFS_OK;
+}
 
 static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
 		const char *str, size_t size) {
