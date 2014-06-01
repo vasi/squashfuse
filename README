@@ -110,17 +110,23 @@ The following operating systems are known to be supported:
 * OpenIndiana
 * Android
 
-
-Alternatives
-------------
-Other squashfs implementations:
-* Linux kernel module
-* squashfs-tools
-* 7-zip / p7zip
-* Grub 2 bootloader
+Acknowledgements
+----------------
+Thanks to:
+* Phillip Lougher, for designing the squashfs format, and implementing support in the kernel. Also for providing permission to use and distribute squashfs_fs.h under a BSD-style license.
+* Maël Kerbiriou, for implementing LZ4 support.
 
 Websites
 --------
 - FUSE home page: http://fuse.sourceforge.net/
 - squashfs home page: http://squashfs.sourceforge.net/
 - squashfs-tools for non-Linux: https://github.com/vasi/squashfs-tools
+
+Other implementations
+---------------------
+These other tools can read the squashfs file format:
+* Linux squashfs kernel module
+* squashfs-tools
+* 7-zip / p7zip
+* Grub 2 bootloader
+
