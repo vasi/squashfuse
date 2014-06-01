@@ -2,7 +2,6 @@ For 0.1
 	Submit squashfs-tools patches
 
 Build system
-	Support AM_SILENT_RULES
 	Autotools versioning
 		Currently autoconf 2.68, automake 1.11 tested. Use AC_PREREQ?
 		Test older versions
