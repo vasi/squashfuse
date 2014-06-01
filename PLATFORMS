@@ -1,3 +1,5 @@
+Overview
+--------
 The following operating systems are known to be supported:
 * Linux
 * Mac OS X
@@ -22,8 +24,7 @@ These don't have FUSE:
 
 
 Details
-------
-
+-------
 * Linux
   + Versions: Kernel 2.4.20 or later, most distros since ~2004
   + Tested on:
