@@ -2,12 +2,9 @@
 
 What is it?
 -----------
-Squashfuse is a FUSE [1] filesystem that allows a squashfs archive to be mounted in user-space. It is designed to be fast and memory-efficient, and supports most of the features of the squashfs format. It also has support for many different operating systems.
+Squashfuse is a FUSE filesystem that allows a squashfs archive to be mounted in user-space. It is designed to be fast and memory-efficient, and supports most of the features of the squashfs format. It also has support for many different operating systems.
 
-Squashfs is an efficiently compressed, read-only archive format. Support for squashfs is in the Linux kernel, and the format is commonly used on Live CD distributions. A squashfs archive can be created using `mksquashfs' from squashfs-tools [2].
-
-[1] http://fuse.sourceforge.net/
-[2] http://squashfs.sourceforge.net/ . A version that works on non-Linux operating systems is at https://github.com/vasi/squashfs-tools
+Squashfs is an efficiently compressed, read-only archive format. Support for squashfs is in the Linux kernel, and the format is commonly used on Live CD distributions. A squashfs archive can be created using `mksquashfs' from squashfs-tools.
 
 Getting it
 ----------
@@ -121,3 +118,9 @@ Other squashfs implementations:
 * squashfs-tools
 * 7-zip / p7zip
 * Grub 2 bootloader
+
+Websites
+--------
+- FUSE home page: http://fuse.sourceforge.net/
+- squashfs home page: http://squashfs.sourceforge.net/
+- squashfs-tools for non-Linux: https://github.com/vasi/squashfs-tools
