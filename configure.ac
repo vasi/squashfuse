@@ -33,10 +33,13 @@ AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
 # FUSE
-SQ_FIND_FUSE
-SQ_FUSE_API_LOWLEVEL
-SQ_FUSE_API_VERSION
-SQ_FUSE_API_XATTR_POSITION
+SQ_FUSE_API
+AS_IF([test "x$sq_fuse_found" = xyes],[
+	SQ_FUSE_API_LOWLEVEL
+	SQ_FUSE_API_VERSION
+	SQ_FUSE_API_XATTR_POSITION
+])
+SQ_FUSE_RESULT
 
 # Misc
 SQ_CHECK_PROG_MAKE_EXPORT
@@ -45,9 +48,23 @@ AC_CHECK_TYPE([__le16],[
 		[Define if <linux/types.h> defines the type __le16])
 ],,[#include <linux/types.h>])
 
+
+# Other options
+AC_ARG_ENABLE([demo],
+	AS_HELP_STRING([--disable-demo], [disable library demo]),,
+	[enable_demo=yes])
+AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
+
+AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
+	AC_MSG_FAILURE([Nothing left to build]))
+
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 AS_ECHO()
-AS_ECHO(["Compression support:$sq_decompressors"])
-AS_ECHO(["FUSE API support: high-level $sq_fuse_lowlevel"])
+AS_ECHO(["Compression support ....... :$sq_decompressors"])
+AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
+AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
+AS_ECHO(["Demo program .............. : $enable_demo"])
+AS_ECHO()

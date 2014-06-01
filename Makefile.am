@@ -8,7 +8,10 @@ endif
 dist_man_MANS = squashfuse.1
 EXTRA_DIST = gen_swap.sh autogen.sh LICENSE
 
-noinst_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
+bin_PROGRAMS =
+noinst_PROGRAMS =
+
+noinst_LTLIBRARIES = libsquashfuse.la
 
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
@@ -28,22 +31,28 @@ libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 libfuseprivate_la_LIBADD = $(FUSE_LIBS)
 
 # High-level squashfuse
-bin_PROGRAMS = squashfuse
+if SQ_WANT_HIGHLEVEL
+noinst_LTLIBRARIES += libfuseprivate.la
+bin_PROGRAMS += squashfuse
 squashfuse_SOURCES = hl.c
 squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_LDADD = libsquashfuse.la libfuseprivate.la
-
-# Sample program squashfuse_ls
-noinst_PROGRAMS = squashfuse_ls
-squashfuse_ls_SOURCES = ls.c
-squashfuse_ls_LDADD = libsquashfuse.la
+endif
 
 # Low-level squashfuse_ll, if supported
-if HAVE_FUSE_LOWLEVEL
+if SQ_WANT_LOWLEVEL
+noinst_LTLIBRARIES += libfuseprivate.la
 bin_PROGRAMS += squashfuse_ll
 squashfuse_ll_SOURCES = ll.c ll_inode.c nonstd-daemon.c ll.h
 squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la
+endif
+
+if SQ_WANT_DEMO
+# Sample program squashfuse_ls
+noinst_PROGRAMS += squashfuse_ls
+squashfuse_ls_SOURCES = ls.c
+squashfuse_ls_LDADD = libsquashfuse.la
 endif
 
 # Handle generation of swap include files

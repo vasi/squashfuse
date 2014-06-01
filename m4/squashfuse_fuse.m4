@@ -21,10 +21,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# SQ_CHECK_FUSE(LIBS, [IF-FOUND], [IF-NOT-FOUND])
+# SQ_TRY_FUSE(LIBS, [IF-FOUND], [IF-NOT-FOUND])
 #
 # Check if FUSE low-level compiles and links correctly.
-AC_DEFUN([SQ_CHECK_FUSE],[
+AC_DEFUN([SQ_TRY_FUSE],[
 	sq_fuse_ok=yes
 	AS_VAR_PUSHDEF([sq_cv_lib],[sq_cv_lib_fuse_""$1""_""$LIBS])
 	AC_CACHE_CHECK([for FUSE library],[sq_cv_lib],[
@@ -68,11 +68,11 @@ AC_DEFUN([SQ_CHECK_FUSE],[
 	AS_VAR_POPDEF([sq_cv_lib])
 ])
 
-# SQ_CHECK_FUSE_DIRS(NAME, INCDIR, LIBDIR, CPPFLAGS, LIBS,
+# SQ_TRY_FUSE_DIRS(NAME, INCDIR, LIBDIR, CPPFLAGS, LIBS,
 #	[IF-FOUND], [IF-NOT-FOUND])
 #
-# Check for FUSE in the given directories.
-AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
+# Check if FUSE is in any of the given directories
+AC_DEFUN([SQ_TRY_FUSE_DIRS],[
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
 		AS_IF([test "x$1" = x],,[AC_MSG_NOTICE([Checking for FUSE in $1])])
 		
@@ -80,7 +80,7 @@ AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
 		AS_IF([test "x$2" = x],,[CPPFLAGS="$CPPFLAGS -I$2"])
 		AS_IF([test "x$3" = x],,[LIBS="$LIBS -L$3"])
 		CPPFLAGS="$CPPFLAGS $4"
-		SQ_CHECK_FUSE($5,[sq_fuse_found=yes],[sq_fuse_found=])
+		SQ_TRY_FUSE($5,[sq_fuse_found=yes],[sq_fuse_found=])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
 		AS_IF([test "x$sq_fuse_found" = xyes],$6,$7)
 	])
@@ -91,15 +91,15 @@ AC_DEFUN([SQ_CHECK_FUSE_DIRS],[
 # Nobody told us where FUSE is, search some common places.
 AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 	AS_CASE([$target_os],[darwin*],[
-		SQ_CHECK_FUSE_DIRS([OSXFUSE directories],
+		SQ_TRY_FUSE_DIRS([OSXFUSE directories],
 			[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
 			[$sq_fuse_cppflags],[osxfuse $sq_fuse_libs])
 	])
-	SQ_CHECK_FUSE_DIRS([default directories],,,
+	SQ_TRY_FUSE_DIRS([default directories],,,
 		[$sq_fuse_cppflags],[$sq_fuse_libs])
-	SQ_CHECK_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
+	SQ_TRY_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
 		[$sq_fuse_cppflags],[$sq_fuse_libs])
-	SQ_CHECK_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
+	SQ_TRY_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
 		[$sq_fuse_cppflags],[$sq_fuse_libs])
 	
 	AS_IF([test "x$sq_fuse_found" = xyes],[
@@ -108,7 +108,7 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 	],[sq_cv_lib_fuse_LIBS=no])
 ])
 
-# SQ_FIND_FUSE([IF-FOUND],[IF-NOT-FOUND])
+# SQ_FIND_FUSE
 #
 # Find the FUSE library
 AC_DEFUN([SQ_FIND_FUSE],[
@@ -129,6 +129,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		fuse_inc="$withval/include/fuse"
 		fuse_lib="$withval/lib"
 	])
+	
 	AC_ARG_WITH(fuse-include,
 		AS_HELP_STRING([--with-fuse-include=DIR], [FUSE header directory]),
 		[fuse_inc=$withval])
@@ -136,7 +137,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		AS_HELP_STRING([--with-fuse-lib=DIR], [FUSE library directory]),
 		[fuse_lib=$withval])
 	AS_IF([test "x$fuse_inc$fuse_lib" = x],,[
-		SQ_CHECK_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],[$sq_fuse_cppflags],
+		SQ_TRY_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],[$sq_fuse_cppflags],
 			[$sq_fuse_libs],,
 			[AC_MSG_FAILURE([Can't find FUSE in specified directories])])
 	])
@@ -145,7 +146,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
 		SQ_SAVE_FLAGS
 		SQ_PKG([fuse],[fuse >= 2.5],
-			[SQ_CHECK_FUSE(,[sq_fuse_found=yes],
+			[SQ_TRY_FUSE(,[sq_fuse_found=yes],
 				[AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
 			[:])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
@@ -166,25 +167,60 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		[AC_MSG_FAILURE([Can't find FUSE])])
 ])
 
+# SQ_FUSE_API
+#
+# Check for the high-level FUSE API
+AC_DEFUN([SQ_FUSE_API],[
+	AC_ARG_ENABLE([high-level],
+		AS_HELP_STRING([--disable-high-level], [disable high-level FUSE driver]),,
+		[enable_high_level=yes])
+	AC_ARG_ENABLE([low-level],
+		AS_HELP_STRING([--disable-low-level], [disable low-level FUSE driver]),,
+		[enable_low_level=check])
+	AC_ARG_ENABLE(fuse,
+		AS_HELP_STRING([--disable-fuse], [disable all FUSE drivers]))
+	AS_IF([test "x$enable_fuse" = xno],[
+		enable_high_level=no
+		enable_low_level=no
+	])
+
+	AS_IF([test "x$enable_high_level$enable_low_level" = xnono],,[SQ_FIND_FUSE])
+])
+
 # SQ_FUSE_API_LOWLEVEL
 #
 # Check if we have the low-level FUSE API available
 AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
-	SQ_SAVE_FLAGS
-	LIBS="$LIBS $FUSE_LIBS"
-	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
+	AS_IF([test "x$enable_low_level" = xno],,[
+		SQ_SAVE_FLAGS
+		LIBS="$LIBS $FUSE_LIBS"
+		CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
-	sq_fuse_lowlevel="low-level"
-	AC_CHECK_DECL([fuse_lowlevel_new],,[sq_fuse_lowlevel=],
-		[#include <fuse_lowlevel.h>])
-	AC_CHECK_FUNC([fuse_lowlevel_new],,[sq_fuse_lowlevel=])
-	AM_CONDITIONAL([HAVE_FUSE_LOWLEVEL],
-		[test "x$sq_fuse_lowlevel" = xlow-level])
+		sq_fuse_lowlevel_found=yes
+		AC_CHECK_DECL([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no],
+			[#include <fuse_lowlevel.h>])
+		AC_CHECK_FUNC([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no])
 	
-	AS_IF([test "x$sq_fuse_lowlevel" = x],
-		[AC_MSG_WARN([The low-level FUSE API is not available, will only compile squashfuse_hl])])
-	
-	SQ_RESTORE_FLAGS
+		SQ_RESTORE_FLAGS
+		
+		AS_IF([test "x$sq_fuse_lowlevel_found" = xno],[
+			sq_err="The low-level FUSE API is not available"
+			AS_IF([test "x$enable_low_level" = xyes],[AC_MSG_FAILURE($sq_err)],
+				[AC_MSG_WARN($sq_err)])
+		])
+		enable_low_level="$sq_fuse_lowlevel_found"
+	])
+])
+
+# SQ_FUSE_RESULT
+#
+# Handle the results of FUSE checks
+AC_DEFUN([SQ_FUSE_RESULT],[
+	AS_IF([test "x$enable_high_level$enable_low_level" = xnono],[
+		AC_MSG_WARN([Without any FUSE support, you will not be able to mount squashfs archives])
+	])
+	AM_CONDITIONAL([SQ_WANT_HIGHLEVEL], [test "x$enable_high_level" = xyes])
+	AM_CONDITIONAL([SQ_WANT_LOWLEVEL], [test "x$enable_low_level" = xyes])
 ])
 
 # SQ_FUSE_API_VERSION
@@ -195,7 +231,7 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 	LIBS="$LIBS $FUSE_LIBS"
 	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
-	AS_IF([test "x$sq_fuse_lowlevel" = xlow-level],[
+	AS_IF([test "x$enable_low_level" = xyes],[
 		AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
 			[#include <fuse_lowlevel.h>])
 		AS_IF([test "x$found_dirent" = xyes],,
