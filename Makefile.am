@@ -5,8 +5,8 @@ if MAKE_EXPORT
 export COPYFILE_DISABLE = 1
 endif
 
-dist_man_MANS = squashfuse.1
-EXTRA_DIST = gen_swap.sh autogen.sh LICENSE
+dist_man_MANS =
+EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -32,20 +32,23 @@ libfuseprivate_la_LIBADD = $(FUSE_LIBS)
 
 # High-level squashfuse
 if SQ_WANT_HIGHLEVEL
-noinst_LTLIBRARIES += libfuseprivate.la
 bin_PROGRAMS += squashfuse
 squashfuse_SOURCES = hl.c
 squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_LDADD = libsquashfuse.la libfuseprivate.la
+
+noinst_LTLIBRARIES += libfuseprivate.la
+dist_man_MANS += squashfuse.1
 endif
 
 # Low-level squashfuse_ll, if supported
 if SQ_WANT_LOWLEVEL
-noinst_LTLIBRARIES += libfuseprivate.la
 bin_PROGRAMS += squashfuse_ll
 squashfuse_ll_SOURCES = ll.c ll_inode.c nonstd-daemon.c ll.h
 squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la
+
+noinst_LTLIBRARIES += libfuseprivate.la
 endif
 
 if SQ_WANT_DEMO
