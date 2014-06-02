@@ -31,6 +31,56 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+
+We have three kinds of unique identifiers for inodes:
+
+1. sqfs_inode_id
+  - Points directly to the on-disk location of the inode data.
+  - A 48-bit integer (32-bit block id, and 16 bit offset within a block).
+  - Not assigned sequentially, two IDs will differ by at least 20.
+  - The root inode may have any value of sqfs_inode_id.
+  - You CAN easily get the inode data from an sqfs_inode_id.
+  - You CANNOT get the sqfs_inode_id from the inode data.
+
+2. sqfs_inode_number
+  - Arbitrary identifier for inodes, assigned by mksquashfs.
+  - A 32-bit integer.
+  - Assigned sequentially, starting at zero.
+  - The root inode generally has the value zero.
+  - You CANNOT find the inode data directly from an sqfs_inode_number.
+  - You CAN find the sqfs_inode_number from the inode data.
+  - You CAN lookup sqfs_inode_number -> sqfs_inode_id IFF the squashfs
+    archive has the optional export table enabled.
+
+3. fuse_ino_t
+  - Arbitrary identifier for inodes, assigned by the FUSE driver.
+  - Has the same width as 'long', either 32- or 64-bit.
+  - The value zero is reserved to indicate a non-existent entry.
+  - The value one is reserved to indicate the root inode.
+
+
+To implement a low-level filesystem, we must:
+  - Generate a fuse_ino_t when telling FUSE about a new inode.
+  - Find the inode data when FUSE asks us about a fuse_ino_t.
+
+So we need a bidirectional mapping between fuse_ino_t and sqfs_inode_id.
+We use several different strategies, depending on the bitness of the system,
+and whether or not the squashfs archive has an export table:
+
+1. On 64-bit systems: fuse_ino_t is big enough to hold the sqfs_inode_id.
+	 We can just make minor adjustments for the reserved values of fuse_ino_t.
+
+2. On 32-bit systems, with export table: fuse_ino_t can hold the
+	 sqfs_inode_number, with adjustments for reserved values. We can use the
+   export table to lookup the sqfs_inode_id from the sqfs_inode_number.
+
+3. On 32-bit systems, no export: fuse_ino_t again holds sqfs_inode_number.
+   But we have to maintain our own mapping of
+	 sqfs_inode_number -> sqfs_inode_id, which can use quite a lot of memory.
+
+*/
+
 
 /***** INODE CONVERSION FOR 64-BIT INODES ****
  *
