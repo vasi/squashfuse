@@ -112,7 +112,8 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 #
 # Find the FUSE library
 AC_DEFUN([SQ_FIND_FUSE],[
-	sq_fuse_cppflags=""
+	# FUSE headers usually demand _FILE_OFFSET_BITS=64
+	sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
 	sq_fuse_libs="fuse"
 	AS_CASE([$target_os],[darwin*],[
 		sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
