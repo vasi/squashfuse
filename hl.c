@@ -296,6 +296,7 @@ int main(int argc, char *argv[]) {
 	if (!hl)
 		return -1;
 	
+	fuse_opt_add_arg(&args, "-s"); /* single threaded */
 	ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
 	fuse_opt_free_args(&args);
 	return ret;
