@@ -263,6 +263,7 @@ int main(int argc, char *argv[]) {
 	struct fuse_args args;
 	sqfs_opts opts;
 	sqfs_hl *hl;
+	int ret;
 	
 	struct fuse_operations sqfs_hl_ops;
 	memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
@@ -294,5 +295,8 @@ int main(int argc, char *argv[]) {
 	hl = sqfs_hl_open(opts.image);
 	if (!hl)
 		return -1;
-	return fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+	
+	ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+	fuse_opt_free_args(&args);
+	return ret;
 }
