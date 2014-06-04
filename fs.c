@@ -98,6 +98,8 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
 void sqfs_destroy(sqfs *fs) {
 	sqfs_table_destroy(&fs->id_table);
 	sqfs_table_destroy(&fs->frag_table);
+	if (sqfs_export_ok(fs))
+		sqfs_table_destroy(&fs->export_table);
 	sqfs_cache_destroy(&fs->md_cache);
 	sqfs_cache_destroy(&fs->data_cache);
 	sqfs_cache_destroy(&fs->frag_cache);
