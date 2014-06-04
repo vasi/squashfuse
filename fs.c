@@ -103,6 +103,7 @@ void sqfs_destroy(sqfs *fs) {
 	sqfs_cache_destroy(&fs->md_cache);
 	sqfs_cache_destroy(&fs->data_cache);
 	sqfs_cache_destroy(&fs->frag_cache);
+	sqfs_cache_destroy(&fs->blockidx);
 }
 
 void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size) {
