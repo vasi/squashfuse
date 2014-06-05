@@ -40,15 +40,15 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 typedef uint32_t sqfs_blocklist_entry;
 typedef struct {
 	sqfs *fs;
-	size_t remain;
-	sqfs_md_cursor cur;
+	size_t remain;			/* How many blocks left in the file? */
+	sqfs_md_cursor cur;	/* Points to next blocksize in MD */
 	bool started;
 
 	uint64_t pos;
 	
-	uint64_t block;
-	sqfs_blocklist_entry header;
-	uint32_t input_size;
+	uint64_t block;			/* Points to next data block location */
+	sqfs_blocklist_entry header; /* Packed blocksize data */
+	uint32_t input_size;				 /* Extracted size of this block */
 } sqfs_blocklist;
 
 size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode);
