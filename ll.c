@@ -453,6 +453,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	fuse_opt_free_args(&args);
+	free(ll);
 	free(mountpoint);
 	
 	return -err;
