@@ -61,13 +61,17 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 	sqfs_off_t *size, void *buf);
 
 
+/*** Block index for skipping to the middle of large files ***/
+
 typedef struct {
-	uint64_t data_block;
-	uint32_t md_block;
+	uint64_t data_block;	/* A data block where the file continues */
+	uint32_t md_block;		/* A metadata block with blocksizes that continue from
+													 data_block */
 } sqfs_blockidx_entry;
 
 sqfs_err sqfs_blockidx_init(sqfs_cache *cache);
 
+/* Fill *out with all the block-index entries for this file */
 sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 	sqfs_blockidx_entry **out);
 
