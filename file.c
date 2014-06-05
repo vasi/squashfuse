@@ -314,7 +314,7 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 	bl->cur.block = blockidx->md_block + fs->sb.inode_table_start;
 	bl->cur.offset %= sizeof(sqfs_blocklist_entry);
 	bl->remain -= skipped;
-	bl->pos = skipped * fs->sb.block_size;
+	bl->pos = (uint64_t)skipped * fs->sb.block_size;
 	bl->block = blockidx->data_block;
 	return SQFS_OK;
 }
