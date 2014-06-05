@@ -307,7 +307,7 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 			return err;
 	}
 	
-	skipped = (metablock * SQUASHFS_META_INDEXES)
+	skipped = (metablock * SQUASHFS_METADATA_SIZE / sizeof(sqfs_blocklist_entry))
 		- (bl->cur.offset / sizeof(sqfs_blocklist_entry));
 	
 	blockidx += metablock - 1;
