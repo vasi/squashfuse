@@ -33,8 +33,7 @@ typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
 	sqfs fs;
 	
-	/* Converting inodes between squashfs and fuse */
-	fuse_ino_t (*ino_fuse)(sqfs_ll *ll, sqfs_inode_id i);
+	/* Convert from FUSE inode to squashfs inode */
 	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
 	
 	/* Register a new inode, returning the fuse ID for it */

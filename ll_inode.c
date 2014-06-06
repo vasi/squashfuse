@@ -90,16 +90,6 @@ and whether or not the squashfs archive has an export table:
  *
  * Both 1 and 2 are guaranteed not to be used by sqfs, due to inode size
  */
-static fuse_ino_t sqfs_ll_ino64_fuse(sqfs_ll *ll, sqfs_inode_id i) {
-	if (i == sqfs_inode_root(&ll->fs)) {
-		return FUSE_ROOT_ID;
-	} else if (i == 0) {
-		return 2;
-	} else {
-		return i;
-	}
-}
-
 static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 	if (i == FUSE_ROOT_ID) {
 		return sqfs_inode_root(&ll->fs);
@@ -111,11 +101,17 @@ static sqfs_inode_id sqfs_ll_ino64_sqfs(sqfs_ll *ll, fuse_ino_t i) {
 }
 
 static fuse_ino_t sqfs_ll_ino64_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-	return sqfs_ll_ino64_fuse(ll, sqfs_dentry_inode(e));
+	sqfs_inode_id i = sqfs_dentry_inode(e);
+	if (i == sqfs_inode_root(&ll->fs)) {
+		return FUSE_ROOT_ID;
+	} else if (i == 0) {
+		return 2;
+	} else {
+		return i;
+	}
 }
 
 static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
-	ll->ino_fuse = sqfs_ll_ino64_fuse;
 	ll->ino_sqfs = sqfs_ll_ino64_sqfs;
 	ll->ino_fuse_num = sqfs_ll_ino64_fuse_num;
 	return SQFS_OK;
@@ -179,13 +175,6 @@ static fuse_ino_t sqfs_ll_ino32_fuse2num(sqfs_ll *ll, fuse_ino_t i) {
 	} else {
 		return i - 1;
 	}
-}
-
-static fuse_ino_t sqfs_ll_ino32_fuse(sqfs_ll *ll, sqfs_inode_id i) {
-	sqfs_inode inode;
-	if (sqfs_inode_get(&ll->fs, &inode, i))
-		return FUSE_INODE_NONE; /* We shouldn't get here! */
-	return sqfs_ll_ino32_num2fuse(ll, inode.base.inode_number);
 }
 
 static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
@@ -262,7 +251,6 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 	sqfs_hash_init(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
 		SQFS_ICACHE_INITIAL);
 		
-	ll->ino_fuse = sqfs_ll_ino32_fuse;
 	ll->ino_sqfs = sqfs_ll_ino32_sqfs;
 	ll->ino_fuse_num = sqfs_ll_ino32_fuse_num;
 	ll->ino_register = sqfs_ll_ino32_register;
@@ -306,7 +294,6 @@ static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
 	map = malloc(sizeof(sqfs_ll_inode_map));
 	map->root = inode.base.inode_number;
 	
-	ll->ino_fuse = sqfs_ll_ino32_fuse;
 	ll->ino_sqfs = sqfs_ll_ino32exp_sqfs;
 	ll->ino_fuse_num = sqfs_ll_ino32_fuse_num;
 	ll->ino_destroy = sqfs_ll_ino32exp_destroy;
