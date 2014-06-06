@@ -28,6 +28,7 @@
 #include "nonstd.h"
 
 #include <errno.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -151,6 +152,7 @@ typedef struct {
 	uint32_t refcount;
 	uint32_t ino_hi;
 	uint16_t ino_lo;
+	char end_of_struct;
 } sqfs_ll_inode_entry;
 
 #define IE_INODE(ie) (((uint64_t)(ie)->ino_hi << 16) | (ie)->ino_lo)
@@ -257,7 +259,7 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
 		
 	map = malloc(sizeof(sqfs_ll_inode_map));
 	map->root = inode.base.inode_number;
-	sqfs_hash_init(&map->icache, sizeof(sqfs_ll_inode_entry),
+	sqfs_hash_init(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
 		SQFS_ICACHE_INITIAL);
 		
 	ll->ino_fuse = sqfs_ll_ino32_fuse;
