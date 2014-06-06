@@ -165,7 +165,7 @@ Squashfuse is probably not the right tool for the job, if:
     The SquashFS kernel module has seen much more testing than squashfuse.
 
 
-If you don't yet use SquashFS, consider starting, now that squashfuse exists.
+If you don't yet use SquashFS, consider starting now that squashfuse exists.
 For many uses, the chief drawbacks of SquashFS were requiring Linux and root
 access, but squashfuse has that covered.
 
@@ -186,7 +186,8 @@ Squashfuse currently comprises three programs:
   * squashfuse      Allows you to mount a squashfs filesystem.
   
   * squashfuse_ll   Like `squashfuse', but implemented using the low-level
-                    FUSE API. It's a tiny bit faster, but less portable.
+                    FUSE API. It's faster, especially with large directories,
+                    and it uses less memory. However, it's less portable.
   
   * squashfuse_ls   Lists all the files in a squashfs archive. A demonstration
                     of using the squashfuse core in the absence of FUSE.
@@ -209,13 +210,16 @@ Squashfuse is missing the following features:
   - Support for SquashFS versions less than 4.0
   - Multi-core decompression
 
+Squashfuse has low memory usage, generally around 400 KB of heap for
+`squashfuse_ll', up to 5 MB for `squashfuse'.
 
-3c. Known bugs
+
+3d. Known bugs
 --------------
 - On 32-bit systems with a large inode cache, when mounting a large SquashFS
-  archive created with the "-no-exports" option, squashfuse_ll may use a large
-  amount of memory. This is due to a bug in the FUSE API, where ino_t is shrunk
-  to 32-bits.
+  archive created with the "-no-exports" option, squashfuse_ll may use more
+  memory that normal--up to tens of MB. This is due to a bug in the FUSE API,
+  scheduled for a fix in FUSE 3.
 
 
 4. References
