@@ -40,6 +40,12 @@
 	typedef int sqfs_fd_t;
 #endif
 
+#ifdef __GNUC__
+	#define SQFS_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#else
+	#define SQFS_UNUSED(x) UNUSED_ ## x
+#endif
+
 typedef enum {
 	SQFS_OK,
 	SQFS_ERR,

@@ -65,7 +65,7 @@ static void sqfs_hl_op_destroy(void *user_data) {
 	free(hl);
 }
 
-static void *sqfs_hl_op_init(struct fuse_conn_info *conn) {
+static void *sqfs_hl_op_init(struct fuse_conn_info *SQFS_UNUSED(conn)) {
 	return fuse_get_context()->private_data;
 }
 
@@ -103,14 +103,14 @@ static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
 	return 0;
 }
 
-static int sqfs_hl_op_releasedir(const char *path,
+static int sqfs_hl_op_releasedir(const char *SQFS_UNUSED(path),
 		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	return 0;
 }
 
-static int sqfs_hl_op_readdir(const char *path, void *buf,
+static int sqfs_hl_op_readdir(const char *SQFS_UNUSED(path), void *buf,
 		fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	sqfs_err err;
 	sqfs *fs;
@@ -164,14 +164,15 @@ static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
 	return 0;
 }
 
-static int sqfs_hl_op_release(const char *path, struct fuse_file_info *fi) {
+static int sqfs_hl_op_release(const char *SQFS_UNUSED(path),
+		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	return 0;
 }
 
-static int sqfs_hl_op_read(const char *path, char *buf, size_t size,
-		off_t off, struct fuse_file_info *fi) {
+static int sqfs_hl_op_read(const char *SQFS_UNUSED(path), char *buf,
+		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs *fs;
 	sqfs_inode *inode;
 	off_t osize;
@@ -270,18 +271,18 @@ int main(int argc, char *argv[]) {
 	
 	struct fuse_operations sqfs_hl_ops;
 	memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
-	sqfs_hl_ops.init			= sqfs_hl_op_init;
-	sqfs_hl_ops.destroy		= sqfs_hl_op_destroy;
-	sqfs_hl_ops.getattr		= sqfs_hl_op_getattr;
-	sqfs_hl_ops.opendir		= sqfs_hl_op_opendir;
+	sqfs_hl_ops.init				= sqfs_hl_op_init;
+	sqfs_hl_ops.destroy			= sqfs_hl_op_destroy;
+	sqfs_hl_ops.getattr			= sqfs_hl_op_getattr;
+	sqfs_hl_ops.opendir			= sqfs_hl_op_opendir;
 	sqfs_hl_ops.releasedir	= sqfs_hl_op_releasedir;
-	sqfs_hl_ops.readdir		= sqfs_hl_op_readdir;
-	sqfs_hl_ops.open		= sqfs_hl_op_open;
-	sqfs_hl_ops.release		= sqfs_hl_op_release;
-	sqfs_hl_ops.read		= sqfs_hl_op_read;
-	sqfs_hl_ops.readlink	= sqfs_hl_op_readlink;
-	sqfs_hl_ops.listxattr	= sqfs_hl_op_listxattr;
-	sqfs_hl_ops.getxattr	= sqfs_hl_op_getxattr;
+	sqfs_hl_ops.readdir			= sqfs_hl_op_readdir;
+	sqfs_hl_ops.open				= sqfs_hl_op_open;
+	sqfs_hl_ops.release			= sqfs_hl_op_release;
+	sqfs_hl_ops.read				= sqfs_hl_op_read;
+	sqfs_hl_ops.readlink		= sqfs_hl_op_readlink;
+	sqfs_hl_ops.listxattr		= sqfs_hl_op_listxattr;
+	sqfs_hl_ops.getxattr		= sqfs_hl_op_getxattr;
   
 	args.argc = argc;
 	args.argv = argv;

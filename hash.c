@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static sqfs_err sqfs_hash_add_internal(sqfs_hash *h, int doubling,
+static sqfs_err sqfs_hash_add_internal(sqfs_hash *h,
 		sqfs_hash_key k, sqfs_hash_value v) {
 	size_t hash = (k & (h->capacity - 1));	
 	sqfs_hash_bucket *b = malloc(sizeof(sqfs_hash_bucket) + h->value_size);
@@ -56,7 +56,7 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
 		while (b) {
 			sqfs_hash_bucket *n;
 			if (!err)
-				err = sqfs_hash_add_internal(h, 1, b->key, &b->value);
+				err = sqfs_hash_add_internal(h, b->key, &b->value);
 			n = b->next;
 			free(b);
 			b = n;
@@ -111,7 +111,7 @@ sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value v) {
 		if (err)
 			return err;
 	}
-	return sqfs_hash_add_internal(h, 0, k, v);
+	return sqfs_hash_add_internal(h, k, v);
 }
 
 sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k) {

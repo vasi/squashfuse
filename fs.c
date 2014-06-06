@@ -295,7 +295,7 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 }
 
 int sqfs_export_ok(sqfs *fs) {
-	return fs->sb.lookup_table_start != SQUASHFS_INVALID_BLK;
+	return (int64_t)fs->sb.lookup_table_start != SQUASHFS_INVALID_BLK;
 }
 
 sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {

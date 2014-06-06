@@ -105,7 +105,7 @@ void sqfs_usage(char *progname, bool fuse_usage) {
 }
 
 int sqfs_opt_proc(void *data, const char *arg, int key,
-		struct fuse_args *outargs) {
+		struct fuse_args *SQFS_UNUSED(outargs)) {
 	sqfs_opts *opts = (sqfs_opts*)data;
 	if (key == FUSE_OPT_KEY_NONOPT) {
 		if (opts->mountpoint) {

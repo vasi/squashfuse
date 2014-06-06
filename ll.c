@@ -36,7 +36,7 @@
 static const double SQFS_TIMEOUT = DBL_MAX;
 
 static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
-		struct fuse_file_info *fi) {
+		struct fuse_file_info *SQFS_UNUSED(fi)) {
 	sqfs_ll_i lli;
 	struct stat st;
 	if (sqfs_ll_iget(req, &lli, ino))
@@ -74,7 +74,7 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 	free(lli);
 }
 
-static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
 		struct fuse_file_info *fi) {
 	free((sqfs_ll_i*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); /* yes, this is necessary */
@@ -91,8 +91,8 @@ static size_t sqfs_ll_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
 		return esize;
 	#endif
 }
-static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
-		off_t off, struct fuse_file_info *fi) {
+static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
+		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs_err sqerr;
 	sqfs_dir dir;
 	sqfs_name namebuf;
@@ -208,14 +208,14 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	free(inode);
 }
 
-static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
 		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
 	fuse_reply_err(req, 0);
 }
 
-static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
+static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
 		size_t size, off_t off, struct fuse_file_info *fi) {
 	sqfs_ll *ll = fuse_req_userdata(req);
 	sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
@@ -394,18 +394,18 @@ int main(int argc, char *argv[]) {
 	
 	struct fuse_lowlevel_ops sqfs_ll_ops;
 	memset(&sqfs_ll_ops, 0, sizeof(sqfs_ll_ops));
-	sqfs_ll_ops.getattr		= sqfs_ll_op_getattr;
-	sqfs_ll_ops.opendir		= sqfs_ll_op_opendir;
+	sqfs_ll_ops.getattr			= sqfs_ll_op_getattr;
+	sqfs_ll_ops.opendir			= sqfs_ll_op_opendir;
 	sqfs_ll_ops.releasedir	= sqfs_ll_op_releasedir;
-	sqfs_ll_ops.readdir		= sqfs_ll_op_readdir;
-	sqfs_ll_ops.lookup		= sqfs_ll_op_lookup;
-	sqfs_ll_ops.open		= sqfs_ll_op_open;
-	sqfs_ll_ops.release		= sqfs_ll_op_release;
-	sqfs_ll_ops.read		= sqfs_ll_op_read;
-	sqfs_ll_ops.readlink	= sqfs_ll_op_readlink;
-	sqfs_ll_ops.listxattr	= sqfs_ll_op_listxattr;
-	sqfs_ll_ops.getxattr	= sqfs_ll_op_getxattr;
-	sqfs_ll_ops.forget		= sqfs_ll_op_forget;
+	sqfs_ll_ops.readdir			= sqfs_ll_op_readdir;
+	sqfs_ll_ops.lookup			= sqfs_ll_op_lookup;
+	sqfs_ll_ops.open				= sqfs_ll_op_open;
+	sqfs_ll_ops.release			= sqfs_ll_op_release;
+	sqfs_ll_ops.read				= sqfs_ll_op_read;
+	sqfs_ll_ops.readlink		= sqfs_ll_op_readlink;
+	sqfs_ll_ops.listxattr		= sqfs_ll_op_listxattr;
+	sqfs_ll_ops.getxattr		= sqfs_ll_op_getxattr;
+	sqfs_ll_ops.forget			= sqfs_ll_op_forget;
    
 	/* PARSE ARGS */
 	args.argc = argc;

@@ -35,7 +35,8 @@
 sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start, size_t each,
 		size_t count) {
 	size_t i;
-	size_t nblocks, bread;
+	size_t nblocks;
+	ssize_t bread;
 	
 	if (count == 0)
 		return SQFS_OK;

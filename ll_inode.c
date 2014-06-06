@@ -317,7 +317,8 @@ static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
 
 
 
-static void sqfs_ll_null_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
+static void sqfs_ll_null_forget(sqfs_ll *SQFS_UNUSED(ll),
+		fuse_ino_t SQFS_UNUSED(ino), size_t SQFS_UNUSED(refs)) {
 	/* pass */
 }
 

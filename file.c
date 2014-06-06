@@ -155,7 +155,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 		} else {			
 			if ((err = sqfs_blocklist_next(&bl)))
 				return err;
-			if (bl.pos + block_size <= start)
+			if ((sqfs_off_t)(bl.pos + block_size) <= start)
 				continue;
 			
 			data_off = 0;
@@ -173,7 +173,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 		}
 		
 		take = data_size - read_off;
-		if (take > *size)
+		if ((sqfs_off_t)take > *size)
 			take = (size_t)(*size);
 		if (block) {
 			memcpy(buf, (char*)block->data + data_off + read_off, take);
