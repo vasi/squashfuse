@@ -347,35 +347,3 @@ sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i) {
 	}
 	return err;
 }
-
-sqfs_err sqfs_ll_stat(sqfs_ll *ll, sqfs_inode *inode, struct stat *st) {
-	sqfs_err err = SQFS_OK;
-	uid_t id;
-	
-	memset(st, 0, sizeof(*st));
-	st->st_mode = inode->base.mode;
-	st->st_nlink = inode->nlink;
-	st->st_mtime = st->st_ctime = st->st_atime = inode->base.mtime;
-	
-	if (S_ISREG(st->st_mode)) {
-		/* FIXME: do symlinks, dirs, etc have a size? */
-		st->st_size = inode->xtra.reg.file_size;
-		st->st_blocks = st->st_size / 512;
-	} else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
-		st->st_rdev = sqfs_makedev(inode->xtra.dev.major,
-			inode->xtra.dev.minor);
-	}
-	
-	st->st_blksize = ll->fs.sb.block_size; /* seriously? */
-	
-	err = sqfs_id_get(&ll->fs, inode->base.uid, &id);
-	if (err)
-		return err;
-	st->st_uid = id;
-	err = sqfs_id_get(&ll->fs, inode->base.guid, &id);
-	st->st_gid = id;
-	if (err)
-		return err;
-	
-	return SQFS_OK;
-}

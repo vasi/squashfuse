@@ -37,6 +37,8 @@
 	 #define ENOATTR ENODATA
 #endif
 
+#include "nonstd.h"
+
 int sqfs_enoattr() {
 	return ENOATTR;
 }

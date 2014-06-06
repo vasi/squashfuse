@@ -44,6 +44,7 @@
 	#include <unistd.h>
 
 	#include "common.h"
+	#include "nonstd.h"
 
 	ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off) {
 		return pread(fd, buf, count, off);

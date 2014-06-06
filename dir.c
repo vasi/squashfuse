@@ -25,6 +25,7 @@
 #include "dir.h"
 
 #include "fs.h"
+#include "nonstd.h"
 #include "swap.h"
 
 #include <string.h>

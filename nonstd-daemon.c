@@ -30,6 +30,8 @@
 #include <unistd.h>
 #include <fuse_lowlevel.h>
 
+#include "nonstd.h"
+
 int sqfs_ll_daemonize(int fg) {
 	#if HAVE_DECL_FUSE_DAEMONIZE
 		return fuse_daemonize(fg);

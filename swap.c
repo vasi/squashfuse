@@ -41,9 +41,9 @@ SWAP(32)
 SWAP(64)
 #undef SWAP
 
-void sqfs_swapin16_internal(__le16 *v) { sqfs_swapin16((uint16_t*)v); }
-void sqfs_swapin32_internal(__le32 *v) { sqfs_swapin32((uint32_t*)v); }
-void sqfs_swapin64_internal(__le64 *v) { sqfs_swapin64((uint64_t*)v); }
+static void sqfs_swapin16_internal(__le16 *v) { sqfs_swapin16((uint16_t*)v); }
+static void sqfs_swapin32_internal(__le32 *v) { sqfs_swapin32((uint32_t*)v); }
+static void sqfs_swapin64_internal(__le64 *v) { sqfs_swapin64((uint64_t*)v); }
 
 void sqfs_swap16(uint16_t *n) {
 	*n = (*n >> 8) + (*n << 8);

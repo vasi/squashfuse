@@ -117,7 +117,6 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
 
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 
-sqfs_mode_t sqfs_mode(int inode_type);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sqfs_id_t *id);
 
 /* Puts up to *size characters of the link name into buf. Always null-

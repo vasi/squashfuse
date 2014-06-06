@@ -33,6 +33,10 @@ dev_t sqfs_makedev(int maj, int min);
 
 ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off);
 
-int sqfs_enoattr();
+int sqfs_enoattr(void);
+
+sqfs_mode_t sqfs_mode(int inode_type);
+
+int sqfs_ll_daemonize(int fg);
 
 #endif

@@ -64,6 +64,4 @@ typedef struct {
 sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
 
 
-int sqfs_ll_daemonize(int fg);
-
 #endif
