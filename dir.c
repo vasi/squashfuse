@@ -232,6 +232,7 @@ typedef struct {
 static sqfs_err sqfs_dir_ff_name_f(sqfs *fs, sqfs_md_cursor *cur,
 		struct squashfs_dir_index *index, bool *stop, void *arg) {
 	sqfs_err err;
+	int order;
 	sqfs_dir_ff_name_t *args = (sqfs_dir_ff_name_t*)arg;
 	size_t name_size = index->size + 1;
 	
@@ -239,7 +240,7 @@ static sqfs_err sqfs_dir_ff_name_f(sqfs *fs, sqfs_md_cursor *cur,
 		return err;
 	args->name[name_size] = '\0';
 	
-	int order = strncmp(args->name, args->cmp, args->cmplen);
+	order = strncmp(args->name, args->cmp, args->cmplen);
 	if (order > 0 || (order == 0 && name_size > args->cmplen))
 		*stop = true;
 	

@@ -173,10 +173,13 @@ static int sqfs_hl_op_release(const char *path, struct fuse_file_info *fi) {
 static int sqfs_hl_op_read(const char *path, char *buf, size_t size,
 		off_t off, struct fuse_file_info *fi) {
 	sqfs *fs;
+	sqfs_inode *inode;
+	off_t osize;
+	
 	sqfs_hl_lookup(&fs, NULL, NULL);
-	sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
+	inode = (sqfs_inode*)(intptr_t)fi->fh;
 
-	off_t osize = size;
+	osize = size;
 	if (sqfs_read_range(fs, inode, off, &osize, buf))
 		return -EIO;
 	return osize;

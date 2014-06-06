@@ -245,12 +245,14 @@ done:
 sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
 		void *buf, size_t *size) {
 	sqfs_err err = SQFS_OK;
+	bool found;
+	size_t real;
 	
 	sqfs_xattr xattr;
 	if ((err = sqfs_xattr_open(fs, inode, &xattr)))
 		return err;
 	
-	bool found = false;
+	found = false;
 	if ((err = sqfs_xattr_find(&xattr, name, &found)))
 		return err;
 	if (!found) {
@@ -258,7 +260,6 @@ sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
 		return err;
 	}
 	
-	size_t real;
 	if ((err = sqfs_xattr_value_size(&xattr, &real)))
 		return err;
 	

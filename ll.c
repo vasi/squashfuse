@@ -146,7 +146,6 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 	
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
-	
 	if (!S_ISDIR(lli.inode.base.mode)) {
 		fuse_reply_err(req, ENOTDIR);
 		return;
