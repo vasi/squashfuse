@@ -25,11 +25,19 @@
 #ifndef SQFS_SQUASHFUSE_H
 #define SQFS_SQUASHFUSE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "dir.h"
 #include "file.h"
 #include "fs.h"
 #include "traverse.h"
 #include "util.h"
 #include "xattr.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
