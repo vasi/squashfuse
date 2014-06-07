@@ -10,3 +10,5 @@
   * Changed API for directories, uses less memory and exposes fewer internals.
   
   * Windows support for the core library and demo.
+  
+  * Fix support for large file on 32-bit systems.
