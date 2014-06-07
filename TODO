@@ -8,7 +8,6 @@ Build system
 	libsquashfuse
 		Separate out a library with a proper API
 		Try connecting it to File Roller, The Unarchiver, etc
-		Support win32api?
 	Debug builds: configure option?
 	Mac builds
 		Support specifying SDK, arch, universal builds
@@ -39,13 +38,14 @@ Performance
 		Use platform-specific optimizations (eg: libkern/OSByteOrder.h)
 		Also arch-specific
 	Block index: Create incrementally, as needed?
-	Speculative read-ahead?
+	Speculative read-ahead? Trust OS to do it?
 	Caching and threading strategy delegation?
 		eg: Small caches for low-memory; huge caches for complete extraction 
 	Profile for optimization opportunities
 
 Misc
 	mksquashfs is slow, write a faster version?
+    Might be spurious, Mac-related
 
 Platform support
 	Known bad
