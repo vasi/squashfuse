@@ -67,6 +67,7 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
 			return SQFS_ERR;
 	} else {
 		read_bytes = block->data;
+    block->raw_size = size;
 	}
 	
 	if (sqfs_pread(fs->fd, read_bytes, size, pos) != size)
@@ -74,6 +75,8 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
 
 	if (compressed)
 		err = fs->decompressor(read_bytes, size, block->data, &block->size);
+  
+  err = SQFS_OK;
 
 error:
 	if (compressed)
