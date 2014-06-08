@@ -31,16 +31,16 @@
 #include "fs.h"
 
 typedef struct {
-	sqfs_cache_entry *cache_entry;
-	sqfs_err error;
+  sqfs_cache_entry *cache_entry;
+  sqfs_err error;
   size_t raw_size; /* Bytes actually read from the file */
-	size_t size;
-	char data[1];
+  size_t size;
+  char data[1];
 } sqfs_block;
 
 /* Initialize a block cache, with an initial and maximum capacity */
 sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t block_size,
-	size_t initial, size_t max);
+  size_t initial, size_t max);
 
 /* Parse data block header into its component parts */
 void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
@@ -48,7 +48,7 @@ void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
 /* Get a data/metadata block from the cache. */
 sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t pos, sqfs_block **block);
 sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
-	uint32_t hdr, sqfs_block **block);
+  uint32_t hdr, sqfs_block **block);
 
 /* Indicate that we're done with a block */
 sqfs_err sqfs_block_release(sqfs_block *block);
