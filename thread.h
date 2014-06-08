@@ -33,20 +33,12 @@
 #ifdef HAVE_PTHREAD
 	#include <pthread.h>
 
-	typedef struct {
-		pthread_mutex_t mutex;
-	} sqfs_mutex;
-	typedef struct {
-		pthread_cond_t cond;
-	} sqfs_cond_var;
-	
-#else /* No pthreads */
-	typedef struct {
-		char dummy;
-	} sqfs_mutex;
-	typedef struct {
-		char dummy;
-	} sqfs_cond_var;
+	typedef pthread_mutex_t sqfs_mutex;
+	typedef pthread_cond_t sqfs_cond_var;	
+#else
+	/* Dummies */
+	typedef char sqfs_mutex;
+	typedef char sqfs_cond_var;
 #endif
 
 sqfs_err sqfs_mutex_init(sqfs_mutex *m);
