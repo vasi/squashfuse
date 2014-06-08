@@ -32,6 +32,7 @@ libsquashfuse_la_SOURCES =    \
   traverse.c    traverse.h    \
   util.c        util.h        \
   xattr.c       xattr.h       \
+  squashfs_fs.h     \
   nonstd-pread.c    \
   nonstd-stat.c     \
   nonstd-internal.h \
