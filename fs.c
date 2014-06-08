@@ -121,8 +121,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 	while (size > 0) {
 		sqfs_block *block;
 		size_t take;
-  	sqfs_off_t pos = cur->block;
-		sqfs_err err = sqfs_md_cache(fs, &pos, &block);
+		sqfs_err err = sqfs_md_cache(fs, cur->block, &block);
 		if (err)
 			return err;
 		

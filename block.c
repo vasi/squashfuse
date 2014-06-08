@@ -83,47 +83,47 @@ error:
 
 /* Reads block from disk, sets size and data of block. Sets *pos to position
    of next block. */
-static sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t *pos,
+static sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t pos,
 		uint32_t SQFS_UNUSED(data_header), sqfs_block *block) {
 	sqfs_err err = SQFS_OK;
 	uint16_t hdr;
 	bool compressed;
 	uint16_t size;
 	
-	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
+	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
 		return SQFS_ERR;
-	*pos += sizeof(hdr);
 	sqfs_swapin16(&hdr);
 	sqfs_md_header(hdr, &compressed, &size);
+	pos += sizeof(hdr);
 	
 	block->size = SQUASHFS_METADATA_SIZE;
-	err = sqfs_block_read(fs, *pos, compressed, size, block);
-	*pos += size;
+	err = sqfs_block_read(fs, pos, compressed, size, block);
   block->raw_size = sizeof(hdr) + size;
 	
 	return err;
 }
 
 /* Reads block from disk, sets size and data of block */
-static sqfs_err sqfs_data_block_read(sqfs *fs, sqfs_off_t *pos,
+static sqfs_err sqfs_data_block_read(sqfs *fs, sqfs_off_t pos,
 		uint32_t hdr, sqfs_block *block) {
 	bool compressed;
 	uint32_t size;
 	sqfs_data_header(hdr, &compressed, &size);
 	block->size = fs->sb.block_size;
-	return sqfs_block_read(fs, *pos, compressed, size, block);
+  block->raw_size = size;
+	return sqfs_block_read(fs, pos, compressed, size, block);
 }
 
 
 /* Common function for getting cached blocks */
-typedef sqfs_err (*sqfs_block_reader)(sqfs *fs, sqfs_off_t *pos, uint32_t hdr,
+typedef sqfs_err (*sqfs_block_reader)(sqfs *fs, sqfs_off_t pos, uint32_t hdr,
 	sqfs_block *block);
-static sqfs_err sqfs_cached_block(sqfs *fs, sqfs_cache *cache, sqfs_off_t *pos,
+static sqfs_err sqfs_cached_block(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 		uint32_t hdr, sqfs_block **block, sqfs_block_reader reader) {
 	sqfs_err err;
 	sqfs_cache_entry *entry;
 
-	if ((err = sqfs_cache_get(cache, *pos, &entry)))
+	if ((err = sqfs_cache_get(cache, pos, &entry)))
 		return err;
 	*block = sqfs_cache_entry_value(entry);
 	(*block)->cache_entry = entry;
@@ -136,14 +136,14 @@ static sqfs_err sqfs_cached_block(sqfs *fs, sqfs_cache *cache, sqfs_off_t *pos,
 	return err ? err : (*block)->error;
 }
 
-sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block) {
+sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t pos, sqfs_block **block) {
 	return sqfs_cached_block(fs, &fs->md_cache, pos, 0, block,
 		sqfs_md_block_read);
 }
 
 sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 		uint32_t hdr, sqfs_block **block) {
-	return sqfs_cached_block(fs, cache, &pos, hdr, block, sqfs_data_block_read);
+	return sqfs_cached_block(fs, cache, pos, hdr, block, sqfs_data_block_read);
 }
 
 sqfs_err sqfs_block_release(sqfs_block *block) {

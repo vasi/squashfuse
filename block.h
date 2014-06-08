@@ -46,7 +46,7 @@ sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t block_size,
 void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
 
 /* Get a data/metadata block from the cache. */
-sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block);
+sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t pos, sqfs_block **block);
 sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 	uint32_t hdr, sqfs_block **block);
 
