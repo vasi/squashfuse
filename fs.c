@@ -118,10 +118,10 @@ void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sqfs_off_t base
 }
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
-	sqfs_off_t pos = cur->block;
 	while (size > 0) {
 		sqfs_block *block;
 		size_t take;
+  	sqfs_off_t pos = cur->block;
 		sqfs_err err = sqfs_md_cache(fs, &pos, &block);
 		if (err)
 			return err;
@@ -139,7 +139,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		size -= take;
 		cur->offset += take;
 		if (cur->offset == block->size) {
-			cur->block = pos;
+			cur->block += block->raw_size;
 			cur->offset = 0;
 		}
 	}

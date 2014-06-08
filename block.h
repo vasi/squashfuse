@@ -33,6 +33,7 @@
 typedef struct {
 	sqfs_cache_entry *cache_entry;
 	sqfs_err error;
+  size_t raw_size; /* Bytes actually read from the file */
 	size_t size;
 	char data[1];
 } sqfs_block;

@@ -99,6 +99,7 @@ static sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t *pos,
 	block->size = SQUASHFS_METADATA_SIZE;
 	err = sqfs_block_read(fs, *pos, compressed, size, block);
 	*pos += size;
+  block->raw_size = sizeof(hdr) + size;
 	
 	return err;
 }
