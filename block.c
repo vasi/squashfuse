@@ -53,7 +53,7 @@ void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
 sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t block_size,
 		size_t initial, size_t max) {
 	return sqfs_cache_init(cache,
-		sizeof(sqfs_block) - sizeof(void*) + block_size,
+		sizeof(sqfs_block) - sizeof(((sqfs_block*)NULL)->data) + block_size,
 		initial, max, NULL);
 }
 	
