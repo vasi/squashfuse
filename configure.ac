@@ -44,6 +44,7 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 SQ_FUSE_RESULT
 
 # Misc
+AX_PTHREAD()
 SQ_CHECK_PROG_MAKE_EXPORT
 AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
