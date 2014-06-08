@@ -44,7 +44,6 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 SQ_FUSE_RESULT
 
 # Misc
-AX_PTHREAD()
 SQ_CHECK_PROG_MAKE_EXPORT
 AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
@@ -58,6 +57,20 @@ AC_ARG_ENABLE([demo],
 	[enable_demo=yes])
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
+AC_ARG_ENABLE([threads],
+  AS_HELP_STRING([--disable-threads], [disable thread support]),,
+  [enable_threads=check])
+AS_IF([test "x$enable_threads" = xno],,[
+  AX_PTHREAD([
+    enable_threads=yes
+    AC_DEFINE(HAVE_PTHREAD, 1, [POSIX threads available])
+  ],[
+    AS_IF([test "x$enable_threads" = xyes],
+      [AC_MSG_FAILURE([Can't find threading support])])
+    enable_threads=no
+  ])
+])
+
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
@@ -67,7 +80,7 @@ AC_OUTPUT
 
 AS_ECHO()
 AS_ECHO(["Compression support ....... :$sq_decompressors"])
-AS_ECHO(["Threading ................. : $ax_pthread_ok"])
+AS_ECHO(["Threading ................. : $enable_threads"])
 AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
 AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
 AS_ECHO(["Demo program .............. : $enable_demo"])

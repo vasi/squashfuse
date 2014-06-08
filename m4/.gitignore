@@ -2,3 +2,4 @@
 lt*.m4
 libtool.m4
 pkg.m4
+ax_pthread.m4
