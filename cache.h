@@ -26,6 +26,7 @@
 #define SQFS_CACHE_H
 
 #include "common.h"
+#include "thread.h"
 
 /* Cache data, given a key. Used to cache data and metadata blocks, and for
    the blockidx.
@@ -35,25 +36,72 @@
 - Tracks which items are in-use, so only unused ones can be evicted.
 - Round-robin eviction.
 - If multiple threads try to create the same entry, coalesces the requests.
+- If too many threads are keeping items in-use, can make use of spare entries
+  to scale up with the number of threads.
 */
 
 typedef uint64_t sqfs_cache_key;
 typedef void *sqfs_cache_value;
 
 /* Function to cleanup an evicted item */
-typedef void (*sqfs_cache_dispose)(sqfs_cache_value);
+typedef sqfs_err (*sqfs_cache_dispose)(sqfs_cache_value);
+
+struct sqfs_cache;
+typedef struct {
+/* There are four categories of entry:
+		- In use (refcount > 0), either ready or not
+		- Unused (refcount == 0)
+		- Unallocated (value == NULL, index < initial)
+		- Spare (value == NULL, index >= initial) */
+	
+	struct sqfs_cache *cache; /* The cache of which we're a part */
+	
+	sqfs_cache_key key;
+	sqfs_cache_value value;
+	
+	bool ready;
+	size_t refcount;
+	
+	sqfs_cond_var cv;	/* Waiting for this entry to be ready */
+	bool waiting;			/* Is anybody waiting? */
+} sqfs_cache_entry;
+
+struct sqfs_cache {
+	sqfs_cache_entry *entries;
+	
+	size_t value_size;
+	size_t initial, capacity;	/* Initial and maximum capacity */
+	size_t avail;				/* How many non-spare items available to use:
+		 										 unused + unallocated */
+	size_t allocated;		/* How many entries have ever been used:
+		 										 in use + unused */
+	
+	size_t evict;			/* Index of the next entry to evict */
+	sqfs_cache_dispose dispose;
+	
+	sqfs_mutex mutex;
+	sqfs_cond_var cv;	/* Waiting for empty entry */
+	size_t waiters;		/* How many threads waiting */ 
+};
+typedef struct sqfs_cache sqfs_cache;
+
 
 /* Initialize a cache:
    value_size		The size of each value item.
-   initial			The number of items to be cached, initially. If all items are
-							  in use, this may grow up to 'capacity'.
+   initial			The number of items to be cached, initially. If too many
+								threads are keeping items in-use, the capacity will expand
+								up to...
 	 capacity			The maximum number of items to cache.
-	 dispose			A function to cleanup evicted items. */
+	 dispose			A function to cleanup evicted items.
+
+Initialization is not thread safe, no threads should attempt to use the cache
+until sqfs_cache_init() returns. */
 sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t value_size, size_t initial,
 	size_t capacity, sqfs_cache_dispose dispose);
 
-/* Cleanup the cache. */
-void sqfs_cache_destroy(sqfs_cache *cache);
+/* Cleanup the cache. Not thread safe, no threads should attempt to use the
+	 cache during or after destruction. */
+sqfs_err sqfs_cache_destroy(sqfs_cache *cache);
 
 /* Get an item from the cache.
 	 
@@ -84,48 +132,16 @@ sqfs_cache_value sqfs_cache_entry_value(sqfs_cache_entry *entry);
 
 /* Notify this cache that the caller doesn't need this entry anymore, and it
    is available for re-use. */
-void sqfs_cache_entry_release(sqfs_cache_entry *entry);
+sqfs_err sqfs_cache_entry_release(sqfs_cache_entry *entry);
 
 /* Mark this entry as fully initialized. After calling this, the entry must
    not be changed, only read. */
-void sqfs_cache_entry_ready(sqfs_cache_entry *entry);
+sqfs_err sqfs_cache_entry_ready(sqfs_cache_entry *entry);
 
 /* Check if the entry is initialized or not. If it is not, this thread must
    perform initialization. */
 bool sqfs_cache_entry_is_initialized(sqfs_cache_entry *entry);
 
-
-
-
-
-
-// #define SQFS_CACHE_IDX_INVALID 0
-// 
-// typedef uint64_t sqfs_cache_idx;
-// typedef void (*sqfs_cache_dispose)(void* data);
-// 
-// typedef struct {
-// 	sqfs_cache_idx *idxs;
-// 	uint8_t *buf;
-// 	
-// 	sqfs_cache_dispose dispose;
-// 	
-// 	size_t size, count;
-// 	size_t next; /* next block to evict */
-// } sqfs_cache;
-// 
-// sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t size, size_t count,
-// 	sqfs_cache_dispose dispose);
-// void sqfs_cache_destroy(sqfs_cache *cache);
-// 
-// void *sqfs_cache_get(sqfs_cache *cache, sqfs_cache_idx idx);
-// void *sqfs_cache_add(sqfs_cache *cache, sqfs_cache_idx idx);
-// 
-// 
-// typedef struct {
-// 	sqfs_block *block;
-// 	size_t data_size;
-// } sqfs_block_cache_entry;
 
 /* FIXME: move to FS */
 sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count);
