@@ -67,6 +67,7 @@ AC_OUTPUT
 
 AS_ECHO()
 AS_ECHO(["Compression support ....... :$sq_decompressors"])
+AS_ECHO(["Threading ................. : $ax_pthread_ok"])
 AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
 AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
 AS_ECHO(["Demo program .............. : $enable_demo"])
