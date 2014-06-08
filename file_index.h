@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,39 +22,20 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_FILE_H
-#define SQFS_FILE_H
+#ifndef SQFS_FILE_INDEX_H
+#define SQFS_FILE_INDEX_H
 
 #include "common.h"
 
-/* Iterator through blocks of a file */
-typedef uint32_t sqfs_blocklist_entry;
-typedef struct {
-	sqfs *fs;
-	size_t remain;			/* How many blocks left in the file? */
-	sqfs_md_cursor cur;	/* Points to next blocksize in MD */
-	bool started;
+#include "cache.h"
+#include "file.h"
 
-	uint64_t pos;
-	
-	uint64_t block;			/* Points to next data block location */
-	sqfs_blocklist_entry header; /* Packed blocksize data */
-	uint32_t input_size;				 /* Extracted size of this block */
-} sqfs_blocklist;
+/*** Block index for skipping to the middle of large files ***/
 
-/* Count the number of blocks in a file */
-size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode);
+sqfs_err sqfs_blockidx_init(sqfs_cache *cache);
 
-/* Setup a blocklist for a file */
-void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode,
-	sqfs_blocklist *bl);
-
-/* Iterate along the blocklist */
-sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl);
-
-
-/* Read a range of a file into a buffer */
-sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
-	sqfs_off_t *size, void *buf);
+/* Get a blocklist fast-forwarded to the given offset */
+sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
+	sqfs_blocklist *bl, sqfs_off_t start);
 
 #endif

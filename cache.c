@@ -26,6 +26,10 @@
 
 #include <stdlib.h>
 
+static sqfs_err sqfs_cache_dispose_null(sqfs_cache_value SQFS_UNUSED(v)) {
+	return SQFS_OK;
+}
+
 sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t value_size, size_t initial,
 		size_t capacity, sqfs_cache_dispose dispose) {
 	sqfs_err err;
@@ -46,6 +50,8 @@ sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t value_size, size_t initial,
 	cache->allocated = 0;
 	cache->evict = 0;
 	cache->waiters = 0;
+	if (!dispose)
+		dispose = sqfs_cache_dispose_null;
 	cache->dispose = dispose;
 	
 	if ((err = sqfs_cond_init(&cache->cv)))

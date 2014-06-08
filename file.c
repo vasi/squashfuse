@@ -24,7 +24,8 @@
  */
 #include "file.h"
 
-#include "fs.h"
+#include "block.h"
+#include "file_index.h"
 #include "swap.h"
 #include "table.h"
 
@@ -32,7 +33,18 @@
 #include <string.h>
 #include <sys/stat.h>
 
-sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
+
+/* Read a fragment entry from the fragment table */
+static sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
+	uint32_t idx);
+
+/* Read a fragment block from the cache */
+static sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
+	size_t *offset, size_t *size, sqfs_block **block);
+
+
+
+static sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
 		uint32_t idx) {
 	sqfs_err err = SQFS_OK;
 	
@@ -44,7 +56,7 @@ sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
 	return err;
 }
 
-sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
+static sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 		size_t *offset, size_t *size, sqfs_block **block) {
 	struct squashfs_fragment_entry frag;
 	sqfs_err err = SQFS_OK;
@@ -76,7 +88,8 @@ size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode) {
 	}
 }
 
-void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode, sqfs_blocklist *bl) {
+void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode,
+		sqfs_blocklist *bl) {
 	bl->fs = fs;
 	bl->remain = sqfs_blocklist_count(fs, inode);
 	bl->cur = inode->next;
@@ -177,7 +190,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 			take = (size_t)(*size);
 		if (block) {
 			memcpy(buf, (char*)block->data + data_off + read_off, take);
-			/* BLOCK CACHED, DON'T DISPOSE */
+			sqfs_block_release(block);
 		} else {
 			memset(buf, 0, take);
 		}
@@ -193,129 +206,4 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 	return *size ? SQFS_OK : SQFS_ERR;
 }
 
-
-/*
-To read block N of a M-block file, we have to read N blocksizes from the,
-metadata. This is a lot of work for large files! So for those files, we use
-an index to speed it up.
-
-The M blocksizes are split between M / SQUASHFS_METADATA_SIZE MD-blocks.
-For each of these blocks, we maintain in the index the location of the
-MD-block, and the location of the data block corresponding to the start
-of that MD-block.
-
-Then to read block N, we just calculate which metadata block index
-("metablock") we want, and get that block-index entry. Then we
-only need to read that one MD-block to seek within the file.
-*/
-
-/* Is a file worth indexing? */
-static bool sqfs_blockidx_indexable(sqfs *fs, sqfs_inode *inode) {
-	size_t blocks = sqfs_blocklist_count(fs, inode);
-	size_t md_size = blocks * sizeof(sqfs_blocklist_entry);
-	return md_size >= SQUASHFS_METADATA_SIZE;
-}
-
-static void sqfs_blockidx_dispose(void *data) {
-	free(*(sqfs_blockidx_entry**)data);
-}
-
-sqfs_err sqfs_blockidx_init(sqfs_cache *cache) {
-	return sqfs_cache_init(cache, sizeof(sqfs_blockidx_entry**),
-		SQUASHFS_META_SLOTS, &sqfs_blockidx_dispose);
-}
-
-sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
-		sqfs_blockidx_entry **out) {
-	size_t blocks;	/* Number of blocks in the file */
-	size_t md_size; /* Amount of metadata necessary to hold the blocksizes */
-	size_t count; 	/* Number of block-index entries necessary */
-	
-	sqfs_blockidx_entry *blockidx;
-	sqfs_blocklist bl;
-	
-	/* For the cache */
-	sqfs_cache_idx idx;
-	sqfs_blockidx_entry **cachep;
-
-	size_t i = 0;
-	bool first = true;
-	
-	*out = NULL;
-	
-	blocks = sqfs_blocklist_count(fs, inode);
-	md_size = blocks * sizeof(sqfs_blocklist_entry);
-	count = (inode->next.offset + md_size - 1)
-		/ SQUASHFS_METADATA_SIZE;
-	blockidx = malloc(count * sizeof(sqfs_blockidx_entry));
-	if (!blockidx)
-		return SQFS_ERR;
-	
-	sqfs_blocklist_init(fs, inode, &bl);
-	while (bl.remain && i < count) {
-		sqfs_err err = SQFS_OK;
-		/* If the MD cursor offset is small, we found a new MD-block.
-		 * Skip the first MD-block, because we already know where it is:
-		 * inode->next.offset */
-		if (bl.cur.offset < sizeof(sqfs_blocklist_entry) && !first) {
-			blockidx[i].data_block = bl.block + bl.input_size;
-			blockidx[i++].md_block = (uint32_t)(bl.cur.block - fs->sb.inode_table_start);
-		}
-		first = false;
-		
-		err = sqfs_blocklist_next(&bl);
-		if (err) {
-			free(blockidx);
-			return SQFS_ERR;
-		}
-	}
-
-	idx = inode->base.inode_number + 1; /* zero means invalid */
-	cachep = sqfs_cache_add(&fs->blockidx, idx);
-	*out = *cachep = blockidx;
-	return SQFS_OK;
-}
-
-sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
-		sqfs_blocklist *bl, sqfs_off_t start) {
-	size_t block, metablock, skipped;
-	sqfs_blockidx_entry *blockidx, **bp;
-	sqfs_cache_idx idx;
-	
-	sqfs_blocklist_init(fs, inode, bl);
-	block = (size_t)(start / fs->sb.block_size);
-	if (block > bl->remain) { /* fragment */
-		bl->remain = 0;
-		return SQFS_OK;
-	}
-	
-	/* How many MD-blocks do we want to skip? */
-	metablock = (bl->cur.offset + block * sizeof(sqfs_blocklist_entry))
-		/ SQUASHFS_METADATA_SIZE;
-	if (metablock == 0)
-		return SQFS_OK; /* no skip needed, don't want an index */
-	if (!sqfs_blockidx_indexable(fs, inode))
-		return SQFS_OK; /* too small to index */
-	
-	/* Get the index, creating it if necessary */
-	idx = inode->base.inode_number + 1; /* zero means invalid index */
-	if ((bp = sqfs_cache_get(&fs->blockidx, idx))) {
-		blockidx = *bp;
-	} else {
-		sqfs_err err = sqfs_blockidx_add(fs, inode, &blockidx);
-		if (err)
-			return err;
-	}
-	
-	skipped = (metablock * SQUASHFS_METADATA_SIZE / sizeof(sqfs_blocklist_entry))
-		- (bl->cur.offset / sizeof(sqfs_blocklist_entry));
-	
-	blockidx += metablock - 1;
-	bl->cur.block = blockidx->md_block + fs->sb.inode_table_start;
-	bl->cur.offset %= sizeof(sqfs_blocklist_entry);
-	bl->remain -= skipped;
-	bl->pos = (uint64_t)skipped * fs->sb.block_size;
-	bl->block = blockidx->data_block;
-	return SQFS_OK;
-}
 

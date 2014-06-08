@@ -24,7 +24,7 @@
  */
 #include "table.h"
 
-#include "fs.h"
+#include "block.h"
 #include "nonstd.h"
 #include "squashfs_fs.h"
 #include "swap.h"
@@ -32,8 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start, size_t each,
-		size_t count) {
+sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start,
+		size_t each, size_t count) {
 	size_t i;
 	size_t nblocks;
 	ssize_t bread;
@@ -67,16 +67,21 @@ void sqfs_table_destroy(sqfs_table *table) {
 }
 
 sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
+	sqfs_err err;
 	sqfs_block *block;
+	
 	size_t pos = idx * table->each;
 	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
 		off = pos % SQUASHFS_METADATA_SIZE;
 	
 	sqfs_off_t bpos = table->blocks[bnum];
-	if (sqfs_md_cache(fs, &bpos, &block))
+	if ((err = sqfs_md_cache(fs, &bpos, &block)))
 		return SQFS_ERR;
 	
 	memcpy(buf, (char*)(block->data) + off, table->each);
-	/* BLOCK CACHED, DON'T DISPOSE */
+	
+	if ((err = sqfs_block_release(block)))
+		return err;
+	
 	return SQFS_OK;
 }

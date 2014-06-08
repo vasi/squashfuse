@@ -24,7 +24,9 @@
  */
 #include "fs.h"
 
+#include "block.h"
 #include "file.h"
+#include "file_index.h"
 #include "nonstd.h"
 #include "swap.h"
 #include "xattr.h"
@@ -36,6 +38,7 @@
 
 #define DATA_CACHED_BLKS 1
 #define FRAG_CACHED_BLKS 3
+#define CACHED_BLKS_MAX 4
 
 void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 		int *max_minor) {
@@ -83,9 +86,12 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
 			sizeof(uint64_t), fs->sb.inodes);
 	}
 	err |= sqfs_xattr_init(fs);
-	err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_CACHED_BLKS);
-	err |= sqfs_block_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
-	err |= sqfs_block_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
+	err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_METADATA_SIZE,
+		SQUASHFS_CACHED_BLKS, SQUASHFS_CACHED_BLKS);
+	err |= sqfs_block_cache_init(&fs->data_cache, fs->sb.block_size,
+		DATA_CACHED_BLKS, CACHED_BLKS_MAX);
+	err |= sqfs_block_cache_init(&fs->frag_cache, fs->sb.block_size,
+		FRAG_CACHED_BLKS, CACHED_BLKS_MAX);
 	err |= sqfs_blockidx_init(&fs->blockidx);
 	if (err) {
 		sqfs_destroy(fs);
@@ -104,123 +110,6 @@ void sqfs_destroy(sqfs *fs) {
 	sqfs_cache_destroy(&fs->data_cache);
 	sqfs_cache_destroy(&fs->frag_cache);
 	sqfs_cache_destroy(&fs->blockidx);
-}
-
-void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size) {
-	*compressed = !(hdr & SQUASHFS_COMPRESSED_BIT);
-	*size = hdr & ~SQUASHFS_COMPRESSED_BIT;
-	if (!*size)
-		*size = SQUASHFS_COMPRESSED_BIT;
-}
-
-void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
-	*compressed = !(hdr & SQUASHFS_COMPRESSED_BIT_BLOCK);
-	*size = hdr & ~SQUASHFS_COMPRESSED_BIT_BLOCK;
-}
-
-sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
-		uint32_t size, size_t outsize, sqfs_block **block) {
-	sqfs_err err = SQFS_ERR;
-	if (!(*block = malloc(sizeof(**block))))
-		return SQFS_ERR;
-	if (!((*block)->data = malloc(size)))
-		goto error;
-	
-	if (sqfs_pread(fs->fd, (*block)->data, size, pos) != size)
-		goto error;
-
-	if (compressed) {
-		char *decomp = malloc(outsize);
-		if (!decomp)
-			goto error;
-		
-		err = fs->decompressor((*block)->data, size, decomp, &outsize);
-		if (err) {
-			free(decomp);
-			goto error;
-		}
-		free((*block)->data);
-		(*block)->data = decomp;
-		(*block)->size = outsize;
-	} else {
-		(*block)->size = size;
-	}
-
-	return SQFS_OK;
-
-error:
-	sqfs_block_dispose(*block);
-	*block = NULL;
-	return err;
-}
-
-sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t pos, size_t *data_size,
-		sqfs_block **block) {
-	sqfs_err err = SQFS_OK;
-	uint16_t hdr;
-	bool compressed;
-	uint16_t size;
-	
-	*data_size = 0;
-	
-	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
-		return SQFS_ERR;
-	pos += sizeof(hdr);
-	*data_size += sizeof(hdr);
-	sqfs_swapin16(&hdr);
-	
-	sqfs_md_header(hdr, &compressed, &size);
-	
-	err = sqfs_block_read(fs, pos, compressed, size,
-		SQUASHFS_METADATA_SIZE, block);
-	*data_size += size;
-	return err;
-}
-
-sqfs_err sqfs_data_block_read(sqfs *fs, sqfs_off_t pos, uint32_t hdr,
-		sqfs_block **block) {
-	bool compressed;
-	uint32_t size;
-	sqfs_data_header(hdr, &compressed, &size);
-	return sqfs_block_read(fs, pos, compressed, size,
-		fs->sb.block_size, block);
-}
-
-sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block) {
-	sqfs_block_cache_entry *entry = sqfs_cache_get(
-		&fs->md_cache, *pos);
-	if (!entry) {
-		sqfs_err err = SQFS_OK;
-		entry = sqfs_cache_add(&fs->md_cache, *pos);
-		/* fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos); */
-		err = sqfs_md_block_read(fs, *pos,
-			&entry->data_size, &entry->block);
-		if (err)
-			return err;
-	}
-	*block = entry->block;
-	*pos += entry->data_size;
-	return SQFS_OK;
-}
-
-sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
-		uint32_t hdr, sqfs_block **block) {
-	sqfs_block_cache_entry *entry = sqfs_cache_get(cache, pos);
-	if (!entry) {
-		sqfs_err err = SQFS_OK;
-		entry = sqfs_cache_add(cache, pos);
-		err = sqfs_data_block_read(fs, pos, hdr,
-			&entry->block);
-		if (err)
-			return err;
-	}
-	*block = entry->block;
-	return SQFS_OK;
-}
-
-void sqfs_block_dispose(sqfs_block *block) {
-	free(block->data);
-	free(block);
 }
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sqfs_off_t base) {

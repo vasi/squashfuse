@@ -16,12 +16,26 @@ noinst_PROGRAMS =
 noinst_LTLIBRARIES = libsquashfuse.la
 
 # Main library: libsquashfuse
-libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
-	decompress.c xattr.c hash.c stack.c traverse.c util.c \
-	nonstd-pread.c nonstd-stat.c thread.c \
-	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
-	dir.h file.h decompress.h xattr.h squashfuse.h hash.h stack.h traverse.h \
-	util.h fs.h thread.h
+libsquashfuse_la_SOURCES =    \
+  block.c       block.h       \
+  cache.c       cache.h       \
+  decompress.c  decompress.h  \
+  dir.c         dir.h         \
+  file.c        file.h        \
+  file_index.c  file_index.h  \
+  fs.c          fs.h          \
+  hash.c        hash.h        \
+  stack.c       stack.h       \
+  swap.c        swap.h        \
+  table.c       table.h       \
+  thread.c      thread.h      \
+  traverse.c    traverse.h    \
+  util.c        util.h        \
+  xattr.c       xattr.h       \
+  nonstd-pread.c    \
+  nonstd-stat.c     \
+  nonstd-internal.h \
+  nonstd.h  
 libsquashfuse_la_CFLAGS = $(PTHREAD_CFLAGS)
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS)

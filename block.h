@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,39 +22,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_FILE_H
-#define SQFS_FILE_H
+#ifndef SQFS_BLOCK_H
+#define SQFS_BLOCK_H
 
 #include "common.h"
 
-/* Iterator through blocks of a file */
-typedef uint32_t sqfs_blocklist_entry;
+#include "cache.h"
+#include "fs.h"
+
 typedef struct {
-	sqfs *fs;
-	size_t remain;			/* How many blocks left in the file? */
-	sqfs_md_cursor cur;	/* Points to next blocksize in MD */
-	bool started;
+	sqfs_cache_entry *cache_entry;
+	sqfs_err error;
+	size_t size;
+	void *data;
+} sqfs_block;
 
-	uint64_t pos;
-	
-	uint64_t block;			/* Points to next data block location */
-	sqfs_blocklist_entry header; /* Packed blocksize data */
-	uint32_t input_size;				 /* Extracted size of this block */
-} sqfs_blocklist;
+/* Initialize a block cache, with an initial and maximum capacity */
+sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t block_size,
+	size_t initial, size_t max);
 
-/* Count the number of blocks in a file */
-size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode);
+/* Parse data block header into its component parts */
+void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
 
-/* Setup a blocklist for a file */
-void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode,
-	sqfs_blocklist *bl);
+/* Get a data/metadata block from the cache. */
+sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block);
+sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
+	uint32_t hdr, sqfs_block **block);
 
-/* Iterate along the blocklist */
-sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl);
-
-
-/* Read a range of a file into a buffer */
-sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
-	sqfs_off_t *size, void *buf);
+/* Indicate that we're done with a block */
+sqfs_err sqfs_block_release(sqfs_block *block);
 
 #endif

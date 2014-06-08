@@ -142,8 +142,4 @@ sqfs_err sqfs_cache_entry_ready(sqfs_cache_entry *entry);
    perform initialization. */
 bool sqfs_cache_entry_is_initialized(sqfs_cache_entry *entry);
 
-
-/* FIXME: move to FS */
-sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count);
-
 #endif

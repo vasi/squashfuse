@@ -63,11 +63,6 @@ typedef struct sqfs sqfs;
 typedef struct sqfs_inode sqfs_inode;
 
 typedef struct {
-	size_t size;
-	void *data;
-} sqfs_block;
-
-typedef struct {
 	sqfs_off_t block;
 	size_t offset;
 } sqfs_md_cursor;
