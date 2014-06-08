@@ -17,6 +17,9 @@ noinst_LTLIBRARIES = libsquashfuse.la
 
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES =    \
+  common.h          \
+  squashfs_fs.h     \
+  squashfuse.h      \
   block.c       block.h       \
   cache.c       cache.h       \
   decompress.c  decompress.h  \
@@ -32,7 +35,6 @@ libsquashfuse_la_SOURCES =    \
   traverse.c    traverse.h    \
   util.c        util.h        \
   xattr.c       xattr.h       \
-  squashfs_fs.h     \
   nonstd-pread.c    \
   nonstd-stat.c     \
   nonstd-internal.h \
