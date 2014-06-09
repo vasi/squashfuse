@@ -51,7 +51,7 @@ brackets, eg: [0.1]
 * Mac OS X
   + Versions: Mac OS X 10.4 and later
   + Tested on:
-    - 10.9 Lion         / x86_64 / OSXFUSE                      [0.1]
+    - 10.9 Mavericks    / x86_64 / OSXFUSE                      [0.2]
     - 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE [0.1]
     - 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x              [0.1]
     - 10.5 Leopard      / ppc    / MacFUSE                      [0.1]
@@ -61,8 +61,8 @@ brackets, eg: [0.1]
     - OSXFUSE, fuse4x or MacFUSE: http://osxfuse.github.com/,
       http://fuse4x.org/, http://code.google.com/p/macfuse/
   + Packages:
-    - Not necessary just to build a basic zlib-supporting squashfuse.
-    - All package managers require the full Xcode for FUSE,
+    - Not necessary if you just want a basic zlib-supporting squashfuse.
+    - Some package managers require the full Xcode for FUSE,
       not just command-line tools.
     - MacPorts
       port install lzo2 liblzma zlib lz4 osxfuse
