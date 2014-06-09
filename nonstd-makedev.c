@@ -22,7 +22,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
+#define SQFEATURE NONSTD_MAKEDEV_DEF
+#include "nonstd-internal.h"
 
 #ifdef QNX_MAKEDEV
   #include <sys/types.h>
@@ -32,9 +33,6 @@
     return makedev(ND_LOCAL_NODE, maj, min);
   }
 #else
-  #define SQFEATURE NONSTD_MAKEDEV_DEF
-  #include "nonstd-internal.h"
-
   #include <sys/types.h>
   #ifdef HAVE_SYS_MKDEV_H
     #include <sys/mkdev.h>
@@ -43,7 +41,7 @@
     #include <sys/sysmacros.h>
   #endif
 
-  #include "nonstd.h"
+  dev_t sqfs_makedev(int maj, int min);
 
   dev_t sqfs_makedev(int maj, int min) {
     return makedev(maj, min);

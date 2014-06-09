@@ -22,15 +22,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
-
 #define SQFEATURE NONSTD_DAEMON_DEF
 #include "nonstd-internal.h"
 
 #include <unistd.h>
 #include <fuse_lowlevel.h>
 
-#include "nonstd.h"
+int sqfs_ll_daemonize(int fg);
 
 int sqfs_ll_daemonize(int fg) {
   #if HAVE_DECL_FUSE_DAEMONIZE

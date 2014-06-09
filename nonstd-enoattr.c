@@ -22,8 +22,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
-
 #define SQFEATURE NONSTD_ENOATTR_DEF
 #include "nonstd-internal.h"
 
@@ -37,8 +35,8 @@
    #define ENOATTR ENODATA
 #endif
 
-#include "nonstd.h"
+int sqfs_enoattr(void);
 
-int sqfs_enoattr() {
+int sqfs_enoattr(void) {
   return ENOATTR;
 }

@@ -17,7 +17,6 @@ AM_PROG_CC_C_O
 SQ_PROG_CPP_POSIX_2001
 SQ_PROG_CC_WALL
 
-AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
 
 # Non-POSIX declarations

@@ -83,8 +83,13 @@ brackets, eg: [0.1]
 * FreeBSD
   + Versions: FreeBSD 6.0 and later
   + Tested on: FreeBSD 9.0 / amd64 [0.1]
-  + Packages: From ports or packages: fusefs-libs fusefs-kmod lzo2 lz4
-  + Notes: FreeBSD FUSE doesn't support extended attributes
+  + Packages: From ports or packages: fusefs-libs lzo2
+    - On versions less than 10.0, also fusefs-kmod
+  + Configure: ./configure --with-lzo=/usr/local
+  + Notes:
+    - You may have to load the kernel module with `kldload fuse'
+    - You may have to set `sysctl vfs.usermount=1'
+    - FreeBSD FUSE doesn't support extended attributes
 
 * NetBSD
   + Versions: NetBSD 6.0 and later
