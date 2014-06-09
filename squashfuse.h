@@ -32,6 +32,7 @@ extern "C" {
 #include "dir.h"
 #include "file.h"
 #include "fs.h"
+#include "thread.h"
 #include "traverse.h"
 #include "util.h"
 #include "xattr.h"

@@ -422,6 +422,7 @@ int main(int argc, char *argv[]) {
 		sqfs_usage(argv[0], true);
 	if (mountpoint == NULL)
 		sqfs_usage(argv[0], true);
+  mt = mt && sqfs_threads_available();
 	
 	/* OPEN FS */
 	err = !(ll = sqfs_ll_open(opts.image));
@@ -438,7 +439,11 @@ int main(int argc, char *argv[]) {
 					if (fuse_set_signal_handlers(se) != -1) {
 						fuse_session_add_chan(se, ch.ch);
 						/* FIXME: multithreading */
-						err = fuse_session_loop(se);
+            if (mt) {
+              err = fuse_session_loop_mt(se);
+            } else {
+              err = fuse_session_loop(se);
+            }
 						fuse_remove_signal_handlers(se);
 						#if HAVE_DECL_FUSE_SESSION_REMOVE_CHAN
 							fuse_session_remove_chan(ch.ch);

@@ -29,6 +29,7 @@
 
 #include "common.h"
 
+#include <stdbool.h>
 
 #ifdef HAVE_PTHREAD
 	#include <pthread.h>
@@ -40,6 +41,8 @@
 	typedef char sqfs_mutex;
 	typedef char sqfs_cond_var;
 #endif
+
+bool sqfs_threads_available(void);
 
 sqfs_err sqfs_mutex_init(sqfs_mutex *m);
 sqfs_err sqfs_mutex_destroy(sqfs_mutex *m);

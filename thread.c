@@ -25,6 +25,10 @@
 #include "thread.h"
 
 #ifdef HAVE_PTHREAD
+  bool sqfs_threads_available(void) {
+    return true;
+  }
+  
 	sqfs_err sqfs_mutex_init(sqfs_mutex *m) {
 		return pthread_mutex_init(m, NULL) ? SQFS_ERR : SQFS_OK;
 	}
@@ -54,6 +58,10 @@
 		return pthread_cond_broadcast(cv) ? SQFS_ERR : SQFS_OK;
 	}
 #else
+  bool sqfs_threads_available(void) {
+    return false;
+  }
+  
 	sqfs_err sqfs_mutex_init(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
 	sqfs_err sqfs_mutex_destroy(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
 	sqfs_err sqfs_mutex_lock(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
