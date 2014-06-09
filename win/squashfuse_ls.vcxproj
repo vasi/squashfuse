@@ -78,10 +78,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\block.c" />
     <ClCompile Include="..\cache.c" />
     <ClCompile Include="..\decompress.c" />
     <ClCompile Include="..\dir.c" />
     <ClCompile Include="..\file.c" />
+    <ClCompile Include="..\file_index.c" />
     <ClCompile Include="..\fs.c" />
     <ClCompile Include="..\hash.c" />
     <ClCompile Include="..\ls.c" />
@@ -90,17 +92,20 @@
     <ClCompile Include="..\stack.c" />
     <ClCompile Include="..\swap.c" />
     <ClCompile Include="..\table.c" />
+    <ClCompile Include="..\thread.c" />
     <ClCompile Include="..\traverse.c" />
     <ClCompile Include="..\util.c" />
     <ClCompile Include="..\xattr.c" />
     <ClCompile Include="tinfl.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\block.h" />
     <ClInclude Include="..\cache.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\decompress.h" />
     <ClInclude Include="..\dir.h" />
     <ClInclude Include="..\file.h" />
+    <ClInclude Include="..\file_index.h" />
     <ClInclude Include="..\fs.h" />
     <ClInclude Include="..\hash.h" />
     <ClInclude Include="..\nonstd-internal.h" />
@@ -110,6 +115,7 @@
     <ClInclude Include="..\stack.h" />
     <ClInclude Include="..\swap.h" />
     <ClInclude Include="..\table.h" />
+    <ClInclude Include="..\thread.h" />
     <ClInclude Include="..\traverse.h" />
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\xattr.h" />
