@@ -81,7 +81,7 @@ struct sqfs_cache {
   
   sqfs_mutex mutex;
   sqfs_cond_var cv; /* Waiting for empty entry */
-  size_t waiters;   /* How many threads waiting */ 
+  size_t waiters;   /* How many threads waiting */
 };
 typedef struct sqfs_cache sqfs_cache;
 

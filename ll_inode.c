@@ -163,7 +163,7 @@ static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
     return map->root + 1;
   } else {
     return n + 1;
-  } 
+  }
 }
 
 static fuse_ino_t sqfs_ll_ino32_fuse2num(sqfs_ll *ll, fuse_ino_t i) {
@@ -258,7 +258,7 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
   ll->ino_destroy = sqfs_ll_ino32_destroy;
   ll->ino_data = map;
   
-  return err; 
+  return err;
 }
 
 
@@ -310,7 +310,7 @@ static void sqfs_ll_null_forget(sqfs_ll *SQFS_UNUSED(ll),
 }
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll) {
-  sqfs_err err = SQFS_OK; 
+  sqfs_err err = SQFS_OK;
   if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
     err = sqfs_ll_ino64_init(ll);
   } else if (sqfs_export_ok(&ll->fs)) {

@@ -433,7 +433,7 @@ int main(int argc, char *argv[]) {
     err = -1;
     if (sqfs_ll_mount(&ch, mountpoint, &args) == SQFS_OK) {
       struct fuse_session *se = fuse_lowlevel_new(&args,
-        &sqfs_ll_ops, sizeof(sqfs_ll_ops), ll); 
+        &sqfs_ll_ops, sizeof(sqfs_ll_ops), ll);
       if (se != NULL) {
         if (sqfs_ll_daemonize(fg) != -1) {
           if (fuse_set_signal_handlers(se) != -1) {

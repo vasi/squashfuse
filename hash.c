@@ -29,7 +29,7 @@
 
 static sqfs_err sqfs_hash_add_internal(sqfs_hash *h,
     sqfs_hash_key k, sqfs_hash_value v) {
-  size_t hash = (k & (h->capacity - 1));  
+  size_t hash = (k & (h->capacity - 1));
   sqfs_hash_bucket *b = malloc(sizeof(sqfs_hash_bucket) + h->value_size);
   if (!b)
     return SQFS_ERR;

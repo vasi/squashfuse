@@ -167,7 +167,7 @@ sqfs_err sqfs_xattr_value_size(sqfs_xattr *x, size_t *size) {
   }
   
   if (size)
-    *size = x->val.vsize; 
+    *size = x->val.vsize;
   x->cursors |= CURS_VAL;
   return err;
 }

@@ -94,7 +94,7 @@ sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
     sqfs_inode *inode) {
   sqfs_err err;
   
-  sqfs_traverse_init(trv);  
+  sqfs_traverse_init(trv);
   if ((err = sqfs_traverse_path_init(trv)))
     goto error;
   err = sqfs_stack_create(&trv->stack, sizeof(sqfs_traverse_level), 0, NULL);
@@ -281,7 +281,7 @@ static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
   initial = (sqfs_stack_size(&trv->stack) == 0);
   
   if ((err = sqfs_stack_push(&trv->stack, &level)))
-    return err; 
+    return err;
   if ((err = sqfs_dir_open(trv->fs, inode, &level->dir, 0)))
     return err;
   

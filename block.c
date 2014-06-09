@@ -80,7 +80,7 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
 
 error:
   if (compressed)
-    free(read_bytes); 
+    free(read_bytes);
   return err;
 }
 

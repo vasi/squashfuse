@@ -45,7 +45,7 @@ struct sqfs_ll {
   
   /* Private data, and how to destroy it */
   void *ino_data;
-  void (*ino_destroy)(sqfs_ll *ll); 
+  void (*ino_destroy)(sqfs_ll *ll);
 };
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll);

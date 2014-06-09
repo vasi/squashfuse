@@ -165,7 +165,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
       err = sqfs_frag_block(fs, inode, &data_off, &data_size, &block);
       if (err)
         return err;
-    } else {      
+    } else {
       if ((err = sqfs_blocklist_next(&bl)))
         return err;
       if ((sqfs_off_t)(bl.pos + block_size) <= start)

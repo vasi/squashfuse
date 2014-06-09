@@ -36,7 +36,7 @@ sqfs_err sqfs_xattr_init(sqfs *fs);
 
 /* xattr iterator */
 typedef struct {
-  sqfs *fs; 
+  sqfs *fs;
   int cursors;
   sqfs_md_cursor c_name, c_vsize, c_val, c_next;
   

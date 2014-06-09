@@ -196,7 +196,7 @@ static int sqfs_hl_op_readlink(const char *path, char *buf, size_t size) {
     return -EINVAL;
   } else if (sqfs_readlink(fs, &inode, buf, &size)) {
     return -EIO;
-  } 
+  }
   return 0;
 }
 

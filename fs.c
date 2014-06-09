@@ -127,7 +127,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
     
     take = block->size - cur->offset;
     if (take > size)
-      take = size;    
+      take = size;
     if (buf)
       memcpy(buf, (char*)block->data + cur->offset, take);
     if ((err = sqfs_block_release(block)))

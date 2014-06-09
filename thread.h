@@ -35,7 +35,7 @@
   #include <pthread.h>
 
   typedef pthread_mutex_t sqfs_mutex;
-  typedef pthread_cond_t sqfs_cond_var; 
+  typedef pthread_cond_t sqfs_cond_var;
 #else
   /* Dummies */
   typedef char sqfs_mutex;

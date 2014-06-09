@@ -37,7 +37,7 @@ typedef struct {
   
   
   /* private */
-  int state;  
+  int state;
   sqfs *fs;
   sqfs_name namebuf;
   sqfs_stack stack;
