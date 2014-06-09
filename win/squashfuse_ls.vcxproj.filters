@@ -69,6 +69,15 @@
     <ClCompile Include="..\ls.c">
       <Filter>Common sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\file_index.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thread.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\block.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\xattr.h">
@@ -126,6 +135,15 @@
       <Filter>Common headers</Filter>
     </ClInclude>
     <ClInclude Include="..\stack.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\block.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\file_index.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thread.h">
       <Filter>Common headers</Filter>
     </ClInclude>
   </ItemGroup>
