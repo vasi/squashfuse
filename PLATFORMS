@@ -1,6 +1,6 @@
 Overview
 --------
-The following operating systems are known to be supported:
+The following operating systems are supported:
 * Linux
 * Mac OS X
 * FreeBSD
@@ -8,8 +8,12 @@ The following operating systems are known to be supported:
 * OpenIndiana
 * Android
 
-These don't seem to work yet:
+These are not supported by squashfuse_ll, just squashfuse:
+
+These are only supported by the squashfuse_ls demo:
 * Windows
+
+These don't seem to work yet:
 * Solaris
 * QNX
 * Minix
@@ -112,3 +116,13 @@ Details
     - May need `-nodefaultlibs' in LDFLAGS, since configure likes linking
       and compiling together in a single gcc invokation, and
       Android's build system doesn't.
+
+* Windows
+  + Only squashfuse_ls, there's no good FUSE on Windows
+  + Tested on: Windows 7 / x64
+  + Requirements:
+    - A compiler. I've tested with Visual Studio 2013 Express
+  + Configure: No need to run ./configure, just use the Visual Studio solution
+    file.
+  + Notes: For Unicode output, you may need to setup a different console font,
+    and run `chcp 65001' to get the UTF-8 codepage.

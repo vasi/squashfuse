@@ -52,16 +52,19 @@ Platform support
 		QNX 6.5 (qfuse)
 			fuse_session_add_chan() crashes
 			High-level crashes too
-		Windows (fuse4win/dokan)
+		Windows
 			Dokan sample bluescreens, fuse4win sample crashes
 			CBFS? Totally different API, expensive
+			Explorer Namespace Extensions are very hard to write, includes GUI
+      Real filesystem drivers (IFS) are very hard to write
 			Pismo File Mount?
-			Explorer Namespace Extension?
 			FUSE-NT?
-			7-zip can browse squashfs archives, just not in explorer
 	Linux kernel < 2.4.20
 		Requires fuse < 2.4.0. Maybe high-level?
 		LUFS?
+  Network filesystem workaround
+    For systems without FUSE, we could use an FTP or WebDAV server to vend
+      the filesystem.
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
 		Minix 3.2 (puffs/refuse): High-level won't work
