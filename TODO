@@ -54,7 +54,7 @@ Platform support
 			FUSE-NT?
 	Linux kernel < 2.4.20
 		Requires fuse < 2.4.0. Maybe high-level?
-		LUFS?
+		LUFS? AVFS?
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
 		Minix 3.2 (puffs/refuse): High-level won't work

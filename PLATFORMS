@@ -35,12 +35,12 @@ brackets, eg: [0.1]
 * Linux
   + Versions: Kernel 2.4.20 or later, most distros since ~2004
   + Tested on:
-    - Debian / squeeze 6.0              / i386, ppc             [0.1]
-    - Ubuntu / Trusty 14.04             / amd64                 [0.1]
-    - Ubuntu / Precise  12.04           / amd64                 [0.1]
-    - Ubuntu / Natty  11.10             / amd64                 [0.1]
-    - Ubuntu / Lucid  10.04             / amd64                 [0.1]
-    - CentOS / 3.9                      / i386      / FUSE 2.5  ]0.1]
+    - Ubuntu / Trusty  14.04             / amd64                 [0.1]
+    - Ubuntu / Precise 12.04             / amd64                 [0.1]
+    - Ubuntu / Natty   11.10             / amd64                 [0.1]
+    - Ubuntu / Lucid   10.04             / amd64                 [0.1]
+    - Debian / squeeze  6.0              / i386, ppc             [0.1]
+    - CentOS / 3.9                       / i386      / FUSE 2.5  ]0.1]
   + Requirements: CONFIG_FUSE_FS kernel option
   + Packages:
     - apt-get
