@@ -39,9 +39,8 @@ libsquashfuse_la_SOURCES =    \
   nonstd-stat.c     \
   nonstd-internal.h \
   nonstd.h  
-libsquashfuse_la_CFLAGS = $(PTHREAD_CFLAGS)
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
-	$(LZ4_CPPFLAGS)
+	$(LZ4_CPPFLAGS) $(PTHREAD_CFLAGS)
 
 # Helper for FUSE clients: libfuseprivate
 libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
@@ -52,9 +51,9 @@ libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 if SQ_WANT_HIGHLEVEL
 bin_PROGRAMS += squashfuse
 squashfuse_SOURCES = hl.c
-squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
+squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS) $(PTHREAD_CFLAGS)
 squashfuse_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
-  $(FUSE_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+  $(FUSE_LIBS) $(PTHREAD_CFLAGS)
 
 noinst_LTLIBRARIES += libfuseprivate.la
 dist_man_MANS += squashfuse.1
@@ -64,9 +63,9 @@ endif
 if SQ_WANT_LOWLEVEL
 bin_PROGRAMS += squashfuse_ll
 squashfuse_ll_SOURCES = ll.c ll_inode.c nonstd-daemon.c ll.h
-squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
+squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS) $(PTHREAD_CFLAGS)
 squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
-  $(FUSE_LIBS)
+  $(FUSE_LIBS) $(PTHREAD_CFLAGS)
 
 noinst_LTLIBRARIES += libfuseprivate.la
 endif

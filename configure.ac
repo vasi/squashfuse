@@ -44,32 +44,18 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 SQ_FUSE_RESULT
 
 # Misc
+SQ_THREADS
 SQ_CHECK_PROG_MAKE_EXPORT
 AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
 		[Define if <linux/types.h> defines the type __le16])
 ],,[#include <linux/types.h>])
 
-
 # Other options
 AC_ARG_ENABLE([demo],
 	AS_HELP_STRING([--disable-demo], [disable library demo]),,
 	[enable_demo=yes])
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
-
-AC_ARG_ENABLE([threads],
-  AS_HELP_STRING([--disable-threads], [disable thread support]),,
-  [enable_threads=check])
-AS_IF([test "x$enable_threads" = xno],,[
-  AX_PTHREAD([
-    enable_threads=yes
-    AC_DEFINE(HAVE_PTHREAD, 1, [POSIX threads available])
-  ],[
-    AS_IF([test "x$enable_threads" = xyes],
-      [AC_MSG_FAILURE([Can't find threading support])])
-    enable_threads=no
-  ])
-])
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
