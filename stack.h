@@ -30,18 +30,18 @@
 typedef void (*sqfs_stack_free_t)(void *v);
 
 typedef struct {
-	size_t value_size;
-	size_t size;
-	size_t capacity;
-	char *items;
-	sqfs_stack_free_t freer;
+  size_t value_size;
+  size_t size;
+  size_t capacity;
+  char *items;
+  sqfs_stack_free_t freer;
 } sqfs_stack;
 
 /* Ensures the struct is in a safe state */
 void sqfs_stack_init(sqfs_stack *s);
 
 sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
-	sqfs_stack_free_t freer);
+  sqfs_stack_free_t freer);
 void sqfs_stack_destroy(sqfs_stack *s);
 
 sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout);

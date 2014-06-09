@@ -29,50 +29,50 @@
     return true;
   }
   
-	sqfs_err sqfs_mutex_init(sqfs_mutex *m) {
-		return pthread_mutex_init(m, NULL) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_mutex_destroy(sqfs_mutex *m) {
-		return pthread_mutex_destroy(m) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_mutex_lock(sqfs_mutex *m) {
-		return pthread_mutex_lock(m) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_mutex_unlock(sqfs_mutex *m) {
-		return pthread_mutex_unlock(m) ? SQFS_ERR : SQFS_OK;
-	}
+  sqfs_err sqfs_mutex_init(sqfs_mutex *m) {
+    return pthread_mutex_init(m, NULL) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_destroy(sqfs_mutex *m) {
+    return pthread_mutex_destroy(m) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_lock(sqfs_mutex *m) {
+    return pthread_mutex_lock(m) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_unlock(sqfs_mutex *m) {
+    return pthread_mutex_unlock(m) ? SQFS_ERR : SQFS_OK;
+  }
 
-	sqfs_err sqfs_cond_init(sqfs_cond_var *cv) {
-		return pthread_cond_init(cv, NULL) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_cond_destroy(sqfs_cond_var *cv) {
-		return pthread_cond_destroy(cv) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_cond_wait(sqfs_cond_var *cv, sqfs_mutex *m)  {
-		return pthread_cond_wait(cv, m) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_cond_signal(sqfs_cond_var *cv) {
-		return pthread_cond_signal(cv) ? SQFS_ERR : SQFS_OK;
-	}
-	sqfs_err sqfs_cond_broadcast(sqfs_cond_var *cv)  {
-		return pthread_cond_broadcast(cv) ? SQFS_ERR : SQFS_OK;
-	}
+  sqfs_err sqfs_cond_init(sqfs_cond_var *cv) {
+    return pthread_cond_init(cv, NULL) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_cond_destroy(sqfs_cond_var *cv) {
+    return pthread_cond_destroy(cv) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_cond_wait(sqfs_cond_var *cv, sqfs_mutex *m)  {
+    return pthread_cond_wait(cv, m) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_cond_signal(sqfs_cond_var *cv) {
+    return pthread_cond_signal(cv) ? SQFS_ERR : SQFS_OK;
+  }
+  sqfs_err sqfs_cond_broadcast(sqfs_cond_var *cv)  {
+    return pthread_cond_broadcast(cv) ? SQFS_ERR : SQFS_OK;
+  }
 #else
   bool sqfs_threads_available(void) {
     return false;
   }
   
-	sqfs_err sqfs_mutex_init(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
-	sqfs_err sqfs_mutex_destroy(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
-	sqfs_err sqfs_mutex_lock(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
-	sqfs_err sqfs_mutex_unlock(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
+  sqfs_err sqfs_mutex_init(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
+  sqfs_err sqfs_mutex_destroy(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
+  sqfs_err sqfs_mutex_lock(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
+  sqfs_err sqfs_mutex_unlock(sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
 
-	sqfs_err sqfs_cond_init(sqfs_cond_var *SQFS_UNUSED(cv)) { return SQFS_OK; }
-	sqfs_err sqfs_cond_destroy(sqfs_cond_var *SQFS_UNUSED(cv))
+  sqfs_err sqfs_cond_init(sqfs_cond_var *SQFS_UNUSED(cv)) { return SQFS_OK; }
+  sqfs_err sqfs_cond_destroy(sqfs_cond_var *SQFS_UNUSED(cv))
     { return SQFS_OK; }
-	sqfs_err sqfs_cond_wait(sqfs_cond_var *SQFS_UNUSED(cv),
+  sqfs_err sqfs_cond_wait(sqfs_cond_var *SQFS_UNUSED(cv),
     sqfs_mutex *SQFS_UNUSED(m)) { return SQFS_OK; }
-	sqfs_err sqfs_cond_signal(sqfs_cond_var *SQFS_UNUSED(cv)) { return SQFS_OK; }
-	sqfs_err sqfs_cond_broadcast(sqfs_cond_var *SQFS_UNUSED(cv))
+  sqfs_err sqfs_cond_signal(sqfs_cond_var *SQFS_UNUSED(cv)) { return SQFS_OK; }
+  sqfs_err sqfs_cond_broadcast(sqfs_cond_var *SQFS_UNUSED(cv))
     { return SQFS_OK; }
 #endif

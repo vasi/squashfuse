@@ -28,17 +28,17 @@
 #include "nonstd-internal.h"
 
 #ifdef HAVE_ATTR_XATTR_H
-	#include <sys/types.h>
-	#include <attr/xattr.h>
+  #include <sys/types.h>
+  #include <attr/xattr.h>
 #endif
 #include <errno.h>
 
 #ifndef ENOATTR
-	 #define ENOATTR ENODATA
+   #define ENOATTR ENODATA
 #endif
 
 #include "nonstd.h"
 
 int sqfs_enoattr() {
-	return ENOATTR;
+  return ENOATTR;
 }

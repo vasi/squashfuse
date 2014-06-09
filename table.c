@@ -33,54 +33,54 @@
 #include <string.h>
 
 sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start,
-		size_t each, size_t count) {
-	size_t i;
-	size_t nblocks;
-	ssize_t bread;
-	
-	if (count == 0)
-		return SQFS_OK;
-	
-	nblocks = sqfs_divceil(each * count, SQUASHFS_METADATA_SIZE);
-	bread = nblocks * sizeof(uint64_t);
-	
-	table->each = each;
-	if (!(table->blocks = malloc(bread)))
-		goto err;
-	if (sqfs_pread(fd, table->blocks, bread, start) != bread)
-		goto err;
-	
-	for (i = 0; i < nblocks; ++i)
-		sqfs_swapin64(&table->blocks[i]);
-	
-	return SQFS_OK;
-	
+    size_t each, size_t count) {
+  size_t i;
+  size_t nblocks;
+  ssize_t bread;
+  
+  if (count == 0)
+    return SQFS_OK;
+  
+  nblocks = sqfs_divceil(each * count, SQUASHFS_METADATA_SIZE);
+  bread = nblocks * sizeof(uint64_t);
+  
+  table->each = each;
+  if (!(table->blocks = malloc(bread)))
+    goto err;
+  if (sqfs_pread(fd, table->blocks, bread, start) != bread)
+    goto err;
+  
+  for (i = 0; i < nblocks; ++i)
+    sqfs_swapin64(&table->blocks[i]);
+  
+  return SQFS_OK;
+  
 err:
-	free(table->blocks);
-	table->blocks = NULL;
-	return SQFS_ERR;
+  free(table->blocks);
+  table->blocks = NULL;
+  return SQFS_ERR;
 }
 
 void sqfs_table_destroy(sqfs_table *table) {
-	free(table->blocks);
-	table->blocks = NULL;
+  free(table->blocks);
+  table->blocks = NULL;
 }
 
 sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
-	sqfs_err err;
-	sqfs_block *block;
-	
-	size_t pos = idx * table->each;
-	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
-		off = pos % SQUASHFS_METADATA_SIZE;
-	
-	if ((err = sqfs_md_cache(fs, table->blocks[bnum], &block)))
-		return SQFS_ERR;
-	
-	memcpy(buf, (char*)(block->data) + off, table->each);
-	
-	if ((err = sqfs_block_release(block)))
-		return err;
-	
-	return SQFS_OK;
+  sqfs_err err;
+  sqfs_block *block;
+  
+  size_t pos = idx * table->each;
+  size_t bnum = pos / SQUASHFS_METADATA_SIZE,
+    off = pos % SQUASHFS_METADATA_SIZE;
+  
+  if ((err = sqfs_md_cache(fs, table->blocks[bnum], &block)))
+    return SQFS_ERR;
+  
+  memcpy(buf, (char*)(block->data) + off, table->each);
+  
+  if ((err = sqfs_block_release(block)))
+    return err;
+  
+  return SQFS_OK;
 }

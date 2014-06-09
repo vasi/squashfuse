@@ -28,103 +28,103 @@
 
 /* Ensure a capacity of cap */
 static sqfs_err sqfs_stack_capacity(sqfs_stack *s, size_t cap) {
-	char *items;
-	if (cap <= s->capacity)
-		return SQFS_OK;
-	
-	items = realloc(s->items, cap * s->value_size);
-	if (!items)
-		return SQFS_ERR;
-	
-	s->items = items;
-	s->capacity = cap;
-	return SQFS_OK;
+  char *items;
+  if (cap <= s->capacity)
+    return SQFS_OK;
+  
+  items = realloc(s->items, cap * s->value_size);
+  if (!items)
+    return SQFS_ERR;
+  
+  s->items = items;
+  s->capacity = cap;
+  return SQFS_OK;
 }
 
 /* Calculate the next capacity to use */
 #define CAPACITY_DEFAULT 8
 #define CAPACITY_RATIO 3 / 2
 static size_t sqfs_stack_next_capacity(size_t cap) {
-	size_t n;
-	
-	if (cap == 0)
-		return CAPACITY_DEFAULT;
-	
-	n = cap * CAPACITY_RATIO;
-	if (n <= cap)
-		return cap + 1;
-	return n;
+  size_t n;
+  
+  if (cap == 0)
+    return CAPACITY_DEFAULT;
+  
+  n = cap * CAPACITY_RATIO;
+  if (n <= cap)
+    return cap + 1;
+  return n;
 }
 
 /* Grow by one */
 static sqfs_err sqfs_stack_grow(sqfs_stack *s) {
-	if (s->size == s->capacity) {
-		sqfs_err err = sqfs_stack_capacity(s,
-			sqfs_stack_next_capacity(s->capacity));
-		if (err)
-			return err;
-	}
-	s->size++;
-	return SQFS_OK;
+  if (s->size == s->capacity) {
+    sqfs_err err = sqfs_stack_capacity(s,
+      sqfs_stack_next_capacity(s->capacity));
+    if (err)
+      return err;
+  }
+  s->size++;
+  return SQFS_OK;
 }
 
 
 sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
-		sqfs_stack_free_t freer) {
-	s->value_size = vsize;
-	s->freer = freer;
-	s->items = NULL;
-	s->capacity = s->size = 0;
-	return sqfs_stack_capacity(s, initial);
+    sqfs_stack_free_t freer) {
+  s->value_size = vsize;
+  s->freer = freer;
+  s->items = NULL;
+  s->capacity = s->size = 0;
+  return sqfs_stack_capacity(s, initial);
 }
 
 void sqfs_stack_init(sqfs_stack *s) {
-	s->items = NULL;
-	s->capacity = 0;
+  s->items = NULL;
+  s->capacity = 0;
 }
 
 void sqfs_stack_destroy(sqfs_stack *s) {
-	while (sqfs_stack_pop(s))
-		; /* pass */
-	free(s->items);
-	sqfs_stack_init(s);
+  while (sqfs_stack_pop(s))
+    ; /* pass */
+  free(s->items);
+  sqfs_stack_init(s);
 }
 
 sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout) {
-	sqfs_err err = sqfs_stack_grow(s);
-	if (err)
-		return err;
-	return sqfs_stack_top(s, vout);
+  sqfs_err err = sqfs_stack_grow(s);
+  if (err)
+    return err;
+  return sqfs_stack_top(s, vout);
 }
 
 bool sqfs_stack_pop(sqfs_stack *s) {
-	void *v;
-	
-	if (s->size == 0)
-		return false;
-	
-	sqfs_stack_top(s, &v);
-	if (s->freer)
-		s->freer(v);
-	s->size--;
-	return true;
+  void *v;
+  
+  if (s->size == 0)
+    return false;
+  
+  sqfs_stack_top(s, &v);
+  if (s->freer)
+    s->freer(v);
+  s->size--;
+  return true;
 }
 
 size_t sqfs_stack_size(sqfs_stack *s) {
-	return s->size;
+  return s->size;
 }
 
 sqfs_err sqfs_stack_at(sqfs_stack *s, size_t i, void *vout) {
-	if (i >= s->size)
-		return SQFS_ERR;
-	
-	*(void**)vout = s->items + i * s->value_size;
-	return SQFS_OK;
+  if (i >= s->size)
+    return SQFS_ERR;
+  
+  *(void**)vout = s->items + i * s->value_size;
+  return SQFS_OK;
 }
 
 sqfs_err sqfs_stack_top(sqfs_stack *s, void *vout) {
-	if (s->size == 0)
-		return SQFS_ERR;
-	
-	return sqfs_stack_at(s, s->size - 1, vout);
+  if (s->size == 0)
+    return SQFS_ERR;
+  
+  return sqfs_stack_at(s, s->size - 1, vout);
 }

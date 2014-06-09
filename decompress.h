@@ -27,8 +27,8 @@
 
 #include "common.h"
 
-#define SQFS_COMP_UNKNOWN	0
-#define SQFS_COMP_MAX		16
+#define SQFS_COMP_UNKNOWN 0
+#define SQFS_COMP_MAX   16
 
 typedef int sqfs_compression_type;
 
@@ -39,7 +39,7 @@ void sqfs_compression_supported(sqfs_compression_type *types);
 
 
 typedef sqfs_err (*sqfs_decompressor)(void *in, size_t insz,
-	void *out, size_t *outsz);
+  void *out, size_t *outsz);
 
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type);
 

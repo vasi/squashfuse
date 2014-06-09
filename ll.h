@@ -31,21 +31,21 @@
 
 typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
-	sqfs fs;
-	
-	/* Convert from FUSE inode to squashfs inode */
-	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
-	
-	/* Register a new inode, returning the fuse ID for it */
-	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
-	void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
-	
-	/* Like register, but don't actually remember it */
-	fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
-	
-	/* Private data, and how to destroy it */
-	void *ino_data;
-	void (*ino_destroy)(sqfs_ll *ll);	
+  sqfs fs;
+  
+  /* Convert from FUSE inode to squashfs inode */
+  sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
+  
+  /* Register a new inode, returning the fuse ID for it */
+  fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
+  void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
+  
+  /* Like register, but don't actually remember it */
+  fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
+  
+  /* Private data, and how to destroy it */
+  void *ino_data;
+  void (*ino_destroy)(sqfs_ll *ll); 
 };
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll);
@@ -58,8 +58,8 @@ sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i);
 /* Convenience function: Get both ll and inode, and handle errors */
 #define SQFS_FUSE_INODE_NONE 0
 typedef struct {
-	sqfs_ll *ll;
-	sqfs_inode inode;
+  sqfs_ll *ll;
+  sqfs_inode inode;
 } sqfs_ll_i;
 sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
 

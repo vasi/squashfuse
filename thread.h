@@ -32,14 +32,14 @@
 #include <stdbool.h>
 
 #ifdef HAVE_PTHREAD
-	#include <pthread.h>
+  #include <pthread.h>
 
-	typedef pthread_mutex_t sqfs_mutex;
-	typedef pthread_cond_t sqfs_cond_var;	
+  typedef pthread_mutex_t sqfs_mutex;
+  typedef pthread_cond_t sqfs_cond_var; 
 #else
-	/* Dummies */
-	typedef char sqfs_mutex;
-	typedef char sqfs_cond_var;
+  /* Dummies */
+  typedef char sqfs_mutex;
+  typedef char sqfs_cond_var;
 #endif
 
 bool sqfs_threads_available(void);

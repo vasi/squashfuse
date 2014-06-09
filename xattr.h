@@ -36,17 +36,17 @@ sqfs_err sqfs_xattr_init(sqfs *fs);
 
 /* xattr iterator */
 typedef struct {
-	sqfs *fs;	
-	int cursors;
-	sqfs_md_cursor c_name, c_vsize, c_val, c_next;
-	
-	size_t remain;
-	struct squashfs_xattr_id info;
-	
-	uint16_t type;
-	bool ool;
-	struct squashfs_xattr_entry entry;
-	struct squashfs_xattr_val val;
+  sqfs *fs; 
+  int cursors;
+  sqfs_md_cursor c_name, c_vsize, c_val, c_next;
+  
+  size_t remain;
+  struct squashfs_xattr_id info;
+  
+  uint16_t type;
+  bool ool;
+  struct squashfs_xattr_entry entry;
+  struct squashfs_xattr_val val;
 } sqfs_xattr;
 
 /* Get xattr iterator for this inode */
@@ -69,6 +69,6 @@ sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found);
    Returns in 'size' the size of the xattr, if found, or zero if not found.
    Does not touch 'buf' if it's not big enough. */
 sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
-	void *buf, size_t *size);
+  void *buf, size_t *size);
 
 #endif

@@ -32,27 +32,27 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
-	#include <win32.h>
+  #include <win32.h>
 #else
-	typedef mode_t sqfs_mode_t;
-	typedef uid_t sqfs_id_t;
-	typedef off_t sqfs_off_t;
-	typedef int sqfs_fd_t;
+  typedef mode_t sqfs_mode_t;
+  typedef uid_t sqfs_id_t;
+  typedef off_t sqfs_off_t;
+  typedef int sqfs_fd_t;
 #endif
 
 #ifdef __GNUC__
-	#define SQFS_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+  #define SQFS_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
 #else
-	#define SQFS_UNUSED(x) UNUSED_ ## x
+  #define SQFS_UNUSED(x) UNUSED_ ## x
 #endif
 
 typedef enum {
-	SQFS_OK,
-	SQFS_ERR,
-	SQFS_BADFORMAT,		/* unsupported file format */
-	SQFS_BADVERSION,	/* unsupported squashfs version */
-	SQFS_BADCOMP,		/* unsupported compression method */
-	SQFS_UNSUP			/* unsupported feature */
+  SQFS_OK,
+  SQFS_ERR,
+  SQFS_BADFORMAT,   /* unsupported file format */
+  SQFS_BADVERSION,  /* unsupported squashfs version */
+  SQFS_BADCOMP,   /* unsupported compression method */
+  SQFS_UNSUP      /* unsupported feature */
 } sqfs_err;
 
 #define SQFS_INODE_ID_BYTES 6
@@ -63,8 +63,8 @@ typedef struct sqfs sqfs;
 typedef struct sqfs_inode sqfs_inode;
 
 typedef struct {
-	sqfs_off_t block;
-	size_t offset;
+  sqfs_off_t block;
+  size_t offset;
 } sqfs_md_cursor;
 
 #endif

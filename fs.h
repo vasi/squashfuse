@@ -34,52 +34,52 @@
 #include "table.h"
 
 struct sqfs {
-	sqfs_fd_t fd;
-	struct squashfs_super_block sb;
-	sqfs_table id_table;
-	sqfs_table frag_table;
-	sqfs_table export_table;
-	sqfs_cache md_cache;
-	sqfs_cache data_cache;
-	sqfs_cache frag_cache;
-	sqfs_cache blockidx;
-	sqfs_decompressor decompressor;
-	
-	struct squashfs_xattr_id_table xattr_info;
-	sqfs_table xattr_table;
+  sqfs_fd_t fd;
+  struct squashfs_super_block sb;
+  sqfs_table id_table;
+  sqfs_table frag_table;
+  sqfs_table export_table;
+  sqfs_cache md_cache;
+  sqfs_cache data_cache;
+  sqfs_cache frag_cache;
+  sqfs_cache blockidx;
+  sqfs_decompressor decompressor;
+  
+  struct squashfs_xattr_id_table xattr_info;
+  sqfs_table xattr_table;
 };
 
 typedef uint32_t sqfs_xattr_idx;
 struct sqfs_inode {
-	struct squashfs_base_inode base;
-	int nlink;
-	sqfs_xattr_idx xattr;
-	
-	sqfs_md_cursor next;
-	
-	union {
-		struct {
-			int major, minor;
-		} dev;
-		size_t symlink_size;
-		struct {
-			uint64_t start_block;
-			uint64_t file_size;
-			uint32_t frag_idx;
-			uint32_t frag_off;
-		} reg;
-		struct {
-			uint32_t start_block;
-			uint16_t offset;
-			uint32_t dir_size;
-			uint16_t idx_count;
-			uint32_t parent_inode;
-		} dir;
-	} xtra;
+  struct squashfs_base_inode base;
+  int nlink;
+  sqfs_xattr_idx xattr;
+  
+  sqfs_md_cursor next;
+  
+  union {
+    struct {
+      int major, minor;
+    } dev;
+    size_t symlink_size;
+    struct {
+      uint64_t start_block;
+      uint64_t file_size;
+      uint32_t frag_idx;
+      uint32_t frag_off;
+    } reg;
+    struct {
+      uint32_t start_block;
+      uint16_t offset;
+      uint32_t dir_size;
+      uint16_t idx_count;
+      uint32_t parent_inode;
+    } dir;
+  } xtra;
 };
 
 void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
-	int *max_minor);
+  int *max_minor);
 
 /* Number of groups of size 'group' required to hold size 'total' */
 size_t sqfs_divceil(uint64_t total, size_t group);

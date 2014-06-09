@@ -25,16 +25,16 @@
 #include "swap.h"
 
 #define SWAP(BITS) \
-	void sqfs_swapin##BITS(uint##BITS##_t *v) { \
-		int i; \
-		uint8_t *c = (uint8_t*)v; \
-		uint##BITS##_t r = 0; \
-		for (i = sizeof(*v) - 1; i >= 0; --i) { \
-			r <<= 8; \
-			r += c[i]; \
-		} \
-		*v = r; \
-	}
+  void sqfs_swapin##BITS(uint##BITS##_t *v) { \
+    int i; \
+    uint8_t *c = (uint8_t*)v; \
+    uint##BITS##_t r = 0; \
+    for (i = sizeof(*v) - 1; i >= 0; --i) { \
+      r <<= 8; \
+      r += c[i]; \
+    } \
+    *v = r; \
+  }
 
 SWAP(16)
 SWAP(32)
@@ -46,7 +46,7 @@ static void sqfs_swapin32_internal(__le32 *v) { sqfs_swapin32((uint32_t*)v); }
 static void sqfs_swapin64_internal(__le64 *v) { sqfs_swapin64((uint64_t*)v); }
 
 void sqfs_swap16(uint16_t *n) {
-	*n = (*n >> 8) + (*n << 8);
+  *n = (*n >> 8) + (*n << 8);
 }
 
 #include "squashfs_fs.h"

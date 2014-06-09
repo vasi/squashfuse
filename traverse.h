@@ -31,19 +31,19 @@
 #include "stack.h"
 
 typedef struct {
-	bool dir_end;
-	sqfs_dir_entry entry;
-	char *path;
-	
-	
-	/* private */
-	int state;	
-	sqfs *fs;
-	sqfs_name namebuf;
-	sqfs_stack stack;
-	
-	size_t path_size, path_cap;
-	size_t path_last_size;
+  bool dir_end;
+  sqfs_dir_entry entry;
+  char *path;
+  
+  
+  /* private */
+  int state;  
+  sqfs *fs;
+  sqfs_name namebuf;
+  sqfs_stack stack;
+  
+  size_t path_size, path_cap;
+  size_t path_last_size;
 } sqfs_traverse;
 
 /* Begin a recursive traversal of a filesystem tree.
@@ -51,14 +51,14 @@ typedef struct {
    this inode itself. */
 sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid);
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
-	sqfs_inode *inode);
+  sqfs_inode *inode);
 
 /* Clean up at any point during or after a traversal */
 void sqfs_traverse_close(sqfs_traverse *trv);
 
 /* Get the next item in the traversal. An item may be:
    - A directory entry, in which case trv->entry will be filled
-	 - A marker that a directory is finished, in which case trv->dir_end will
+   - A marker that a directory is finished, in which case trv->dir_end will
      be true.
    Returns false if there are no more items. */
 bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err);

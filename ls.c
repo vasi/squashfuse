@@ -31,45 +31,45 @@
 
 #define PROGNAME "squashfuse_ls"
 
-#define ERR_MISC	(-1)
-#define ERR_USAGE	(-2)
-#define ERR_OPEN	(-3)
+#define ERR_MISC  (-1)
+#define ERR_USAGE (-2)
+#define ERR_OPEN  (-3)
 
 static void usage() {
-	fprintf(stderr, "%s (c) 2013 Dave Vasilevsky\n\n", PROGNAME);
-	fprintf(stderr, "Usage: %s ARCHIVE\n", PROGNAME);
-	exit(ERR_USAGE);
+  fprintf(stderr, "%s (c) 2013 Dave Vasilevsky\n\n", PROGNAME);
+  fprintf(stderr, "Usage: %s ARCHIVE\n", PROGNAME);
+  exit(ERR_USAGE);
 }
 
 static void die(const char *msg) {
-	fprintf(stderr, "%s\n", msg);
-	exit(ERR_MISC);
+  fprintf(stderr, "%s\n", msg);
+  exit(ERR_MISC);
 }
 
 int main(int argc, char *argv[]) {
-	sqfs_err err = SQFS_OK;
-	sqfs_traverse trv;
-	sqfs fs;
-	char *image;
+  sqfs_err err = SQFS_OK;
+  sqfs_traverse trv;
+  sqfs fs;
+  char *image;
 
-	if (argc != 2)
-		usage();
-	image = argv[1];
+  if (argc != 2)
+    usage();
+  image = argv[1];
 
-	if ((err = sqfs_open_image(&fs, image)))
-		exit(ERR_OPEN);
-	
-	if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))
-		die("sqfs_traverse_open error");
-	while (sqfs_traverse_next(&trv, &err)) {
-		if (!trv.dir_end) {
-			printf("%s\n", trv.path);
-		}
-	}
-	if (err)
-		die("sqfs_traverse_next error");
-	sqfs_traverse_close(&trv);
-	
-	sqfs_fd_close(fs.fd);
-	return 0;
+  if ((err = sqfs_open_image(&fs, image)))
+    exit(ERR_OPEN);
+  
+  if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))
+    die("sqfs_traverse_open error");
+  while (sqfs_traverse_next(&trv, &err)) {
+    if (!trv.dir_end) {
+      printf("%s\n", trv.path);
+    }
+  }
+  if (err)
+    die("sqfs_traverse_next error");
+  sqfs_traverse_close(&trv);
+  
+  sqfs_fd_close(fs.fd);
+  return 0;
 }

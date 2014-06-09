@@ -28,28 +28,28 @@
 #include "common.h"
 
 /* Simple hashtable
- *	- Keys are integers
- *	- Values are opaque data
+ *  - Keys are integers
+ *  - Values are opaque data
  *
  * Implementation
- *	- Hash function is modulus
- *	- Chaining for duplicates
- *	- Sizes are powers of two
+ *  - Hash function is modulus
+ *  - Chaining for duplicates
+ *  - Sizes are powers of two
  */
 typedef uint32_t sqfs_hash_key;
 typedef void *sqfs_hash_value;
 
 typedef struct sqfs_hash_bucket {
-	struct sqfs_hash_bucket *next;
-	sqfs_hash_key key;
-	char value[1]; /* extended to size */
+  struct sqfs_hash_bucket *next;
+  sqfs_hash_key key;
+  char value[1]; /* extended to size */
 } sqfs_hash_bucket;
 
 typedef struct {
-	size_t value_size;
-	size_t capacity;
-	size_t size;
-	sqfs_hash_bucket **buckets;
+  size_t value_size;
+  size_t capacity;
+  size_t size;
+  sqfs_hash_bucket **buckets;
 } sqfs_hash;
 
 sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial);
