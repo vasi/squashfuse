@@ -35,8 +35,6 @@
    #define ENOATTR ENODATA
 #endif
 
-int sqfs_enoattr(void);
-
 int sqfs_enoattr(void) {
   return ENOATTR;
 }

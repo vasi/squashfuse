@@ -44,3 +44,5 @@
 #elif SQFEATURE == CHANGE_POSIX_C_SOURCE
   #undef _POSIX_C_SOURCE
 #endif
+
+#include "nonstd.h"

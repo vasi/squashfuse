@@ -41,8 +41,6 @@
     #include <sys/sysmacros.h>
   #endif
 
-  dev_t sqfs_makedev(int maj, int min);
-
   dev_t sqfs_makedev(int maj, int min) {
     return makedev(maj, min);
   }

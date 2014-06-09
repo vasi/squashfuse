@@ -82,7 +82,9 @@ brackets, eg: [0.1]
 
 * FreeBSD
   + Versions: FreeBSD 6.0 and later
-  + Tested on: FreeBSD 9.0 / amd64 [0.1]
+  + Tested on:
+    - FreeBSD 10.0 / amd64 [0.2]
+    - FreeBSD 9.0  / amd64 [0.1]
   + Packages: From ports or packages: fusefs-libs lzo2
     - On versions less than 10.0, also fusefs-kmod
   + Configure: ./configure --with-lzo=/usr/local

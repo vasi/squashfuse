@@ -27,10 +27,7 @@
 
 #include <sys/stat.h>
 
-#include "common.h"
 #include "squashfs_fs.h"
-
-sqfs_mode_t sqfs_mode(int inode_type);
 
 /* S_IF* are not standard */
 sqfs_mode_t sqfs_mode(int inode_type) {

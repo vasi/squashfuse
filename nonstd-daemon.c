@@ -28,8 +28,6 @@
 #include <unistd.h>
 #include <fuse_lowlevel.h>
 
-int sqfs_ll_daemonize(int fg);
-
 int sqfs_ll_daemonize(int fg) {
   #if HAVE_DECL_FUSE_DAEMONIZE
     return fuse_daemonize(fg);
