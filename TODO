@@ -53,10 +53,10 @@ Platform support
 			fuse_session_add_chan() crashes
 			High-level crashes too
 		Windows
-			Dokan sample bluescreens, fuse4win sample crashes
-			CBFS? Totally different API, expensive
-			Explorer Namespace Extensions are very hard to write, includes GUI
-      Real filesystem drivers (IFS) are very hard to write
+			Dokan/DokanX/fuse4win: all crash for me
+			CBFS: Totally different API, expensive
+			Explorer Namespace Extensions: hard to write, includes GUI code
+      IFS driver: hard to write (kernel)
 			Pismo File Mount?
 			FUSE-NT?
 	Linux kernel < 2.4.20

@@ -29,15 +29,18 @@ These don't have FUSE:
 
 Details
 -------
+Systems are marked with the last tested version of squashfuse in square
+brackets, eg: [0.1]
+
 * Linux
   + Versions: Kernel 2.4.20 or later, most distros since ~2004
   + Tested on:
-    - Debian / squeeze 6.0              / i386, ppc
-    - Ubuntu / Trusty 14.04             / amd64
-    - Ubuntu / Precise  12.04           / amd64
-    - Ubuntu / Natty  11.10             / amd64
-    - Ubuntu / Lucid  10.04             / amd64
-    - CentOS / 3.9                      / i386      / FUSE 2.5
+    - Debian / squeeze 6.0              / i386, ppc             [0.1]
+    - Ubuntu / Trusty 14.04             / amd64                 [0.1]
+    - Ubuntu / Precise  12.04           / amd64                 [0.1]
+    - Ubuntu / Natty  11.10             / amd64                 [0.1]
+    - Ubuntu / Lucid  10.04             / amd64                 [0.1]
+    - CentOS / 3.9                      / i386      / FUSE 2.5  ]0.1]
   + Requirements: CONFIG_FUSE_FS kernel option
   + Packages:
     - apt-get
@@ -48,11 +51,11 @@ Details
 * Mac OS X
   + Versions: Mac OS X 10.4 and later
   + Tested on:
-    - 10.9 Lion         / x86_64 / OSXFUSE
-    - 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE
-    - 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x
-    - 10.5 Leopard      / ppc    / MacFUSE
-    - 10.4 Tiger        / i386   / MacFUSE
+    - 10.9 Lion         / x86_64 / OSXFUSE                      [0.1]
+    - 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE [0.1]
+    - 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x              [0.1]
+    - 10.5 Leopard      / ppc    / MacFUSE                      [0.1]
+    - 10.4 Tiger        / i386   / MacFUSE                      [0.1]
   + Requirements
     - Command-line developer tools
     - OSXFUSE, fuse4x or MacFUSE: http://osxfuse.github.com/,
@@ -79,13 +82,13 @@ Details
 
 * FreeBSD
   + Versions: FreeBSD 6.0 and later
-  + Tested on: FreeBSD 9.0 / amd64
+  + Tested on: FreeBSD 9.0 / amd64 [0.1]
   + Packages: From ports or packages: fusefs-libs fusefs-kmod lzo2 lz4
   + Notes: FreeBSD FUSE doesn't support extended attributes
 
 * NetBSD
   + Versions: NetBSD 6.0 and later
-  + Tested on: NetBSD 6.0 BETA / i386
+  + Tested on: NetBSD 6.0 BETA / i386 [0.1]
   + Requirements: puffs enabled in kernel (present by default)
   + Packages: From pkgsrc: libfuse libperfuse lzo
   + Configure: ./configure --with-fuse=/usr/pkg --with-lzo=/usr/pkg
@@ -95,7 +98,7 @@ Details
     - perfused crashes mysteriously on some archives
 
 * OpenIndiana
-  + Tested on: OpenIndiana 151a / i386
+  + Tested on: OpenIndiana 151a / i386 [0.1]
   + Requirements: C compiler: gcc or Sun Studio 12.3 work
   + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
   + Installation: Must ensure device is where libfuse expects it:
@@ -105,7 +108,7 @@ Details
     - OpenIndiana FUSE doesn't support extended attributes
 
 * Android
-  + Tested on: Android emulator / 2.3.3 / armel
+  + Tested on: Android emulator / 2.3.3 / armel [0.1]
   + Requirements:
     - CONFIG_FUSE_FS enabled in kernel. Most Android kernels have this
       disabled, so the kernel must be rebuilt.
@@ -119,7 +122,7 @@ Details
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
-  + Tested on: Windows 7 / x64
+  + Tested on: Windows 7 / x64 [0.2]
   + Requirements:
     - A compiler. I've tested with Visual Studio 2013 Express
   + Configure: No need to run ./configure, just use the Visual Studio solution
