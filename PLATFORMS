@@ -89,8 +89,8 @@ brackets, eg: [0.1]
     - On versions less than 10.0, also fusefs-kmod
   + Configure: ./configure --with-lzo=/usr/local
   + Notes:
-    - You may have to load the kernel module with `kldload fuse'
-    - You may have to set `sysctl vfs.usermount=1'
+    - Need to load the kernel module, eg: `kldload fuse'
+    - Need to set `sysctl vfs.usermount=1' for non-root
     - FreeBSD FUSE doesn't support extended attributes
 
 * NetBSD
@@ -103,7 +103,7 @@ brackets, eg: [0.1]
     - For the low_level API, also install perfuse
   + Configure: ./configure --with-fuse=/usr/pkg --with-lzo=/usr/pkg
   + Notes:
-    - Mounting seems to require root
+    - Need to set `sysctl -w vfs.generic.usermount=1' for non-root
     - NetBSD FUSE doesn't support extended attributes
     - perfused crashes mysteriously on some archives
 

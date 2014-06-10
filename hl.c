@@ -304,6 +304,9 @@ int main(int argc, char *argv[]) {
     fuse_opt_add_arg(&args, "-s"); /* single threaded */
   
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
-  fuse_opt_free_args(&args);
+  
+  /* Only free if we actually allocated something */
+  if (!sqfs_threads_available())
+    fuse_opt_free_args(&args);
   return ret;
 }
