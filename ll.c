@@ -438,7 +438,6 @@ int main(int argc, char *argv[]) {
         if (sqfs_ll_daemonize(fg) != -1) {
           if (fuse_set_signal_handlers(se) != -1) {
             fuse_session_add_chan(se, ch.ch);
-            /* FIXME: multithreading */
             if (mt) {
               err = fuse_session_loop_mt(se);
             } else {

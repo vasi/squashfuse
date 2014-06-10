@@ -54,7 +54,7 @@ brackets, eg: [0.1]
     - 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE [0.1]
     - 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x              [0.1]
     - 10.5 Leopard      / ppc    / MacFUSE                      [0.1]
-    - 10.4 Tiger        / i386   / MacFUSE                      [0.1]
+    - 10.4 Tiger        / i386   / MacFUSE                      [0.2]
   + Requirements
     - Command-line developer tools
     - OSXFUSE, fuse4x or MacFUSE: http://osxfuse.github.com/,
@@ -109,11 +109,9 @@ brackets, eg: [0.1]
     - NetBSD FUSE doesn't support extended attributes
 
 * OpenIndiana
-  + Tested on: OpenIndiana 151a / i386 [0.1]
+  + Tested on: OpenIndiana 151a8 / i386 [0.2]
   + Requirements: C compiler: gcc or Sun Studio 12.3 work
   + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
-  + Installation: Must ensure device is where libfuse expects it:
-    ln -s "/devices/pseudo/fuse@0:fuse" /dev/fuse
   + Notes:
     - Mounting requires root
     - OpenIndiana FUSE doesn't support extended attributes

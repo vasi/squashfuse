@@ -64,8 +64,6 @@
   }
 #endif
 
-
-/* TODO: WIN32 implementation of open/close */
 /* TODO: i18n of error messages */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   sqfs_err err;
