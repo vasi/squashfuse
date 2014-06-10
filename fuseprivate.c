@@ -94,6 +94,7 @@ void sqfs_usage(char *progname, bool fuse_usage) {
   fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
   fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
     progname ? progname : PACKAGE_NAME);
+#if FUSE_PARSE_CMDLINE
   if (fuse_usage) {
     struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
     fuse_opt_add_arg(&args, ""); /* progname */
@@ -101,6 +102,7 @@ void sqfs_usage(char *progname, bool fuse_usage) {
     fprintf(stderr, "\n");
     fuse_parse_cmdline(&args, NULL, NULL, NULL);
   }
+#endif
   exit(-2);
 }
 

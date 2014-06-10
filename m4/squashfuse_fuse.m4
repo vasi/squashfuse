@@ -271,6 +271,30 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 	SQ_RESTORE_FLAGS
 ])
 
+# SQ_FUSE_API_PARSE_CMDLINE
+#
+# Check if fuse_parse_cmdline() is available
+AC_DEFUN([SQ_FUSE_API_PARSE_CMDLINE],[
+	SQ_SAVE_FLAGS
+	LIBS="$LIBS $FUSE_LIBS"
+	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
+	
+	AC_CACHE_CHECK([for fuse_parse_cmdline],
+		[sq_cv_decl_fuse_parse_cmdline],[
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse.h>],[
+				fuse_parse_cmdline(NULL, NULL, NULL, NULL);
+			])],
+			[sq_cv_decl_fuse_parse_cmdline=yes],
+			[sq_cv_decl_fuse_parse_cmdline=no])
+	])
+	AS_IF([test "x$sq_cv_decl_fuse_parse_cmdline" = xyes],[
+		AC_DEFINE([FUSE_PARSE_CMDLINE],1,
+			[Define if fuse_parse_cmdline() is available])
+	])
+	
+	SQ_RESTORE_FLAGS
+])
+
 # SQ_FUSE_API_XATTR_POSITION
 #
 # Check for OS X's special flag to getxattr.
