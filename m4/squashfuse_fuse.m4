@@ -112,7 +112,9 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 #
 # Find the FUSE library
 AC_DEFUN([SQ_FIND_FUSE],[
-	# FUSE headers usually demand _FILE_OFFSET_BITS=64
+  AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
+
+  # FUSE headers usually demand _FILE_OFFSET_BITS=64
 	sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
 	sq_fuse_libs="fuse"
 	AS_CASE([$target_os],
@@ -216,7 +218,7 @@ AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
 		AS_IF([test "x$sq_fuse_lowlevel_found" = xno],[
 			sq_err="The low-level FUSE API is not available"
 			AS_IF([test "x$enable_low_level" = xyes],[AC_MSG_FAILURE($sq_err)],
-				[AC_MSG_WARN($sq_err)])
+				[sq_warn_ll=$sq_err])
 		])
 		enable_low_level="$sq_fuse_lowlevel_found"
 	])
@@ -227,7 +229,7 @@ AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
 # Handle the results of FUSE checks
 AC_DEFUN([SQ_FUSE_RESULT],[
 	AS_IF([test "x$enable_high_level$enable_low_level" = xnono],[
-		AC_MSG_WARN([Without any FUSE support, you will not be able to mount squashfs archives])
+    sq_warn_fuse="Without any FUSE support, you will not be able to mount squashfs archives"
 	])
 	AM_CONDITIONAL([SQ_WANT_HIGHLEVEL], [test "x$enable_high_level" = xyes])
 	AM_CONDITIONAL([SQ_WANT_LOWLEVEL], [test "x$enable_low_level" = xyes])

@@ -15,12 +15,10 @@ AC_PROG_CPP
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
 SQ_PROG_CPP_POSIX_2001
-# Run tests in POSIX mode
-CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE=200112L"
 SQ_PROG_CC_WALL
 
-AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
-
+# Run tests in POSIX mode
+CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE=200112L"
 
 # Non-POSIX declarations
 SQ_CHECK_DECL_MAKEDEV
@@ -46,27 +44,37 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 ])
 SQ_FUSE_RESULT
 
-# Misc
+# Multithreading
 SQ_THREADS
+
+# Make
 SQ_CHECK_PROG_MAKE_EXPORT
+
+# Types
 AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
 		[Define if <linux/types.h> defines the type __le16])
 ],,[#include <linux/types.h>])
+AC_CHECK_SIZEOF([off_t])
+AS_IF([test "$ac_cv_sizeof_off_t" -le 4],[
+  sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
+])
 
-# Other options
+# Demo
 AC_ARG_ENABLE([demo],
 	AS_HELP_STRING([--disable-demo], [disable library demo]),,
 	[enable_demo=yes])
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
+# Make sure we have something to do
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
-
+# Output
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
+# Print some helpful details
 AS_ECHO()
 AS_ECHO(["Compression support ....... :$sq_decompressors"])
 AS_ECHO(["Threading ................. : $enable_threads"])
@@ -74,3 +82,8 @@ AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
 AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
 AS_ECHO(["Demo program .............. : $enable_demo"])
 AS_ECHO()
+
+# Print warnings
+AS_IF([test "x$sq_warn_ll" = x],,AC_MSG_WARN([$sq_warn_ll]))
+AS_IF([test "x$sq_warn_fuse" = x],,AC_MSG_WARN([$sq_warn_fuse]))
+AS_IF([test "x$sq_warn_offt" = x],,AC_MSG_WARN([$sq_warn_offt]))
