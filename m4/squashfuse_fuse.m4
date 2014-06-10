@@ -115,10 +115,19 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	# FUSE headers usually demand _FILE_OFFSET_BITS=64
 	sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
 	sq_fuse_libs="fuse"
-	AS_CASE([$target_os],[darwin*],[
-		sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
-		sq_fuse_libs="osxfuse fuse4x fuse_ino64 $sq_fuse_libs"
-	])
+	AS_CASE([$target_os],
+    [darwin*],[
+      # Some version of MacFUSE require some define's before inclusion
+  		sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
+  		sq_fuse_libs="osxfuse fuse4x fuse_ino64 $sq_fuse_libs"
+	  ],
+    [netbsd*],[
+      # NetBSD 'refuse' requires _NETBSD_SOURCE
+      sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
+      sq_fuse_libs="refuse $sq_fuse_libs"
+    ]
+  )
+  
 	AC_ARG_WITH(fuse-soname,
 		AS_HELP_STRING([--with-fuse-soname=SONAME], [FUSE library name]),
 		[sq_fuse_libs="$withval"])

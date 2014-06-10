@@ -26,10 +26,6 @@
 #define SQFS_COMMON_H
 
 #include "config.h"
-#if !defined(_POSIX_C_SOURCE) && !defined(SQFEATURE)
-  #define _POSIX_C_SOURCE 200112L
-#endif
-
 
 #include <stdbool.h>
 #include <stdint.h>

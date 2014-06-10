@@ -29,6 +29,7 @@
 #define CHANGE_POSIX_C_SOURCE 5
 #define CHANGE_NETBSD_SOURCE 6
 
+#undef _POSIX_C_SOURCE
 #include "config.h"
 
 #if SQFEATURE == CHANGE_XOPEN_SOURCE
