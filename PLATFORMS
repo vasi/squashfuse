@@ -90,7 +90,7 @@ brackets, eg: [0.1]
   + Configure: ./configure --with-lzo=/usr/local
   + Notes:
     - Need to load the kernel module, eg: `kldload fuse'
-    - Need to set `sysctl vfs.usermount=1' for non-root
+    - Set `sysctl vfs.usermount=1' for non-root
     - FreeBSD FUSE doesn't support extended attributes
 
 * NetBSD
@@ -100,12 +100,14 @@ brackets, eg: [0.1]
     - NetBSD 6.0 BETA / i386 [0.1]
   + Requirements: puffs enabled in kernel (present by default)
   + Packages: From pkgsrc: lzo
-    - For the low_level API, also install perfuse
+    - For the low-level API, also install perfuse fuse on 6.1
+      (libperfuse libfuse on 6.0)
   + Configure: ./configure --with-fuse=/usr/pkg --with-lzo=/usr/pkg
   + Notes:
-    - Need to set `sysctl -w vfs.generic.usermount=1' for non-root
+    - For low-level, set `sysctl -w kern.sbmax=$n', where n is at least 540672
+    - Low-level is slightly buggy, prints warning messages
+    - Set `sysctl -w vfs.generic.usermount=1' for non-root
     - NetBSD FUSE doesn't support extended attributes
-    - perfused crashes mysteriously on some archives
 
 * OpenIndiana
   + Tested on: OpenIndiana 151a / i386 [0.1]

@@ -124,7 +124,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
     [netbsd*],[
       # NetBSD 'refuse' requires _NETBSD_SOURCE
       sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
-      sq_fuse_libs="refuse $sq_fuse_libs"
+      sq_fuse_libs="$sq_fuse_libs refuse"
     ]
   )
   
