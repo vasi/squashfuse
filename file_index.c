@@ -77,7 +77,6 @@ sqfs_err sqfs_blockidx_init(sqfs_cache *cache) {
 /* Fill idx with all the block-index entries for this file */
 static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
     sqfs_blockidx *idx) {
-  sqfs_err err;
   sqfs_blockidx_entry *blockidx;
   sqfs_blocklist bl;
   
@@ -85,6 +84,7 @@ static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
   size_t md_size; /* Amount of metadata necessary to hold the blocksizes */
   size_t count;   /* Number of block-index entries necessary */
   
+  sqfs_err err = SQFS_OK;
   size_t i = 0;
   bool first = true;
   
