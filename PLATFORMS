@@ -53,7 +53,7 @@ brackets, eg: [0.1]
     - 10.9 Mavericks    / x86_64 / OSXFUSE                      [0.2]
     - 10.7 Lion         / x86_64 / Tuxera FUSE, fuse4x, OSXFUSE [0.1]
     - 10.6 Snow Leopard / x86_64 / MacFUSE, fuse4x              [0.1]
-    - 10.5 Leopard      / ppc    / MacFUSE                      [0.1]
+    - 10.5 Leopard      / ppc    / MacFUSE                      [0.2]
     - 10.4 Tiger        / i386   / MacFUSE                      [0.2]
   + Requirements
     - Command-line developer tools
@@ -140,6 +140,7 @@ brackets, eg: [0.1]
     - Disable pkg-config: `export PKG_CONFIG_LIBDIR='
     - Configure for cross-compiling, with --host=arm-linux-androideabi
   + Notes:
+    - On Android, squashfuse only supports files < 2GB in size
     - Mounting requires root
     - Use the adb shell to run squashfuse
     - Usually /data/local/tmp is a location with exec privileges
