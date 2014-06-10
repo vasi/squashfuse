@@ -117,17 +117,32 @@ brackets, eg: [0.1]
     - OpenIndiana FUSE doesn't support extended attributes
 
 * Android
-  + Tested on: Android emulator / 2.3.3 / armel [0.1]
+  + Tested on:
+    - Samsung Galaxy S4 / 4.4.2 / armel [0.2]
+    - Android emulator  / 4.4.2 / x86   [0.2]
+    - Android emulator  / 2.3.3 / armel [0.1]
   + Requirements:
-    - CONFIG_FUSE_FS enabled in kernel. Most Android kernels have this
-      disabled, so the kernel must be rebuilt.
+    - Android SDK and NDK
+    - CONFIG_FUSE_FS enabled in kernel. Recent Android kernels (> 4.2) usually
+      have this enabled. Otherwise you'll have to compile your own kernel.
     - fuse-android: https://github.com/seth-hg/fuse-android
   + Configure:
-    - Cross-compile from Linux by passing --host flag to configure
-    - Use CPPFLAGS/LDFLAGS/LIBS that fuse-android used for fusexmp
-    - May need `-nodefaultlibs' in LDFLAGS, since configure likes linking
-      and compiling together in a single gcc invokation, and
-      Android's build system doesn't.
+    - Assuming $NDK_ROOT points to your Android NDK directory, and
+      $FUSE_ANDROID points to your fuse-android directory
+    - Create a standalone toolchain:
+      `$NDK_ROOT/build/tools/make-standalone-toolchain.sh \
+        --install-dir=toolchain --arch=arm'
+    - Put it in the path: `export PATH=$PWD/toolchain/bin:$PATH'
+    - Copy in android-fuse library and headers:
+      `cp $FUSE_ANDROID/obj/local/armeabi-v7a/libfuse.a \
+        toolchain/sysroot/usr/lib/
+       cp -R $FUSE_ANDROID/jni/include/* toolchain/sysroot/usr/include/'
+    - Disable pkg-config: `export PKG_CONFIG_LIBDIR='
+    - Configure for cross-compiling, with --host=arm-linux-androideabi
+  + Notes:
+    - Mounting requires root
+    - Use the adb shell to run squashfuse
+    - Usually /data/local/tmp is a location with exec privileges
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
