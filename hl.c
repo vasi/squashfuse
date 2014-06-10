@@ -60,7 +60,7 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 
 
 static void sqfs_hl_op_destroy(void *user_data) {
-  sqfs_hl *hl = (sqfs_hl*)user_data;
+  sqfs_hl *hl = fuse_get_context()->private_data;
   sqfs_destroy(&hl->fs);
   free(hl);
 }
