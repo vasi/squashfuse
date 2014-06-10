@@ -28,10 +28,12 @@
 #include "nonstd.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <float.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static const double SQFS_TIMEOUT = DBL_MAX;
 

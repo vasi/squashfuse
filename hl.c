@@ -28,6 +28,7 @@
 #include "nonstd.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,11 @@ struct sqfs_hl {
   sqfs fs;
   sqfs_inode root;
 };
+
+#ifndef HAVE_FUSE_INIT_USER_DATA
+static sqfs_hl *gHL;
+#endif
+
 
 static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
     const char *path) {
@@ -65,8 +71,14 @@ static void sqfs_hl_op_destroy(void *user_data) {
   free(hl);
 }
 
-static void *sqfs_hl_op_init(struct fuse_conn_info *SQFS_UNUSED(conn)) {
+static void *sqfs_hl_op_init(
+#ifdef HAVE_FUSE_INIT_USER_DATA
+    struct fuse_conn_info *SQFS_UNUSED(conn)) {
   return fuse_get_context()->private_data;
+#else
+    ) {
+  return gHL;
+#endif
 }
 
 static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
@@ -303,7 +315,12 @@ int main(int argc, char *argv[]) {
   if (!sqfs_threads_available())
     fuse_opt_add_arg(&args, "-s"); /* single threaded */
   
+#ifdef HAVE_FUSE_INIT_USER_DATA
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+#else
+  gHL = hl;
+  ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops);
+#endif
   
   /* Only free if we actually allocated something */
   if (!sqfs_threads_available())

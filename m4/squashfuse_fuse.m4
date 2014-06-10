@@ -243,6 +243,20 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 	LIBS="$LIBS $FUSE_LIBS"
 	CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
+	AC_CACHE_CHECK([for user_data in high-level FUSE init],
+		[sq_cv_decl_fuse_user_data],[
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fuse.h>],[
+				struct fuse_operations ops;
+				ops.init(NULL);
+			])],
+			[sq_cv_decl_fuse_user_data=yes],
+			[sq_cv_decl_fuse_user_data=no])
+	])
+	AS_IF([test "x$sq_cv_decl_fuse_user_data" = xyes],[
+		AC_DEFINE([HAVE_FUSE_INIT_USER_DATA],1,
+				[Define if op.init() takes a user_data parameter])
+	])
+
 	AS_IF([test "x$enable_low_level" = xyes],[
 		AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
 			[#include <fuse_lowlevel.h>])
