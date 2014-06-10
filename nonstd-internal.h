@@ -29,6 +29,11 @@
 #define CHANGE_POSIX_C_SOURCE 5
 #define CHANGE_NETBSD_SOURCE 6
 
+#undef _XOPEN_SOURCE
+#undef _NETBSD_SOURCE
+#undef _DARWIN_C_SOURCE
+#undef _BSD_SOURCE
+#undef _GNU_SOURCE
 #undef _POSIX_C_SOURCE
 #include "config.h"
 
