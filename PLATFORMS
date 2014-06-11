@@ -38,14 +38,16 @@ brackets, eg: [0.1]
     - Ubuntu / Trusty  14.04             / i386, amd64           [0.2]
     - Ubuntu / Precise 12.04             / amd64                 [0.1]
     - Ubuntu / Lucid   10.04             / amd64                 [0.1]
-    - Debian / squeeze  6.0              / i386, ppc             [0.1]
+    - Debian / squeeze  6.0              / i386, ppc, armel      [0.2]
     - CentOS / 3.9                       / i386      / FUSE 2.5  [0.2]
   + Requirements: CONFIG_FUSE_FS kernel option
   + Packages:
     - apt-get
-      Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev
+      - Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev \
         liblzma-dev liblz4-dev libattr1-dev pkg-config
-      Runtime: libfuse2 zlib1g liblzo2-2 liblzma2
+      - Runtime: libfuse2 zlib1g liblzo2-2 liblzma2 liblz4-1
+      - It's helpful to have fuse-utils as well
+      - Older distros may not have liblz4, just leave it out.
 
 * Mac OS X
   + Versions: Mac OS X 10.4 and later
