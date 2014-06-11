@@ -39,6 +39,14 @@ Performance
 	Caching and threading strategy delegation?
 		eg: Small caches for low-memory; huge caches for complete extraction 
 	Profile for optimization opportunities
+  32-bit inode memory bug workaround
+    Currently we identify inodes with a 32-bit block location + 16-bit offset
+    Blocks are only 8192 bytes (2^13) and inodes are at least 16 (2^4) bytes
+      we can uniquely identify an offset with just 9 bytes
+    That leaves us with 23 bytes as the block index, which should work for all
+      but the largest archives
+    We can reserve room for all the inodes, in case index overflows 23 bits
+    Must we read all MD blocks at start? Use B+tree?
 
 Platform support
 	Known bad
@@ -53,8 +61,8 @@ Platform support
 			Pismo File Mount?
 			FUSE-NT?
 	Linux kernel < 2.4.20
-		Requires fuse < 2.4.0. Maybe high-level?
-		LUFS? AVFS?
+		Requires lower versions of fuse, eg: 2.1
+    Write a separate driver?
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
 		Minix 3.2 (puffs/refuse): High-level won't work
