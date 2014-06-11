@@ -97,3 +97,22 @@ AC_DEFUN([SQ_PKG],[
 		$3
 	],[$4])
 ])
+
+# SQ_SPLIT(OUTPUT, LIST, SEP, PREF, SUF, NEWSEP)
+#
+# Split a string on SEP, and reform it with the given prefix, suffix and
+# new separator into the output variable.
+AC_DEFUN([SQ_SPLIT],[
+  sq_out=
+  sq_first=yes
+  sq_ifs="$IFS"
+  IFS="$3"
+  for sq_i in $2
+  do
+    AS_IF([test "x$sq_first" = x],[sq_out="$sq_out$6"])
+    sq_first=
+    sq_out="$sq_out$4$sq_i$5"
+  done
+  IFS="$sq_ifs"
+  $1=$sq_out
+])

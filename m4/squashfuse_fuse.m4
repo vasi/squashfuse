@@ -31,10 +31,12 @@ AC_DEFUN([SQ_TRY_FUSE],[
 		for sq_lib in '' $1
 		do
 			SQ_SAVE_FLAGS
-			AS_IF([test "x$sq_lib" = x],,[LIBS="$LIBS -l$sq_lib"])
+      SQ_SPLIT(sq_lib_add,$sq_lib,[:],[-l],,[ ])
+
+			AS_IF([test "x$sq_lib" = x],,[LIBS="$LIBS $sq_lib_add"])
 			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_get_context])],[
 				AS_IF([test "x$sq_lib" = x],[sq_lib_out="already present"],
-					[sq_lib_out="-l$sq_lib"])
+					[sq_lib_out="$sq_lib_add"])
 				AS_VAR_SET([sq_cv_lib],[$sq_lib_out])
 			])
 			SQ_RESTORE_FLAGS
@@ -116,7 +118,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 
   # FUSE headers usually demand _FILE_OFFSET_BITS=64
 	sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
-	sq_fuse_libs="fuse"
+	sq_fuse_libs="fuse refuse:puffs"
 	AS_CASE([$target_os],
     [darwin*],[
       # Some version of MacFUSE require some define's before inclusion
@@ -126,7 +128,6 @@ AC_DEFUN([SQ_FIND_FUSE],[
     [netbsd*],[
       # NetBSD 'refuse' requires _NETBSD_SOURCE
       sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
-      sq_fuse_libs="$sq_fuse_libs refuse"
     ]
   )
   
