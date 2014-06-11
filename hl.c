@@ -157,7 +157,7 @@ static int sqfs_hl_op_readdir(const char *SQFS_UNUSED(path), void *buf,
   sqfs_dentry_init(&entry, namebuf);
   while (sqfs_dir_next(fs, &dir, &entry, &err)) {
     #if !READDIR_BROKEN
-      sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
+      doff = sqfs_dentry_next_offset(&entry);
       st.st_mode = sqfs_dentry_mode(&entry);
     #endif
     if (filler(buf, sqfs_dentry_name(&entry), stp, doff))
