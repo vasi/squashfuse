@@ -162,6 +162,10 @@ brackets, eg: [0.1]
   + Only squashfuse and squashfuse_ls, there's no low-level API
   + Versions: OpenBSD 5.4 and later
   + Tested on: OpenBSD 5.5 / amd64 [0.2]
+  + Packages: lzo2 lz4 xz
+  + Configure: ./configure --with-lzo=/usr/local --with-lz4=/usr/local
   + Notes:
     - Mounting requires root
     - OpenBSD FUSE doesn't support extended attributes
+    - Has special snowflake breakage in readdir(), that squashfuse must work
+      around

@@ -122,6 +122,14 @@ static int sqfs_hl_op_releasedir(const char *SQFS_UNUSED(path),
   return 0;
 }
 
+/* Some systems have a very cranky readdir filler. For them, don't use offsets
+   and don't pass a struct stat. */
+#if defined(__OpenBSD__)
+  #define READDIR_BROKEN 1
+#else
+  #define READDIR_BROKEN 0
+#endif
+
 static int sqfs_hl_op_readdir(const char *SQFS_UNUSED(path), void *buf,
     fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
   sqfs_err err;
@@ -130,20 +138,29 @@ static int sqfs_hl_op_readdir(const char *SQFS_UNUSED(path), void *buf,
   sqfs_dir dir;
   sqfs_name namebuf;
   sqfs_dir_entry entry;
-  struct stat st;
+  struct stat st, *stp = &st;
+  sqfs_off_t doff;
+
+#if READDIR_BROKEN
+  stp = NULL;
+  offset = 0;
+#endif
   
   sqfs_hl_lookup(&fs, NULL, NULL);
   inode = (sqfs_inode*)(intptr_t)fi->fh;
-    
+
   if (sqfs_dir_open(fs, inode, &dir, offset))
     return -EINVAL;
   
   memset(&st, 0, sizeof(st));
+  doff = 0;
   sqfs_dentry_init(&entry, namebuf);
   while (sqfs_dir_next(fs, &dir, &entry, &err)) {
-    sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
-    st.st_mode = sqfs_dentry_mode(&entry);
-    if (filler(buf, sqfs_dentry_name(&entry), &st, doff))
+    #if !READDIR_BROKEN
+      sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
+      st.st_mode = sqfs_dentry_mode(&entry);
+    #endif
+    if (filler(buf, sqfs_dentry_name(&entry), stp, doff))
       return 0;
   }
   if (err)
