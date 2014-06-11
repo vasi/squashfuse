@@ -10,6 +10,7 @@ The following operating systems are supported:
 
 These are not supported by squashfuse_ll, just squashfuse:
 * OpenBSD
+* DragonflyBSD
 
 These are only supported by the squashfuse_ls demo:
 * Windows
@@ -23,7 +24,6 @@ These don't seem to work yet:
 
 These don't have FUSE:
 * iOS
-* DragonFly BSD - NetBSD's `puffs' is in HEAD
 * Commercial UNIX: AIX, HP-UX, etc
 
 
@@ -90,7 +90,7 @@ brackets, eg: [0.1]
     - On versions less than 10.0, also fusefs-kmod
   + Configure: ./configure --with-lzo=/usr/local
   + Notes:
-    - Need to load the kernel module, eg: `kldload fuse'
+    - Need to load the kernel module: `kldload fuse'
     - Set `sysctl vfs.usermount=1' for non-root
     - FreeBSD FUSE doesn't support extended attributes
 
@@ -171,3 +171,14 @@ brackets, eg: [0.1]
     - OpenBSD FUSE doesn't support extended attributes
     - Has special snowflake breakage in readdir(), that squashfuse must work
       around
+
+* DragonflyBSD
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: DragonflyBSD 3.2 and later
+  + Tested on: DragonflyBSD 3.8 / amd64 [0.2]
+  + Packages: lzo2
+  + Configure: ./configure --with-lzo=/usr/local
+  + Notes:
+    - Need to load kernel module: `kldload puffs`
+    - Mounting requires root
+    - DragonflyBSD FUSE doesn't support extended attributes
