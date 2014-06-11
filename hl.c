@@ -276,12 +276,13 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
 }
 
 int main(int argc, char *argv[]) {
+  struct fuse_operations sqfs_hl_ops;
   struct fuse_args args;
   sqfs_opts opts;
   sqfs_hl *hl;
   int ret;
+  struct fuse_opt specs[] = { FUSE_OPT_END };
   
-  struct fuse_operations sqfs_hl_ops;
   memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
   sqfs_hl_ops.init        = sqfs_hl_op_init;
   sqfs_hl_ops.destroy     = sqfs_hl_op_destroy;
@@ -303,7 +304,7 @@ int main(int argc, char *argv[]) {
   opts.progname = argv[0];
   opts.image = NULL;
   opts.mountpoint = 0;
-  if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
+  if (fuse_opt_parse(&args, &opts, specs, sqfs_opt_proc) == -1)
     sqfs_usage(argv[0], true);
   if (!opts.image)
     sqfs_usage(argv[0], true);

@@ -9,6 +9,7 @@ The following operating systems are supported:
 * Android
 
 These are not supported by squashfuse_ll, just squashfuse:
+* OpenBSD
 
 These are only supported by the squashfuse_ls demo:
 * Windows
@@ -22,7 +23,6 @@ These don't seem to work yet:
 
 These don't have FUSE:
 * iOS
-* OpenBSD
 * DragonFly BSD - NetBSD's `puffs' is in HEAD
 * Commercial UNIX: AIX, HP-UX, etc
 
@@ -109,6 +109,7 @@ brackets, eg: [0.1]
     - NetBSD FUSE doesn't support extended attributes
 
 * OpenIndiana
+  + Versions: all
   + Tested on: OpenIndiana 151a8 / i386 [0.2]
   + Requirements: C compiler: gcc or Sun Studio 12.3 work
   + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
@@ -117,6 +118,7 @@ brackets, eg: [0.1]
     - OpenIndiana FUSE doesn't support extended attributes
 
 * Android
+  + Versions: all
   + Tested on:
     - Samsung Galaxy S4 / 4.4.2 / armel [0.2]
     - Android emulator  / 4.4.2 / x86   [0.2]
@@ -147,6 +149,7 @@ brackets, eg: [0.1]
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
+  + Versions: unknown
   + Tested on: Windows 7 / x64 [0.2]
   + Requirements:
     - A compiler. I've tested with Visual Studio 2013 Express
@@ -154,3 +157,11 @@ brackets, eg: [0.1]
     file.
   + Notes: For Unicode output, you may need to setup a different console font,
     and run `chcp 65001' to get the UTF-8 codepage.
+
+* OpenBSD
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: OpenBSD 5.4 and later
+  + Tested on: OpenBSD 5.5 / amd64 [0.2]
+  + Notes:
+    - Mounting requires root
+    - OpenBSD FUSE doesn't support extended attributes

@@ -74,7 +74,8 @@ if SQ_WANT_DEMO
 # Sample program squashfuse_ls
 noinst_PROGRAMS += squashfuse_ls
 squashfuse_ls_SOURCES = ls.c
-squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS)
+squashfuse_ls_CPPFLAGS = $(PTHREAD_CFLAGS)
+squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) $(PTHREAD_CFLAGS)
 endif
 
 # Handle generation of swap include files
