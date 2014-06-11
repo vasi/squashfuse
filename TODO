@@ -75,6 +75,7 @@ Programs
   Cross-language: Try to embed into eg: Java or Ruby
   Implement unsquashfs
   Plugin for File Roller, The Unarchiver, etc
+  PUFFS API
 
 Old versions
 	v3
