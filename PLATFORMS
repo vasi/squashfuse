@@ -184,14 +184,17 @@ brackets, eg: [0.1]
 * Minix
   + Only squashfuse and squashfuse_ls, there's no low-level API
   + Versions: Minix 3.2.1 and later
-  + Tested on: Minix 3.2.1 [0.2]
+  + Tested on: Minix 3.2.1 [0.2] NOT WORKING
   + Packages:
+  + Configure: ./configure --with-fuse-ldflags='-Wl,-wrap,main -lminixfs -lsys -lminlib -ltimers -lcompat_minix'
   + Notes
-    - root
-    - xattr
-    - thread
-    - off_t
-    --with-fuse-ldflags='-Wl,-wrap,main -lminixfs -lsys -lminlib -ltimers -lcompat_minix'
+    - On Minix, squashfuse only supports files < 2GB in size
+    - On Minix, squashfuse does not support threads
+    - root?
+    - xattr?
+    - Name as mount.squashfuse...
+    - Add unit in system.conf.d...
+    ???
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
