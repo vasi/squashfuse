@@ -5,7 +5,7 @@ The following operating systems are supported:
 * Mac OS X
 * FreeBSD
 * NetBSD
-* OpenIndiana
+* illumos
 * Android
 
 These are not supported by squashfuse_ll, just squashfuse:
@@ -34,6 +34,7 @@ brackets, eg: [0.1]
 
 * Linux
   + Versions: Kernel 2.4.20 or later, most distros since ~2004
+     - See below for Android
   + Tested on:
     - Ubuntu / Trusty  14.04             / i386, amd64           [0.2]
     - Ubuntu / Precise 12.04             / amd64                 [0.1]
@@ -88,10 +89,14 @@ brackets, eg: [0.1]
 * FreeBSD
   + Versions: FreeBSD 6.0 and later
   + Tested on:
-    - FreeBSD 10.0 / amd64 [0.2]
-    - FreeBSD 9.0  / amd64 [0.1]
-  + Packages: From ports or packages: fusefs-libs lzo2
-    - On versions less than 10.0, also fusefs-kmod
+    - FreeBSD 10.0 / amd64           [0.2]
+    - FreeBSD 9.0  / amd64           [0.1]
+    - Debian kFreeBSD wheezy / amd64 [0.2]
+  + Packages
+    - Ports or packages: fusefs-libs lzo2
+      - On versions less than 10.0, also fusefs-kmod
+    - apt-get: Same packages as Debian Linux
+      - Also need kfreebsd-headers-9 fuse4bsd fuse4bsd-dkms
   + Configure: ./configure --with-lzo=/usr/local
   + Notes:
     - Need to load the kernel module: `kldload fuse'
@@ -114,14 +119,14 @@ brackets, eg: [0.1]
     - Set `sysctl -w vfs.generic.usermount=1' for non-root
     - NetBSD FUSE doesn't support extended attributes
 
-* OpenIndiana
+* illumos
   + Versions: all
   + Tested on: OpenIndiana 151a8 / i386 [0.2]
   + Requirements: C compiler: gcc or Sun Studio 12.3 work
   + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
   + Notes:
     - Mounting requires root
-    - OpenIndiana FUSE doesn't support extended attributes
+    - illumos FUSE doesn't support extended attributes
 
 * Android
   + Versions: all
