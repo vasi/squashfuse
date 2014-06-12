@@ -158,17 +158,6 @@ brackets, eg: [0.1]
     - Use the adb shell to run squashfuse
     - Usually /data/local/tmp is a location with exec privileges
 
-* Windows
-  + Only squashfuse_ls, there's no good FUSE on Windows
-  + Versions: unknown
-  + Tested on: Windows 7 / x64 [0.2]
-  + Requirements:
-    - A compiler. I've tested with Visual Studio 2013 Express
-  + Configure: No need to run ./configure, just use the Visual Studio solution
-    file.
-  + Notes: For Unicode output, you may need to setup a different console font,
-    and run `chcp 65001' to get the UTF-8 codepage.
-
 * OpenBSD
   + Only squashfuse and squashfuse_ls, there's no low-level API
   + Versions: OpenBSD 5.4 and later
@@ -191,3 +180,14 @@ brackets, eg: [0.1]
     - Need to load kernel module: `kldload puffs`
     - Mounting requires root
     - DragonflyBSD FUSE doesn't support extended attributes
+
+* Windows
+  + Only squashfuse_ls, there's no good FUSE on Windows
+  + Versions: unknown
+  + Tested on: Windows 7 / x64 [0.2]
+  + Requirements:
+    - A compiler. I've tested with Visual Studio 2013 Express
+  + Configure: No need to run ./configure, just use the Visual Studio solution
+    file.
+  + Notes: For Unicode output, you may need to setup a different console font,
+    and run `chcp 65001' to get the UTF-8 codepage.
