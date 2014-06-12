@@ -181,6 +181,10 @@ brackets, eg: [0.1]
     - Mounting requires root
     - DragonflyBSD FUSE doesn't support extended attributes
 
+* Minix
+  + Versions: Minix 3.2.1 and later
+link to puffs???
+
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
   + Versions: unknown
