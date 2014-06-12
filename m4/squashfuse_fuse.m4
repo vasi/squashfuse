@@ -21,10 +21,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# SQ_TRY_FUSE(LIBS, [IF-FOUND], [IF-NOT-FOUND])
+# SQ_TRY_FUSE_LIBS(LIBGROUPS, LDFLAGS, [IF-FOUND], [IF-NOT-FOUND])
 #
-# Check if FUSE low-level compiles and links correctly.
-AC_DEFUN([SQ_TRY_FUSE],[
+# Check if any of the space-separated library groups can successfully link
+# a FUSE driver. A library group is a colon-separated list of libraries.
+# On success, set sq_fuse_ok=yes and add the required linker flags to $LIBS.
+AC_DEFUN([SQ_TRY_FUSE_LIBS],[
 	sq_fuse_ok=yes
 	AS_VAR_PUSHDEF([sq_cv_lib],[sq_cv_lib_fuse_""$1""_""$LIBS])
 	AC_CACHE_CHECK([for FUSE library],[sq_cv_lib],[
@@ -32,8 +34,8 @@ AC_DEFUN([SQ_TRY_FUSE],[
 		do
 			SQ_SAVE_FLAGS
       SQ_SPLIT(sq_lib_add,$sq_lib,[:],[-l],,[ ])
-
-			AS_IF([test "x$sq_lib" = x],,[LIBS="$LIBS $sq_lib_add"])
+      AS_IF([test "x$2" = x],,[sq_lib_add="$sq_lib_add $2"])
+			AS_IF([test "x$sq_lib_add" = x],,[LIBS="$LIBS $sq_lib_add"])
 			AC_LINK_IFELSE([AC_LANG_CALL(,[fuse_get_context])],[
 				AS_IF([test "x$sq_lib" = x],[sq_lib_out="already present"],
 					[sq_lib_out="$sq_lib_add"])
@@ -61,19 +63,19 @@ AC_DEFUN([SQ_TRY_FUSE],[
 		AS_VAR_POPDEF([sq_cv_hdr])
 	])
 	
-	AS_IF([test "x$sq_fuse_ok" = "xno"],[$3],[
+	AS_IF([test "x$sq_fuse_ok" = "xno"],[$4],[
 		AS_VAR_COPY([sq_lib_res],[sq_cv_lib])
 		AS_IF([test "x$sq_lib_res" = "xalready present"],,
 			[LIBS="$LIBS $sq_lib_res"])
-		$2
+		$3
 	])
 	AS_VAR_POPDEF([sq_cv_lib])
 ])
 
-# SQ_TRY_FUSE_DIRS(NAME, INCDIR, LIBDIR, CPPFLAGS, LIBS,
-#	[IF-FOUND], [IF-NOT-FOUND])
+# SQ_TRY_FUSE_DIRS(NAME, INCDIR, LIBDIR, LIBGROUPS, [IF-FOUND], [IF-NOT-FOUND])
 #
-# Check if FUSE is in any of the given directories
+# Check if the FUSE headers and libraries are in the given directories.
+# Set sq_fuse_ok=yes on success, and set FUSE_CPPFLAGS and FUSE_LIBS.
 AC_DEFUN([SQ_TRY_FUSE_DIRS],[
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
 		AS_IF([test "x$1" = x],,[AC_MSG_NOTICE([Checking for FUSE in $1])])
@@ -81,10 +83,11 @@ AC_DEFUN([SQ_TRY_FUSE_DIRS],[
 		SQ_SAVE_FLAGS
 		AS_IF([test "x$2" = x],,[CPPFLAGS="$CPPFLAGS -I$2"])
 		AS_IF([test "x$3" = x],,[LIBS="$LIBS -L$3"])
-		CPPFLAGS="$CPPFLAGS $4"
-		SQ_TRY_FUSE($5,[sq_fuse_found=yes],[sq_fuse_found=])
+		CPPFLAGS="$CPPFLAGS $sq_fuse_cppflags"
+		SQ_TRY_FUSE_LIBS($4,[$sq_fuse_ldflags],[sq_fuse_found=yes],
+      [sq_fuse_found=])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
-		AS_IF([test "x$sq_fuse_found" = xyes],$6,$7)
+		AS_IF([test "x$sq_fuse_found" = xyes],$5,$6)
 	])
 ])
 
@@ -95,14 +98,12 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
 	AS_CASE([$target_os],[darwin*],[
 		SQ_TRY_FUSE_DIRS([OSXFUSE directories],
 			[/usr/local/include/osxfuse/fuse],[/usr/local/lib],
-			[$sq_fuse_cppflags],[osxfuse $sq_fuse_libs])
+			[osxfuse $sq_fuse_libs])
 	])
-	SQ_TRY_FUSE_DIRS([default directories],,,
-		[$sq_fuse_cppflags],[$sq_fuse_libs])
-	SQ_TRY_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],
-		[$sq_fuse_cppflags],[$sq_fuse_libs])
+	SQ_TRY_FUSE_DIRS([default directories],,,[$sq_fuse_libs])
+	SQ_TRY_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],[$sq_fuse_libs])
 	SQ_TRY_FUSE_DIRS([/usr/local],[/usr/local/include/fuse],[/usr/local/lib],
-		[$sq_fuse_cppflags],[$sq_fuse_libs])
+		[$sq_fuse_libs])
 	
 	AS_IF([test "x$sq_fuse_found" = xyes],[
 		sq_cv_lib_fuse_LIBS="$FUSE_LIBS"
@@ -130,6 +131,13 @@ AC_DEFUN([SQ_FIND_FUSE],[
       sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
     ]
   )
+
+	AC_ARG_WITH(fuse-cppflags,
+		AS_HELP_STRING([--with-fuse-cppflags=FLAGS], [FUSE compiler flags]),
+		[sq_fuse_cppflags="$withval"])
+	AC_ARG_WITH(fuse-ldflags,
+		AS_HELP_STRING([--with-fuse-ldflags=FLAGS], [FUSE linker flags]),
+		[sq_fuse_ldflags="$withval"])
   
 	AC_ARG_WITH(fuse-soname,
 		AS_HELP_STRING([--with-fuse-soname=SONAME], [FUSE library name]),
@@ -150,8 +158,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 		AS_HELP_STRING([--with-fuse-lib=DIR], [FUSE library directory]),
 		[fuse_lib=$withval])
 	AS_IF([test "x$fuse_inc$fuse_lib" = x],,[
-		SQ_TRY_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],[$sq_fuse_cppflags],
-			[$sq_fuse_libs],,
+		SQ_TRY_FUSE_DIRS(,[$fuse_inc],[$fuse_lib],[$sq_fuse_libs],,
 			[AC_MSG_FAILURE([Can't find FUSE in specified directories])])
 	])
 	
@@ -159,7 +166,7 @@ AC_DEFUN([SQ_FIND_FUSE],[
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
 		SQ_SAVE_FLAGS
 		SQ_PKG([fuse],[fuse >= 2.5],
-			[SQ_TRY_FUSE(,[sq_fuse_found=yes],
+			[SQ_TRY_FUSE_LIBS(,,[sq_fuse_found=yes],
 				[AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
 			[:])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
