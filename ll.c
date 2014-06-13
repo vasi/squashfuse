@@ -414,10 +414,7 @@ int main(int argc, char *argv[]) {
   args.argv = argv;
   args.allocated = 0;
   
-  opts.progname = argv[0];
-  opts.image = NULL;
-  opts.mountpoint = 0;
-  if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
+  if (sqfs_opt_parse(&args, &opts))
     sqfs_usage(argv[0], true);
 
   if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)
@@ -428,6 +425,7 @@ int main(int argc, char *argv[]) {
   
   /* OPEN FS */
   err = !(ll = sqfs_ll_open(opts.image));
+  free(opts.image);
   
   /* STARTUP FUSE */
   if (!err) {

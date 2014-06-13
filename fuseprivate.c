@@ -106,9 +106,69 @@ void sqfs_usage(char *progname, bool fuse_usage) {
   exit(-2);
 }
 
-int sqfs_opt_proc(void *data, const char *arg, int key,
+
+#if CONTEXT_BROKEN
+  static sqfs_opts *gOpts;
+#endif
+
+
+/* Scan for a "-o image=foo.squashfs" option. Minix actually needs this,
+   there's terrible opt parsing. */
+static char *sqfs_opt_scan_image(struct fuse_args *args) {
+#ifdef __minix
+  int i;
+  bool in_opt = false;
+  
+  for (i = 0; i < args->argc; ++i) {
+    char *a = args->argv[i];
+    if (strcmp(a, "--") == 0) /* End of args marker */
+      break;
+    
+    /* Are we starting a new option group? */
+    if (!in_opt && strcmp(a, "-o") == 0) {
+      in_opt = true; /* Minix doesn't allow '-ofoo=bar', needs '-o foo=bar' */
+      continue;
+    }
+    if (!in_opt) /* Don't care about non-options */
+      continue;
+    
+    while (true) {
+      char *sep = a;
+      char *comma = a;
+      
+      while (*comma && *comma != ',') /* Find a comma */
+        ++comma;
+      
+      while (sep < comma && *sep && *sep != '=')
+        ++sep; /* Find an equals separator, Minix doesn't allow spaces */
+      
+      if (sep < comma && strncmp(a, "image", sep - a) == 0) {
+        /* Found our option! */
+        ++sep;
+        return strndup(sep, comma - sep);
+      }
+      
+      if (!*comma)
+        break;
+      a = comma + 1;
+    }
+    
+    in_opt = false; /* No longer in an option group */
+  }
+  
+#endif
+  return NULL;
+}
+
+static int sqfs_opt_proc(void *data, const char *arg, int key,
     struct fuse_args *SQFS_UNUSED(outargs)) {
-  sqfs_opts *opts = (sqfs_opts*)data;
+  sqfs_opts *opts;
+#if CONTEXT_BROKEN
+  opts = gOpts;
+#else
+  opts = (sqfs_opts*)data;
+#endif
+  
   if (key == FUSE_OPT_KEY_NONOPT) {
     if (opts->mountpoint) {
       return -1; /* Too many args */
@@ -116,7 +176,7 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
       opts->mountpoint = 1;
       return 1;
     } else {
-      opts->image = arg;
+      opts->image = strdup(arg);
       return 0;
     }
   } else if (key == FUSE_OPT_KEY_OPT) {
@@ -124,4 +184,27 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
       sqfs_usage(opts->progname, true);
   }
   return 1; /* Keep */
+}
+
+sqfs_err sqfs_opt_parse(struct fuse_args *args, sqfs_opts *opts) {
+  char *scan_image = NULL;
+  struct fuse_opt specs[] = { FUSE_OPT_END };
+  
+  opts->progname = args->argv[0];
+  opts->image = NULL;
+  opts->mountpoint = 0;
+#if CONTEXT_BROKEN
+  gOpts = opts;
+#endif
+  
+  scan_image = sqfs_opt_scan_image(args);
+  if (fuse_opt_parse(args, opts, specs, sqfs_opt_proc) == -1)
+    return SQFS_ERR;
+  
+  if (scan_image) {
+    free(opts->image);
+    opts->image = scan_image;
+  }
+    
+  return SQFS_OK;
 }

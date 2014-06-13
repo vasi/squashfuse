@@ -42,13 +42,6 @@
   #define READDIR_NO_OFFSETS 0
 #endif
 
-/* Some systems don't return anything useful for fuse_get_context() */
-#if defined(__minix)
-  #define CONTEXT_BROKEN  1
-#else
-  #define CONTEXT_BROKEN 0
-#endif
-
 
 typedef struct sqfs_hl sqfs_hl;
 struct sqfs_hl {
@@ -340,7 +333,6 @@ int main(int argc, char *argv[]) {
   sqfs_opts opts;
   sqfs_hl *hl;
   int ret;
-  struct fuse_opt specs[] = { FUSE_OPT_END };
   
   memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
   sqfs_hl_ops.init        = sqfs_hl_op_init;
@@ -360,15 +352,13 @@ int main(int argc, char *argv[]) {
   args.argv = argv;
   args.allocated = 0;
   
-  opts.progname = argv[0];
-  opts.image = NULL;
-  opts.mountpoint = 0;
-  if (fuse_opt_parse(&args, &opts, specs, sqfs_opt_proc) == -1)
+  if (sqfs_opt_parse(&args, &opts))
     sqfs_usage(argv[0], true);
   if (!opts.image)
     sqfs_usage(argv[0], true);
   
   hl = sqfs_hl_open(opts.image);
+  free(opts.image);
   if (!hl)
     return -1;
   

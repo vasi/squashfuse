@@ -33,6 +33,15 @@
 
 /* Common functions for FUSE high- and low-level clients */
 
+
+/* Some systems don't return anything useful for fuse_get_context() */
+#if defined(__minix)
+  #define CONTEXT_BROKEN  1
+#else
+  #define CONTEXT_BROKEN 0
+#endif
+
+
 /* Fill in a stat structure. Does not set st_ino */
 sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
 
@@ -45,10 +54,10 @@ void sqfs_usage(char *progname, bool fuse_usage);
 /* Parse command-line arguments */
 typedef struct {
   char *progname;
-  const char *image;
+  char *image;
   int mountpoint;
 } sqfs_opts;
-int sqfs_opt_proc(void *data, const char *arg, int key,
-  struct fuse_args *outargs);
+
+sqfs_err sqfs_opt_parse(struct fuse_args *args, sqfs_opts *opts);
 
 #endif
