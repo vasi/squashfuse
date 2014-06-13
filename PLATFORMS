@@ -11,6 +11,7 @@ The following operating systems are supported:
 These are not supported by squashfuse_ll, just squashfuse:
 * OpenBSD
 * DragonflyBSD
+* Minix
 
 These are only supported by the squashfuse_ls demo:
 * Windows
@@ -18,7 +19,6 @@ These are only supported by the squashfuse_ls demo:
 These don't seem to work yet:
 * Solaris
 * QNX
-* Minix
 * Haiku
 * Hurd
 
@@ -101,7 +101,7 @@ brackets, eg: [0.1]
   + Notes:
     - Need to load the kernel module: `kldload fuse'
     - Set `sysctl vfs.usermount=1' for non-root
-    - FreeBSD FUSE doesn't support extended attributes
+    - No extended attributes support
 
 * NetBSD
   + Versions: NetBSD 6.0 and later
@@ -117,7 +117,7 @@ brackets, eg: [0.1]
     - For low-level, set `sysctl -w kern.sbmax=$n', where n is at least 540672
     - Low-level is slightly buggy, prints warning messages
     - Set `sysctl -w vfs.generic.usermount=1' for non-root
-    - NetBSD FUSE doesn't support extended attributes
+    - No extended attributes support
 
 * illumos
   + Versions: all
@@ -126,7 +126,7 @@ brackets, eg: [0.1]
   + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
   + Notes:
     - Mounting requires root
-    - illumos FUSE doesn't support extended attributes
+    - No extended attributes support
 
 * Android
   + Versions: all
@@ -153,7 +153,7 @@ brackets, eg: [0.1]
     - Disable pkg-config: `export PKG_CONFIG_LIBDIR='
     - Configure for cross-compiling, with --host=arm-linux-androideabi
   + Notes:
-    - On Android, squashfuse only supports files < 2GB in size
+    - No files more than 2GB in size
     - Mounting requires root
     - Use the adb shell to run squashfuse
     - Usually /data/local/tmp is a location with exec privileges
@@ -166,7 +166,7 @@ brackets, eg: [0.1]
   + Configure: ./configure --with-lzo=/usr/local --with-lz4=/usr/local
   + Notes:
     - Mounting requires root
-    - OpenBSD FUSE doesn't support extended attributes
+    - No extended attributes support
     - Has special snowflake breakage in readdir(), that squashfuse must work
       around
 
@@ -179,23 +179,27 @@ brackets, eg: [0.1]
   + Notes:
     - Need to load kernel module: `kldload puffs`
     - Mounting requires root
-    - DragonflyBSD FUSE doesn't support extended attributes
+    - No extended attributes support
 
 * Minix
   + Only squashfuse and squashfuse_ls, there's no low-level API
   + Versions: Minix 3.2.1 and later
-  + Tested on: Minix 3.2.1 [0.2] NOT WORKING
-  + Packages:
-  + Configure: ./configure LDFLAGS='-Xcompiler -static' \
-     --with-fuse-ldflags='-Wl,-wrap,main -lminixfs -lsys -lminlib'
+  + Tested on: Minix 3.2.1 [0.2]
+  + Packages: lzo
+  + Configure
+    - ./configure LDFLAGS='-Xcompiler -static' --with-lzo=/usr/pkg
+       --with-fuse-ldflags='-Wl,-wrap,main -lminixfs -lsys -lminlib'
+  + Usage
+    - Copy the `squashfuse' executable to /usr/pkg/bin/squashfuse and to
+      /usr/pkg/bin/mount.squashfuse
+    - Create /etc/system.conf.d/squashfuse, whose contents should be similar
+      to the ntfs-3g stanza in /etc/system.conf. You may need to reboot
+      afterwards.
   + Notes
-    - On Minix, squashfuse only supports files < 2GB in size
-    - On Minix, squashfuse does not support threads
-    - root?
-    - xattr?
-    - Name as mount.squashfuse...
-    - Add unit in system.conf.d...
-    ???
+    - Mounting requires root
+    - No extended attributes support
+    - No files more than 2 GB in size
+    - No thread support
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows

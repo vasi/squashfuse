@@ -64,13 +64,17 @@ To build from the development repository, rather than a tarball, you'll need:
   - automake 1.11 or later
   - libtool 2
 
-Known fully-supported platforms:
+Known platforms with at least some support:
   - Linux
   - Mac OS X
   - FreeBSD
   - NetBSD
-  - OpenIndiana
+  - OpenBSD
+  - Dragonfly BSD
+  - Minix
+  - illumos
   - Android
+  - Windows
   - other platforms may work too!
 
 For a precise list of packages you will need on your OS, and other platform
