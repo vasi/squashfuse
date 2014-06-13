@@ -34,50 +34,94 @@
 #include <string.h>
 
 
+/* Some systems have a very cranky readdir filler. For them, don't use offsets
+   and don't pass a struct stat. */
+#if defined(__OpenBSD__)
+  #define READDIR_NO_OFFSETS 1
+#else
+  #define READDIR_NO_OFFSETS 0
+#endif
+
+/* Some systems don't return anything useful for fuse_get_context() */
+#if defined(__minix)
+  #define CONTEXT_BROKEN  1
+#else
+  #define CONTEXT_BROKEN 0
+#endif
+
+
 typedef struct sqfs_hl sqfs_hl;
 struct sqfs_hl {
   sqfs fs;
   sqfs_inode root;
 };
 
-#ifndef HAVE_FUSE_INIT_USER_DATA
-static sqfs_hl *gHL;
+
+/* Global user-data, for broken FUSE implementations */
+#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
+  static sqfs_hl *gHL;
 #endif
 
+/* Get the user-data, whether or not we're broken */
+static sqfs_hl *sqfs_user_data(void *data) {
+#if CONTEXT_BROKEN
+  (void)data;
+  return gHL;
+#else
+  if (data)
+    return data;
+  return fuse_get_context()->private_data;
+#endif
+}
 
+/* Lookup the fs and inode for a path */
 static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
     const char *path) {
   bool found;
   
-  sqfs_hl *hl = fuse_get_context()->private_data;
+  sqfs_hl *hl = sqfs_user_data(NULL);
   *fs = &hl->fs;
-  if (inode)
-    *inode = hl->root; /* copy */
+  *inode = hl->root; /* copy */
 
-  if (path) {
-    sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found);
-    if (err)
-      return err;
-    if (!found)
-      return SQFS_ERR;
-  }
+  sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found);
+  if (err)
+    return err;
+  if (!found)
+    return SQFS_ERR;
+  
   return SQFS_OK;
+}
+
+/* Get the filehandle that should be in the fileinfo */
+static sqfs_err sqfs_hl_fh(sqfs **fs, sqfs_inode **inode, const char *path,
+    struct fuse_file_info *fi) {
+#if CONTEXT_BROKEN
+  (void)fi;
+  return sqfs_hl_lookup(fs, *inode, path);
+#else
+  (void)path;
+  *fs = &sqfs_user_data(NULL)->fs;
+  *inode = (sqfs_inode*)(intptr_t)fi->fh;
+  return SQFS_OK;
+#endif
 }
 
 
 static void sqfs_hl_op_destroy(void *user_data) {
-  sqfs_hl *hl = fuse_get_context()->private_data;
+  sqfs_hl *hl = sqfs_user_data(user_data);
   sqfs_destroy(&hl->fs);
   free(hl);
 }
 
 static void *sqfs_hl_op_init(
 #ifdef HAVE_FUSE_INIT_USER_DATA
-    struct fuse_conn_info *SQFS_UNUSED(conn)) {
-  return fuse_get_context()->private_data;
-#else
+    struct fuse_conn_info *SQFS_UNUSED(conn)
+#endif
     ) {
+#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   return gHL;
+#else
+  return fuse_get_context()->private_data;
 #endif
 }
 
@@ -125,41 +169,36 @@ static int sqfs_hl_op_releasedir(const char *SQFS_UNUSED(path),
   return 0;
 }
 
-/* Some systems have a very cranky readdir filler. For them, don't use offsets
-   and don't pass a struct stat. */
-#if defined(__OpenBSD__)
-  #define READDIR_BROKEN 1
-#else
-  #define READDIR_BROKEN 0
-#endif
-
-static int sqfs_hl_op_readdir(const char *SQFS_UNUSED(path), void *buf,
+static int sqfs_hl_op_readdir(const char *path, void *buf,
     fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
   sqfs_err err;
   sqfs *fs;
-  sqfs_inode *inode;
   sqfs_dir dir;
   sqfs_name namebuf;
   sqfs_dir_entry entry;
-  struct stat st, *stp = &st;
+  sqfs_inode inode, *inodep;
+  struct stat st, *stp;
   sqfs_off_t doff;
+  
+  stp = &st;
+  inodep = &inode;
 
-#if READDIR_BROKEN
+#if READDIR_NO_OFFSETS
   stp = NULL;
   offset = 0;
 #endif
   
-  sqfs_hl_lookup(&fs, NULL, NULL);
-  inode = (sqfs_inode*)(intptr_t)fi->fh;
+  if (sqfs_hl_fh(&fs, &inodep, path, fi))
+    return -ENOENT;
 
-  if (sqfs_dir_open(fs, inode, &dir, offset))
+  if (sqfs_dir_open(fs, inodep, &dir, offset))
     return -EINVAL;
   
   memset(&st, 0, sizeof(st));
   doff = 0;
   sqfs_dentry_init(&entry, namebuf);
   while (sqfs_dir_next(fs, &dir, &entry, &err)) {
-    #if !READDIR_BROKEN
+    #if !READDIR_NO_OFFSETS
       doff = sqfs_dentry_next_offset(&entry);
       st.st_mode = sqfs_dentry_mode(&entry);
     #endif
@@ -203,17 +242,17 @@ static int sqfs_hl_op_release(const char *SQFS_UNUSED(path),
   return 0;
 }
 
-static int sqfs_hl_op_read(const char *SQFS_UNUSED(path), char *buf,
+static int sqfs_hl_op_read(const char *path, char *buf,
     size_t size, off_t off, struct fuse_file_info *fi) {
   sqfs *fs;
-  sqfs_inode *inode;
+  sqfs_inode inode, *inodep = &inode;
   off_t osize;
   
-  sqfs_hl_lookup(&fs, NULL, NULL);
-  inode = (sqfs_inode*)(intptr_t)fi->fh;
+  if (sqfs_hl_fh(&fs, &inodep, path, fi))
+    return -ENOENT;
 
   osize = size;
-  if (sqfs_read_range(fs, inode, off, &osize, buf))
+  if (sqfs_read_range(fs, inodep, off, &osize, buf))
     return -EIO;
   return osize;
 }
@@ -335,11 +374,13 @@ int main(int argc, char *argv[]) {
   
   if (!sqfs_threads_available())
     fuse_opt_add_arg(&args, "-s"); /* single threaded */
-  
+
+#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
+  gHL = hl;
+#endif
 #ifdef HAVE_FUSE_INIT_USER_DATA
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
 #else
-  gHL = hl;
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops);
 #endif
   
