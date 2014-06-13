@@ -90,6 +90,9 @@ static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
   if (sqfs_stat(fs, &inode, st))
     return -ENOENT;
   
+  /* Minix needs this */
+  st->st_ino = inode.base.inode_number;
+
   return 0;
 }
 
