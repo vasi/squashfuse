@@ -72,6 +72,7 @@ Known platforms with at least some support:
   - OpenBSD
   - Dragonfly BSD
   - Minix
+  - Hurd
   - illumos
   - Android
   - Windows

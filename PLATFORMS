@@ -12,6 +12,7 @@ These are not supported by squashfuse_ll, just squashfuse:
 * OpenBSD
 * DragonflyBSD
 * Minix
+* Hurd (mostly)
 
 These are only supported by the squashfuse_ls demo:
 * Windows
@@ -202,6 +203,18 @@ brackets, eg: [0.1]
     - No thread support
     - Has special snowflake breakage all over, lots of workarounds needed. See
       https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
+
+* Hurd
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: since 2012
+  + Tested on: Debian Hurd snapshot 2014-05-29 [0.2]
+  + Packages: libfuse-hurd-dev libz-dev liblzo2-dev liblz4-dev liblzma-dev
+  + Notes
+    - No extended attributes support
+    - Has special snowflake breakage in readdir and option parsing
+    - Random things aren't working, eg: 'cat my-sym-link' acts like
+      'readlink my-sym-link'.
+    - Is a bit crashy, for unknown reasons. Clues are welcomed!
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
