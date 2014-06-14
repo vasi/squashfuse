@@ -200,6 +200,8 @@ brackets, eg: [0.1]
     - No extended attributes support
     - No files more than 2 GB in size
     - No thread support
+    - Has special snowflake breakage all over, lots of workarounds needed. See
+      https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
