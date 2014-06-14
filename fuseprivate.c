@@ -31,6 +31,45 @@
 
 #include "nonstd.h"
 
+/* fuse_opt_add_arg() equivalent */
+static int sqfs_opt_add_arg(struct fuse_args *args, const char *arg);
+
+/* Option-processing callback */
+static int sqfs_opt_proc(void *data, const char *arg, int key,
+    struct fuse_args *outargs);
+
+
+#if __minix || !HAVE_FUSE_OPT_PARSE
+  #define NEED_OPT_SCAN 1
+#endif
+#if NEED_OPT_SCAN
+/* Very simple opt parsing. We only handle:
+   - a literal '--'
+   - positional arguments
+   - arguments of the form '-f' or '--foo', without argument
+   - arguments like '-o foo,bar'. We don't split foo from bar.
+*/
+#define OPT_TYPE_OPTARG     1   /* -o foo,bar */
+#define OPT_TYPE_OPTION     2   /* -f or --foo or -- */
+#define OPT_TYPE_POSITIONAL 3
+typedef sqfs_err (*sqfs_opt_scan_proc)(void *ctx, int type, const char *arg);
+static sqfs_err sqfs_opt_scan(void *ctx, sqfs_opt_scan_proc proc, int argc,
+  char **argv);
+#endif
+
+/* Scan for -o image=something arguments, if necessary,
+   without fuse_opt_parse() */
+#ifdef __minix
+static char *sqfs_opt_scan_image(int argc, char **argv);
+#endif
+
+#if !HAVE_FUSE_OPT_PARSE
+/* Ersatz replacement for fuse_opt_parse() */
+static sqfs_err sqfs_opt_parse_ersatz(struct fuse_args *outargs, int argc,
+  char **argv, sqfs_opts *opts);
+#endif
+
+
 sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
   sqfs_err err = SQFS_OK;
   uid_t id;
@@ -107,58 +146,205 @@ void sqfs_usage(char *progname, bool fuse_usage) {
 }
 
 
+#if NEED_OPT_SCAN
+static sqfs_err sqfs_opt_scan(void *ctx, sqfs_opt_scan_proc proc, int argc,
+    char **argv) {
+  size_t i;
+  bool in_opt = false, /* are we at an option argument? */
+    no_opts = false; /* are we done with options? */
+  sqfs_err err = SQFS_OK;
+  
+  for (i = 1; i < argc; ++i) {
+    char *a = argv[i];
+    if (err)
+      return err;
+    
+    if (no_opts) {
+      proc(ctx, OPT_TYPE_POSITIONAL, a);
+      continue;
+    }
+    
+    if (!in_opt) {
+      if (a[0] != '-') {
+        err = proc(ctx, OPT_TYPE_POSITIONAL, a);
+        continue;
+      } else if (a[1] == 'o') {
+        in_opt = true;
+        if (!a[2])
+          continue; /* '-o whatever' as two args */
+        a += 2;
+      } else {
+        err = proc(ctx, OPT_TYPE_OPTION, a);
+        if (a[1] == '-' && !a[2])
+          no_opts = true; /* found -- */
+        continue;
+      }
+    }
+    
+    err = proc(ctx, OPT_TYPE_OPTARG, a);
+    in_opt = false;
+  }
+  
+  return err;
+}
+#endif
+
+
+#ifdef __minix
+/* This is only needed on Minix, where opt-parsing in FUSE is terrible. We
+   can't provide a non-block-device as an argument, so we need to use
+   -o image=foo.squashfs . And fuse_opt_proc() doesn't behave. Wheeeee! */
+static sqfs_err sqfs_opt_scan_image_proc(void *ctx, int type,
+    const char *arg) {
+  char **image = (char**)ctx;
+  
+  if (*image || type != OPT_TYPE_OPTARG)
+    return SQFS_OK;
+  
+  /* Go over each item in the foo=bar,baz=blah group */
+  while (true) {
+    const char *sep = arg;
+    const char *comma = arg;
+    
+    while (*comma && *comma != ',') /* Find a comma */
+      ++comma;
+    
+    while (sep < comma && *sep && *sep != '=')
+      ++sep; /* Find an equals separator, Minix doesn't allow spaces */
+    
+    if (sep < comma && strncmp(arg, "image", sep - arg) == 0) {
+      /* Found our option! */
+      size_t len;
+      ++sep;
+      len = comma - sep;
+      if (!(*image = malloc(len + 1)))
+        return SQFS_ERR;
+      strncpy(*image, sep, len + 1);
+      (*image)[len] = '\0';
+      return SQFS_OK;
+    }
+    
+    if (!*comma)
+      break;
+    arg = comma + 1;
+  }
+  
+  return SQFS_OK;
+}
+static char *sqfs_opt_scan_image(int argc, char **argv) {
+  char *ret = NULL;
+  sqfs_err err = sqfs_opt_scan(&ret, sqfs_opt_scan_image_proc, argc, argv);
+  return err ? NULL : ret;
+}
+#endif
+
+
+#if !HAVE_FUSE_OPT_PARSE
+typedef struct {
+  struct fuse_args *outargs;
+  sqfs_opts *opts;
+} sqfs_opt_parse_ersatz_ctx;
+static sqfs_err sqfs_opt_parse_ersatz_proc(void *ctx, int type,
+    const char *arg) {
+  sqfs_opt_parse_ersatz_ctx *c = (sqfs_opt_parse_ersatz_ctx*)ctx;
+  
+  /* NOTE: This relies on the current behaviour of sqfs_opt_proc! */
+  int key = (type == OPT_TYPE_POSITIONAL ? FUSE_OPT_KEY_NONOPT
+      : FUSE_OPT_KEY_OPT);
+  int keep = sqfs_opt_proc(c->opts, arg, key, NULL);
+  
+  if (keep == -1)
+    return SQFS_ERR;
+  if (keep) {
+    sqfs_err err = SQFS_OK;
+    if (type == OPT_TYPE_OPTARG)
+      err = sqfs_opt_add_arg(c->outargs, "-o");
+    if (!err)
+      err = sqfs_opt_add_arg(c->outargs, arg);
+    return err;
+  }
+  return SQFS_OK;
+}
+static sqfs_err sqfs_opt_parse_ersatz(struct fuse_args *outargs, int argc,
+    char **argv, sqfs_opts *opts) {
+  sqfs_opt_parse_ersatz_ctx ctx;
+  ctx.outargs = outargs;
+  ctx.opts = opts;
+  
+  outargs->argc = 0;
+  outargs->argv = NULL;
+  outargs->allocated = 0;
+  
+  sqfs_opt_add_arg(outargs, argv[0]); /* progname */
+  return sqfs_opt_scan(&ctx, sqfs_opt_parse_ersatz_proc, argc, argv);
+}
+#endif
+
+
+static int sqfs_opt_add_arg(struct fuse_args *args, const char *arg) {
+#if HAVE_FUSE_OPT_PARSE
+  return fuse_opt_add_arg(args, arg) == -1 ? SQFS_ERR : SQFS_OK;
+#else
+  char *new_arg, **new_argv;
+  size_t new_argc, new_size;
+  
+  if (!(new_arg = malloc(strlen(arg) + 1)))
+    return -1;
+  strcpy(new_arg, arg);
+    
+  new_argc = args->argc + 1;
+  new_size = new_argc + 1; /* NULL at end */
+  new_argv = realloc(args->argv, new_size * sizeof(char*));
+  if (!new_argv) {
+    free(new_arg);
+    return -1;
+  }
+  
+  new_argv[new_argc - 1] = new_arg;
+  new_argv[new_argc] = NULL;
+  
+  args->argc = new_argc;
+  args->argv = new_argv;
+  args->allocated = 1;
+  
+  return 0;
+#endif
+}
+
+sqfs_err sqfs_opt_single_threaded(struct fuse_args *args) {
+  if (sqfs_opt_add_arg(args, "-s") == -1)
+    return SQFS_ERR;
+  return SQFS_OK;
+}
+
+void sqfs_opt_free(struct fuse_args *args) {
+  if (!args)
+    return;
+  
+#if HAVE_FUSE_OPT_PARSE
+  if (args->allocated) /* Some systems don't check this */
+    fuse_opt_free_args(args);
+#else
+  if (args->allocated) {
+    if (args->argv) {
+      size_t i;
+      for (i = 0; i < args->argc; ++i) {
+        if (args->argv[i])
+          free(args->argv[i]);
+      }
+      free(args->argv);
+    }
+    args->argc = 0;
+    args->argv = NULL;
+    args->allocated = 0;
+  }
+#endif
+}
+
+
 #if CONTEXT_BROKEN
   static sqfs_opts *gOpts;
 #endif
-
-
-/* Scan for a "-o image=foo.squashfs" option. Minix actually needs this,
-   there's terrible opt parsing. */
-static char *sqfs_opt_scan_image(struct fuse_args *args) {
-#ifdef __minix
-  int i;
-  bool in_opt = false;
-  
-  for (i = 0; i < args->argc; ++i) {
-    char *a = args->argv[i];
-    if (strcmp(a, "--") == 0) /* End of args marker */
-      break;
-    
-    /* Are we starting a new option group? */
-    if (!in_opt && strcmp(a, "-o") == 0) {
-      in_opt = true; /* Minix doesn't allow '-ofoo=bar', needs '-o foo=bar' */
-      continue;
-    }
-    if (!in_opt) /* Don't care about non-options */
-      continue;
-    
-    while (true) {
-      char *sep = a;
-      char *comma = a;
-      
-      while (*comma && *comma != ',') /* Find a comma */
-        ++comma;
-      
-      while (sep < comma && *sep && *sep != '=')
-        ++sep; /* Find an equals separator, Minix doesn't allow spaces */
-      
-      if (sep < comma && strncmp(a, "image", sep - a) == 0) {
-        /* Found our option! */
-        ++sep;
-        return strndup(sep, comma - sep);
-      }
-      
-      if (!*comma)
-        break;
-      a = comma + 1;
-    }
-    
-    in_opt = false; /* No longer in an option group */
-  }
-  
-#endif
-  return NULL;
-}
 
 static int sqfs_opt_proc(void *data, const char *arg, int key,
     struct fuse_args *SQFS_UNUSED(outargs)) {
@@ -168,7 +354,7 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
 #else
   opts = (sqfs_opts*)data;
 #endif
-  
+
   if (key == FUSE_OPT_KEY_NONOPT) {
     if (opts->mountpoint) {
       return -1; /* Too many args */
@@ -188,53 +374,40 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
   return 1; /* Keep */
 }
 
-sqfs_err sqfs_opt_single_threaded(struct fuse_args *args) {
-#if HAVE_FUSE_OPT_PARSE
-  if (fuse_opt_add_arg(args, "-s") == -1)
-    return SQFS_ERR;
-  return SQFS_OK;
-#else
-  #error TODO
-#endif
-}
-
-void sqfs_opt_free(struct fuse_args *args) {
-#if HAVE_FUSE_OPT_PARSE
-  if (args->allocated)
-    fuse_opt_free_args(args);
-#else
-  #error TODO
-#endif
-}
-
 sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
     sqfs_opts *opts) {
-#if HAVE_FUSE_OPT_PARSE
-  char *scan_image = NULL;
-  struct fuse_opt specs[] = { FUSE_OPT_END };
-  
-  outargs->argc = argc;
-  outargs->argv = argv;
-  outargs->allocated = 0;
-  
   opts->progname = argv[0];
   opts->image = NULL;
   opts->mountpoint = 0;
 #if CONTEXT_BROKEN
   gOpts = opts;
 #endif
-  
-  scan_image = sqfs_opt_scan_image(outargs);
-  if (fuse_opt_parse(outargs, opts, specs, sqfs_opt_proc) == -1)
-    return SQFS_ERR;
 
-  if (scan_image) {
-    free(opts->image);
-    opts->image = scan_image;
-  }
+#if HAVE_FUSE_OPT_PARSE
+  {
+    struct fuse_opt specs[] = { FUSE_OPT_END };
+  
+    outargs->argc = argc;
+    outargs->argv = argv;
+    outargs->allocated = 0;
+  
+    if (fuse_opt_parse(outargs, opts, specs, sqfs_opt_proc) == -1)
+      return SQFS_ERR;
+
+    #ifdef __minix
+    {
+      char *scan_image = sqfs_opt_scan_image(argc, argv);
+      if (scan_image) {
+        free(opts->image);
+        opts->image = scan_image;
+      }
+    }
+    #endif
     
-  return SQFS_OK;
+    return SQFS_OK;
+  }
 #else
-  #error TODO
+  /* Ersatz fuse_opt_parse, just enough for our needs */
+  return sqfs_opt_parse_ersatz(outargs, argc, argv, opts);
 #endif
 }
