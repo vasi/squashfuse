@@ -293,10 +293,10 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
   SQ_RESTORE_FLAGS
 ])
 
-# SQ_FUSE_API_PARSE_CMDLINE
+# SQ_FUSE_API_OPTS
 #
-# Check if fuse_parse_cmdline() is available
-AC_DEFUN([SQ_FUSE_API_PARSE_CMDLINE],[
+# Check which FUSE option parsing routines are available
+AC_DEFUN([SQ_FUSE_API_OPTS],[
   SQ_SAVE_FLAGS
   LIBS="$LIBS $FUSE_LIBS"
   CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
@@ -313,6 +313,8 @@ AC_DEFUN([SQ_FUSE_API_PARSE_CMDLINE],[
     AC_DEFINE([FUSE_PARSE_CMDLINE],1,
       [Define if fuse_parse_cmdline() is available])
   ])
+  
+  AC_CHECK_FUNCS([fuse_opt_parse])
   
   SQ_RESTORE_FLAGS
 ])

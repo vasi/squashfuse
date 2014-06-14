@@ -410,11 +410,7 @@ int main(int argc, char *argv[]) {
   sqfs_ll_ops.forget      = sqfs_ll_op_forget;
    
   /* PARSE ARGS */
-  args.argc = argc;
-  args.argv = argv;
-  args.allocated = 0;
-  
-  if (sqfs_opt_parse(&args, &opts))
+  if (sqfs_opt_parse(&args, argc, argv, &opts))
     sqfs_usage(argv[0], true);
 
   if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)

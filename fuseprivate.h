@@ -58,6 +58,11 @@ typedef struct {
   int mountpoint;
 } sqfs_opts;
 
-sqfs_err sqfs_opt_parse(struct fuse_args *args, sqfs_opts *opts);
+sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
+  sqfs_opts *opts);
+void sqfs_opt_free(struct fuse_args *args);
+
+/* If we have no thread support, force single-threaded mode in FUSE */ 
+sqfs_err sqfs_opt_single_threaded(struct fuse_args *args);
 
 #endif

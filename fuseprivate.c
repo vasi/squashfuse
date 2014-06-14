@@ -188,25 +188,53 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
   return 1; /* Keep */
 }
 
-sqfs_err sqfs_opt_parse(struct fuse_args *args, sqfs_opts *opts) {
+sqfs_err sqfs_opt_single_threaded(struct fuse_args *args) {
+#if HAVE_FUSE_OPT_PARSE
+  if (fuse_opt_add_arg(args, "-s") == -1)
+    return SQFS_ERR;
+  return SQFS_OK;
+#else
+  #error TODO
+#endif
+}
+
+void sqfs_opt_free(struct fuse_args *args) {
+#if HAVE_FUSE_OPT_PARSE
+  if (args->allocated)
+    fuse_opt_free_args(args);
+#else
+  #error TODO
+#endif
+}
+
+sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
+    sqfs_opts *opts) {
+#if HAVE_FUSE_OPT_PARSE
   char *scan_image = NULL;
   struct fuse_opt specs[] = { FUSE_OPT_END };
   
-  opts->progname = args->argv[0];
+  outargs->argc = argc;
+  outargs->argv = argv;
+  outargs->allocated = 0;
+  
+  opts->progname = argv[0];
   opts->image = NULL;
   opts->mountpoint = 0;
 #if CONTEXT_BROKEN
   gOpts = opts;
 #endif
   
-  scan_image = sqfs_opt_scan_image(args);
-  if (fuse_opt_parse(args, opts, specs, sqfs_opt_proc) == -1)
+  scan_image = sqfs_opt_scan_image(outargs);
+  if (fuse_opt_parse(outargs, opts, specs, sqfs_opt_proc) == -1)
     return SQFS_ERR;
-  
+
   if (scan_image) {
     free(opts->image);
     opts->image = scan_image;
   }
     
   return SQFS_OK;
+#else
+  #error TODO
+#endif
 }

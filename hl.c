@@ -348,23 +348,19 @@ int main(int argc, char *argv[]) {
   sqfs_hl_ops.listxattr   = sqfs_hl_op_listxattr;
   sqfs_hl_ops.getxattr    = sqfs_hl_op_getxattr;
   
-  args.argc = argc;
-  args.argv = argv;
-  args.allocated = 0;
-  
-  if (sqfs_opt_parse(&args, &opts))
+  if (sqfs_opt_parse(&args, argc, argv, &opts))
     sqfs_usage(argv[0], true);
   if (!opts.image)
     sqfs_usage(argv[0], true);
+
+  if (!sqfs_threads_available())
+    sqfs_opt_single_threaded(&args);
   
   hl = sqfs_hl_open(opts.image);
   free(opts.image);
   if (!hl)
     return -1;
   
-  if (!sqfs_threads_available())
-    fuse_opt_add_arg(&args, "-s"); /* single threaded */
-
 #if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   gHL = hl;
 #endif
@@ -374,8 +370,6 @@ int main(int argc, char *argv[]) {
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops);
 #endif
   
-  /* Only free if we actually allocated something */
-  if (!sqfs_threads_available())
-    fuse_opt_free_args(&args);
+  sqfs_opt_free(&args);
   return ret;
 }

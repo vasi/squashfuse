@@ -37,7 +37,7 @@ AS_IF([test "x$sq_decompressors" = x],
 # FUSE
 SQ_FUSE_API
 AS_IF([test "x$sq_fuse_found" = xyes],[
-  SQ_FUSE_API_PARSE_CMDLINE
+  SQ_FUSE_API_OPTS
 	SQ_FUSE_API_LOWLEVEL
 	SQ_FUSE_API_VERSION
 	SQ_FUSE_API_XATTR_POSITION
