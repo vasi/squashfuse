@@ -176,7 +176,9 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
       opts->mountpoint = 1;
       return 1;
     } else {
-      opts->image = strdup(arg);
+      if (!(opts->image = malloc(strlen(arg) + 1)))
+        return -1;
+      strcpy(opts->image, arg);
       return 0;
     }
   } else if (key == FUSE_OPT_KEY_OPT) {
