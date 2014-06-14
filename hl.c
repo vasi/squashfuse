@@ -36,7 +36,9 @@
 
 /* Some systems have a very cranky readdir filler. For them, don't use offsets
    and don't pass a struct stat. */
-#if defined(__OpenBSD__)
+#if defined(__OpenBSD__) || defined(__GNU__)
+  /* OpenBSD gives offsets within its own buffer, not the offsets we gave it.
+     Hurd gives us the count of items processed. */
   #define READDIR_NO_OFFSETS 1
 #else
   #define READDIR_NO_OFFSETS 0
