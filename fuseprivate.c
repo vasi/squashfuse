@@ -86,6 +86,10 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
   } else if (S_ISBLK(st->st_mode) || S_ISCHR(st->st_mode)) {
     st->st_rdev = sqfs_makedev(inode->xtra.dev.major,
       inode->xtra.dev.minor);
+  } else if (S_ISLNK(st->st_mode)) {
+    size_t size;
+    if (!sqfs_readlink(fs, inode, NULL, &size))
+      st->st_size = size;
   }
   
   st->st_blksize = fs->sb.block_size; /* seriously? */
