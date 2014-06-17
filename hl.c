@@ -73,12 +73,13 @@ static sqfs_hl *sqfs_user_data(void *data) {
 static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
     const char *path) {
   bool found;
+  sqfs_err err;
   
   sqfs_hl *hl = sqfs_user_data(NULL);
   *fs = &hl->fs;
   *inode = hl->root; /* copy */
 
-  sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found);
+  err = sqfs_lookup_path(*fs, inode, path, &found);
   if (err)
     return err;
   if (!found)
