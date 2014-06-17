@@ -116,3 +116,23 @@ AC_DEFUN([SQ_SPLIT],[
   IFS="$sq_ifs"
   $1=$sq_out
 ])
+
+# SQ_CHECK_TYPE_LE16
+#
+# Check if we have __le16 in linux/types.h
+AC_DEFUN([SQ_CHECK_TYPE_LE16],[
+  AC_CHECK_TYPE([__le16],[
+    AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
+      [Define if <linux/types.h> defines the type __le16])
+  ],,[#include <linux/types.h>])
+])
+
+# SQ_CHECK_TYPE_OFF_T
+#
+# Check if we have an off_t big enough for large files
+AC_DEFUN([SQ_CHECK_TYPE_OFF_T],[
+  AC_CHECK_SIZEOF([off_t])
+  AS_IF([test "$ac_cv_sizeof_off_t" -le 4],[
+    sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
+  ])
+])

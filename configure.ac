@@ -51,14 +51,8 @@ SQ_THREADS
 SQ_CHECK_PROG_MAKE_EXPORT
 
 # Types
-AC_CHECK_TYPE([__le16],[
-	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
-		[Define if <linux/types.h> defines the type __le16])
-],,[#include <linux/types.h>])
-AC_CHECK_SIZEOF([off_t])
-AS_IF([test "$ac_cv_sizeof_off_t" -le 4],[
-  sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
-])
+SQ_CHECK_TYPE_LE16
+SQ_CHECK_TYPE_OFF_T
 
 # Demo
 AC_ARG_ENABLE([demo],
