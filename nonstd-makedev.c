@@ -32,7 +32,7 @@
   dev_t sqfs_makedev(int maj, int min) {
     return makedev(ND_LOCAL_NODE, maj, min);
   }
-#else
+#elif defined(NONSTD_MAKEDEV_DEF)
   #include <sys/types.h>
   #ifdef HAVE_SYS_MKDEV_H
     #include <sys/mkdev.h>
@@ -43,5 +43,9 @@
 
   dev_t sqfs_makedev(int maj, int min) {
     return makedev(maj, min);
+  }
+#else
+  dev_t sqfs_makedev(int SQFS_UNUSED(maj), int SQFS_UNUSED(min)) {
+    return 0;
   }
 #endif

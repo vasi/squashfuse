@@ -34,6 +34,7 @@ sq_msg="definition needed by $1"
 AS_VAR_SET_IF([sq_cache],[
   AC_CACHE_CHECK([$sq_msg], [sq_cache])
 ],[
+  AS_VAR_SET([sq_cache],[unknown])
   AC_MSG_NOTICE([checking for $sq_msg])
   for sq_def in none _DARWIN_C_SOURCE _NETBSD_SOURCE _XOPEN_SOURCE \
     _BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
@@ -105,7 +106,12 @@ SQ_CHECK_DECL_MAKEDEV_QNX([
     #ifdef HAVE_SYS_SYSMACROS_H
       #include <sys/sysmacros.h>
     #endif
-  ],[makedev(0,0)])
+  ],[makedev(0,0)],[
+    # Only allow no-makedev if it's known to be ok, eg: Haiku
+    AS_CASE([$target_os],[haiku*],,[
+      AC_MSG_FAILURE([can't figure out how to use makedev])
+    ])
+  ])
 ])
 ])
 
