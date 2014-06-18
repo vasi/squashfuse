@@ -12,6 +12,7 @@ These are not supported by squashfuse_ll, just squashfuse:
 * OpenBSD
 * DragonflyBSD
 * Minix
+* Haiku
 * Hurd (mostly)
 
 These are only supported by the squashfuse_ls demo:
@@ -188,8 +189,7 @@ brackets, eg: [0.1]
   + Tested on: Minix 3.2.1 [0.2]
   + Packages: lzo
   + Configure
-    - ./configure LDFLAGS='-Xcompiler -static' --with-lzo=/usr/pkg
-       --with-fuse-ldflags='-Wl,-wrap,main -lminixfs -lsys -lminlib'
+    - ./configure --with-lzo=/usr/pkg
   + Usage
     - Copy the `squashfuse' executable to /usr/pkg/bin/squashfuse and to
       /usr/pkg/bin/mount.squashfuse
@@ -203,6 +203,24 @@ brackets, eg: [0.1]
     - No thread support
     - Has special snowflake breakage all over, lots of workarounds needed. See
       https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
+
+* Haiku
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: R1 and later
+  + Tested on: Haiku R1 alpha 4 [0.2]
+  + Configure
+    - You must rebuild Haiku with UserlandFS enabled. Put
+      'AddOptionalHaikuImagePackages UserlandFS ;' in your UserBuildConfig.
+  + Usage
+    - Copy the `squashfuse' executable to
+      /boot/home/config/add-ons/userlandfs/ , creating the directory if
+      necessary.
+    - To mount, run 'mount -t userlandfs -p \
+        "squashfuse /path/to/archive.squashfs" path/to/mountpoint'
+    - To unmount, run 'unmount', not 'umount' or 'fusermount'.
+  + Notes
+    ???
+    - No extended attributes support
 
 * Hurd
   + Only squashfuse and squashfuse_ls, there's no low-level API

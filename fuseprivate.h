@@ -35,8 +35,8 @@
 
 
 /* Some systems don't return anything useful for fuse_get_context() */
-#if defined(__minix)
-  #define CONTEXT_BROKEN  1
+#if defined(__minix) || defined(__HAIKU__)
+  #define CONTEXT_BROKEN 1
 #else
   #define CONTEXT_BROKEN 0
 #endif

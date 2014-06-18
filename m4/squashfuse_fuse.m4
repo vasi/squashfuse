@@ -98,7 +98,11 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
   AS_CASE([$target_os],[darwin*],[
     SQ_TRY_FUSE_DIRS([OSXFUSE directories],
       [/usr/local/include/osxfuse/fuse],[/usr/local/lib],
-      [osxfuse $sq_fuse_libs])
+      [$sq_fuse_libs])
+  ])
+  AS_CASE([$target_os],[haiku*],[
+    SQ_TRY_FUSE_DIRS([Haiku directories],
+      [/boot/develop/headers/userlandfs/fuse],,[$sq_fuse_libs])
   ])
   SQ_TRY_FUSE_DIRS([default directories],,,[$sq_fuse_libs])
   SQ_TRY_FUSE_DIRS([/usr],[/usr/include/fuse],[/usr/lib],[$sq_fuse_libs])
@@ -111,6 +115,34 @@ AC_DEFUN([SQ_SEARCH_FUSE_DIRS],[
   ],[sq_cv_lib_fuse_LIBS=no])
 ])
 
+# SQ_FUSE_OS_SPECIFIC
+#
+# Setup OS-specific flags for FUSE
+AC_DEFUN([SQ_FUSE_OS_SPECIFIC],[
+  # Some version of MacFUSE require some define's before inclusion
+  AS_CASE([$target_os],[darwin*],[
+    sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
+    # So many FUSE implementations!
+    sq_fuse_libs="osxfuse fuse4x fuse_ino64 $sq_fuse_libs"
+  ])
+  
+  # 'refuse' requires _NETBSD_SOURCE, not POSIX
+  AS_CASE([$target_os],[netbsd*|minix*],[
+    sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
+  ])
+  
+  # Minix needs to be static, to wrap main(), and a ton of libraries
+  AS_CASE([$target_os],[minix*],[
+    sq_fuse_ldflags="-Xcompiler -static -Wl,-wrap,main -lminixfs -lsys -lminlib"
+  ])
+  
+  # Haiku needs POSIX error compatibility
+  AS_CASE([$target_os],[haiku*],[
+    sq_fuse_cppflags="$sq_fuse_cppflags -DB_USE_POSITIVE_POSIX_ERRORS=1"
+    sq_fuse_libs="$sq_fuse_libs userlandfs_fuse:posix_error_mapper"
+  ])
+])
+
 # SQ_FIND_FUSE
 #
 # Find the FUSE library
@@ -120,15 +152,8 @@ AC_DEFUN([SQ_FIND_FUSE],[
   # FUSE headers usually demand _FILE_OFFSET_BITS=64
   sq_fuse_cppflags="-D_FILE_OFFSET_BITS=64"
   sq_fuse_libs="fuse refuse:puffs"
-  AS_CASE([$target_os],[darwin*],[
-    # Some version of MacFUSE require some define's before inclusion
-    sq_fuse_cppflags="$sq_fuse_cppflags -D__FreeBSD__=10 -D_DARWIN_USE_64_BIT_INODE"
-    sq_fuse_libs="osxfuse fuse4x fuse_ino64 $sq_fuse_libs"
-  ])
-  AS_CASE([$target_os],[netbsd*|minix*],[
-    # NetBSD 'refuse' requires _NETBSD_SOURCE
-    sq_fuse_cppflags="$sq_fuse_cppflags -U_POSIX_C_SOURCE -D_NETBSD_SOURCE"
-  ])
+  
+  SQ_FUSE_OS_SPECIFIC
 
   AC_ARG_WITH(fuse-cppflags,
     AS_HELP_STRING([--with-fuse-cppflags=FLAGS], [FUSE compiler flags]),
