@@ -346,14 +346,14 @@ void sqfs_opt_free(struct fuse_args *args) {
 }
 
 
-#if CONTEXT_BROKEN
+#if SQFS_CONTEXT_BROKEN
   static sqfs_opts *gOpts;
 #endif
 
 static int sqfs_opt_proc(void *data, const char *arg, int key,
     struct fuse_args *SQFS_UNUSED(outargs)) {
   sqfs_opts *opts;
-#if CONTEXT_BROKEN
+#if SQFS_CONTEXT_BROKEN
   opts = gOpts;
 #else
   opts = (sqfs_opts*)data;
@@ -383,7 +383,7 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
   opts->progname = argv[0];
   opts->image = NULL;
   opts->mountpoint = 0;
-#if CONTEXT_BROKEN
+#if SQFS_CONTEXT_BROKEN
   gOpts = opts;
 #endif
 

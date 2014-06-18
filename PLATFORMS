@@ -219,7 +219,6 @@ brackets, eg: [0.1]
         "squashfuse /path/to/archive.squashfs" path/to/mountpoint'
     - To unmount, run 'unmount', not 'umount' or 'fusermount'.
   + Notes
-    ???
     - No extended attributes support
 
 * Hurd

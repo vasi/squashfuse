@@ -368,3 +368,24 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
   
   SQ_RESTORE_FLAGS
 ])
+
+# SQ_FUSE_BREAKAGE
+#
+# Set defines for things that are known to be broken at runtime.
+# We can't practically test for this at configure time, we just hardcode
+# per target.
+AC_DEFUN([SQ_FUSE_BREAKAGE],[
+  AC_MSG_CHECKING([if fuse_get_context() is usable])
+  AS_CASE([$target_os],[minix*|haiku*],[
+    AC_DEFINE([SQFS_CONTEXT_BROKEN],1,
+      [Define if fuse_get_context() returns garbage])
+    AC_MSG_RESULT([no])
+  ],[AC_MSG_RESULT([yes])])
+  
+  AC_MSG_CHECKING([if FUSE readdir() can use offsets])
+  AS_CASE([$target_os],[openbsd*|gnu*],[
+    AC_DEFINE([SQFS_READDIR_NO_OFFSET],1,
+      [Define if the readdir callback can't use offsets])
+    AC_MSG_RESULT([no])
+  ],[AC_MSG_RESULT([yes])])
+])

@@ -34,17 +34,6 @@
 #include <string.h>
 
 
-/* Some systems have a very cranky readdir filler. For them, don't use offsets
-   and don't pass a struct stat. */
-#if defined(__OpenBSD__) || defined(__GNU__)
-  /* OpenBSD gives offsets within its own buffer, not the offsets we gave it.
-     Hurd gives us the count of items processed. */
-  #define READDIR_NO_OFFSETS 1
-#else
-  #define READDIR_NO_OFFSETS 0
-#endif
-
-
 typedef struct sqfs_hl sqfs_hl;
 struct sqfs_hl {
   sqfs fs;
@@ -53,13 +42,13 @@ struct sqfs_hl {
 
 
 /* Global user-data, for broken FUSE implementations */
-#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
+#if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   static sqfs_hl *gHL;
 #endif
 
 /* Get the user-data, whether or not we're broken */
 static sqfs_hl *sqfs_user_data(void *data) {
-#if CONTEXT_BROKEN
+#if SQFS_CONTEXT_BROKEN
   (void)data;
   return gHL;
 #else
@@ -91,7 +80,7 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 /* Get the filehandle that should be in the fileinfo */
 static sqfs_err sqfs_hl_fh(sqfs **fs, sqfs_inode **inode, const char *path,
     struct fuse_file_info *fi) {
-#if CONTEXT_BROKEN
+#if SQFS_CONTEXT_BROKEN
   (void)fi;
   return sqfs_hl_lookup(fs, *inode, path);
 #else
@@ -114,7 +103,7 @@ static void *sqfs_hl_op_init(
     struct fuse_conn_info *SQFS_UNUSED(conn)
 #endif
     ) {
-#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
+#if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   return gHL;
 #else
   return fuse_get_context()->private_data;
@@ -179,7 +168,7 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
   stp = &st;
   inodep = &inode;
 
-#if READDIR_NO_OFFSETS
+#if SQFS_READDIR_NO_OFFSET
   stp = NULL;
   offset = 0;
 #endif
@@ -194,7 +183,7 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
   doff = 0;
   sqfs_dentry_init(&entry, namebuf);
   while (sqfs_dir_next(fs, &dir, &entry, &err)) {
-    #if !READDIR_NO_OFFSETS
+    #if !SQFS_READDIR_NO_OFFSET
       doff = sqfs_dentry_next_offset(&entry);
       st.st_mode = sqfs_dentry_mode(&entry);
     #endif
@@ -364,7 +353,7 @@ int main(int argc, char *argv[]) {
   if (!hl)
     return -1;
   
-#if CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
+#if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   gHL = hl;
 #endif
 #ifdef HAVE_FUSE_INIT_USER_DATA
