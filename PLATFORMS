@@ -21,8 +21,6 @@ These are only supported by the squashfuse_ls demo:
 These don't seem to work yet:
 * Solaris
 * QNX
-* Haiku
-* Hurd
 
 These don't have FUSE:
 * iOS
