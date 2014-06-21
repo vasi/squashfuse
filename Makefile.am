@@ -20,6 +20,7 @@ libsquashfuse_la_SOURCES =    \
   common.h          \
   squashfs_fs.h     \
   squashfuse.h      \
+  array.c       array.h       \
   block.c       block.h       \
   cache.c       cache.h       \
   decompress.c  decompress.h  \
