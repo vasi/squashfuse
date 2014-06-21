@@ -25,17 +25,10 @@
 #ifndef SQFS_STACK_H
 #define SQFS_STACK_H
 
-#include "common.h"
+#include "array.h"
 
-typedef void (*sqfs_stack_free_t)(void *v);
-
-typedef struct {
-  size_t value_size;
-  size_t size;
-  size_t capacity;
-  char *items;
-  sqfs_stack_free_t freer;
-} sqfs_stack;
+typedef sqfs_array_free_t sqfs_stack_free_t;
+typedef sqfs_array sqfs_stack;
 
 /* Ensures the struct is in a safe state */
 void sqfs_stack_init(sqfs_stack *s);

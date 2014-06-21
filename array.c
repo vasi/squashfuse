@@ -111,8 +111,6 @@ static sqfs_err sqfs_array_set_size(sqfs_array *a, size_t size) {
 }
 
 
-
-
 void sqfs_array_init(sqfs_array *a) {
   a->value_size = 0;
   a->items = NULL;
