@@ -58,8 +58,14 @@ void sqfs_array_destroy(sqfs_array *a);
 /* Get the size of an array */
 size_t sqfs_array_size(sqfs_array *a);
 
-/* Shrink the array by 'shrink' items. Must be less than the current size */
+/* Shrink the array by 'shrink' items. Must be at most the current size */
 sqfs_err sqfs_array_shrink(sqfs_array *a, size_t shrink);
+
+/* Grow the array by 'grow' items. If vout is not null, put the first new
+   item's address into *(void**)vout
+   The caller should initialize the new items, their contents are not
+   at all guaranteed! */
+sqfs_err sqfs_array_grow(sqfs_array *a, size_t grow, void *vout);
 
 /* Get the item at a given position, put its address into *(void**)vout */
 sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout);

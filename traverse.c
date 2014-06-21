@@ -235,25 +235,20 @@ static void sqfs_traverse_path_terminate(sqfs_traverse *trv) {
 static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
     const char *str, size_t size) {
   sqfs_err err;
+  char *last;
   
-  /* Remove terminator */
-  if ((err = sqfs_array_shrink(&trv->path, 1)))
+  if ((err = sqfs_array_grow(&trv->path, size, &last)))
     return err;
   
-  if ((err = sqfs_array_concat(&trv->path, str, size)))
-    return err;
-  if ((err = sqfs_array_append(&trv->path, NULL)))
-    return err;
-  
+  memcpy(last - 1, str, size);
   sqfs_traverse_path_terminate(trv);
-  return SQFS_OK;
+  return err;
 }
 
 static void sqfs_traverse_path_remove(sqfs_traverse *trv, size_t size) {
-  size_t tgt = sqfs_array_size(&trv->path);
-  if (tgt <= size)
-    return;
-  
+  size_t orig = sqfs_array_size(&trv->path);
+  if (size >= orig)
+    size = orig - 1;
   sqfs_array_shrink(&trv->path, size);
   sqfs_traverse_path_terminate(trv);
 }

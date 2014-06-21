@@ -36,6 +36,7 @@ static sqfs_err sqfs_array_ensure_capacity(sqfs_array *a, size_t cap);
 
 /* Unconditionally get the item at an index */
 static void *sqfs_array_at_unchecked(sqfs_array *a, size_t idx);
+static void sqfs_array_at_put(sqfs_array *a, size_t idx, void *vout);
 
 /* A default freer, that does nothing */
 static void sqfs_array_freer_null(void *v);
@@ -88,6 +89,11 @@ static sqfs_err sqfs_array_ensure_capacity(sqfs_array *a, size_t cap) {
 
 static void *sqfs_array_at_unchecked(sqfs_array *a, size_t idx) {
   return a->items + idx * a->value_size;
+}
+
+static void sqfs_array_at_put(sqfs_array *a, size_t idx, void *vout) {
+  if (vout)
+    *(void**)vout = sqfs_array_at_unchecked(a, idx);
 }
 
 static void sqfs_array_freer_null(void *SQFS_UNUSED(v)) {
@@ -145,12 +151,23 @@ sqfs_err sqfs_array_shrink(sqfs_array *a, size_t shrink) {
   return sqfs_array_set_size(a, a->size - shrink);
 }
 
+sqfs_err sqfs_array_grow(sqfs_array *a, size_t grow, void *vout) {
+  sqfs_err err;
+  
+  size_t old = a->size;
+  if ((err = sqfs_array_set_size(a, old + grow)))
+    return err;
+  
+  sqfs_array_at_put(a, old, vout);
+  return SQFS_OK;
+}
+
 
 sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout) {
   if (idx > a->size)
     return SQFS_ERR;
   
-  *(void**)vout = sqfs_array_at_unchecked(a, idx);
+  sqfs_array_at_put(a, idx, vout);
   return SQFS_OK;
 }
 
@@ -161,24 +178,16 @@ sqfs_err sqfs_array_last(sqfs_array *a, void *vout) {
 }
 
 sqfs_err sqfs_array_append(sqfs_array *a, void *vout) {
-  sqfs_err err;
-  
-  if ((err = sqfs_array_set_size(a, a->size + 1)))
-    return err;
-  
-  if (vout)
-    *(void**)vout = sqfs_array_at_unchecked(a, a->size - 1);
-  return SQFS_OK;
+  return sqfs_array_grow(a, 1, vout);
 }
 
 sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count) {
   sqfs_err err;
-  size_t orig;
+  void *vout;
   
-  orig = a->size;
-  if ((err = sqfs_array_set_size(a, a->size + count)))
+  if ((err = sqfs_array_grow(a, count, &vout)))
     return err;
   
-  memcpy(sqfs_array_at_unchecked(a, orig), items, count * a->value_size);
+  memcpy(vout, items, count * a->value_size);
   return SQFS_OK;
 }
