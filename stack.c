@@ -59,8 +59,5 @@ sqfs_err sqfs_stack_at(sqfs_stack *s, size_t i, void *vout) {
 }
 
 sqfs_err sqfs_stack_top(sqfs_stack *s, void *vout) {
-  size_t size = sqfs_stack_size(s);
-  if (size == 0)
-    return SQFS_ERR;
-  return sqfs_stack_at(s, size - 1, vout);
+  return sqfs_array_last(s, vout);
 }

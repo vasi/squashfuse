@@ -154,17 +154,24 @@ sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout) {
   return SQFS_OK;
 }
 
+sqfs_err sqfs_array_last(sqfs_array *a, void *vout) {
+  if (a->size == 0)
+    return SQFS_ERR;
+  return sqfs_array_at(a, a->size - 1, vout);
+}
+
 sqfs_err sqfs_array_append(sqfs_array *a, void *vout) {
   sqfs_err err;
   
   if ((err = sqfs_array_set_size(a, a->size + 1)))
     return err;
   
-  *(void**)vout = sqfs_array_at_unchecked(a, a->size - 1);
+  if (vout)
+    *(void**)vout = sqfs_array_at_unchecked(a, a->size - 1);
   return SQFS_OK;
 }
 
-sqfs_err sqfs_array_concat(sqfs_array *a, void *items, size_t count) {
+sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count) {
   sqfs_err err;
   size_t orig;
   

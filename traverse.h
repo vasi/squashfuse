@@ -27,13 +27,14 @@
 
 #include "common.h"
 
+#include "array.h"
 #include "dir.h"
 #include "stack.h"
 
 typedef struct {
   bool dir_end;
   sqfs_dir_entry entry;
-  char *path;
+  sqfs_array path;
   
   
   /* private */
@@ -42,7 +43,6 @@ typedef struct {
   sqfs_name namebuf;
   sqfs_stack stack;
   
-  size_t path_size, path_cap;
   size_t path_last_size;
 } sqfs_traverse;
 
@@ -62,6 +62,9 @@ void sqfs_traverse_close(sqfs_traverse *trv);
      be true.
    Returns false if there are no more items. */
 bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err);
+
+/* Get the path of the current item */
+char *sqfs_traverse_path(sqfs_traverse *trv);
 
 /* Don't recurse into the directory just returned. */
 sqfs_err sqfs_traverse_prune(sqfs_traverse *trv);

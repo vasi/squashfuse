@@ -27,6 +27,9 @@
 
 #include "common.h"
 
+/* A dynamic array, that can expand as needed. Values are guaranteed to be
+   stored consecutively */
+
 /* A function to safely dispose of an array item. When an item is removed from
    the array, or the array is destroyed, it will be called. */
 typedef void (*sqfs_array_free_t)(void *v);
@@ -61,10 +64,14 @@ sqfs_err sqfs_array_shrink(sqfs_array *a, size_t shrink);
 /* Get the item at a given position, put its address into *(void**)vout */
 sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout);
 
-/* Append a new item, and put its address into *(void**)vout */
+/* Get the last item in the array */
+sqfs_err sqfs_array_last(sqfs_array *a, void *vout);
+
+/* Append a new item. If vout is not null, put the new item's address into
+  *(void**)vout. */
 sqfs_err sqfs_array_append(sqfs_array *a, void *vout);
 
 /* Append several items, copying them into the array */
-sqfs_err sqfs_array_concat(sqfs_array *a, void *items, size_t count);
+sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count);
 
 #endif
