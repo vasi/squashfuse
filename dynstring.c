@@ -22,50 +22,55 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_TRAVERSE_H
-#define SQFS_TRAVERSE_H
-
-#include "common.h"
-
-#include "dir.h"
 #include "dynstring.h"
-#include "stack.h"
 
-typedef struct {
-  bool dir_end;
-  sqfs_dir_entry entry;
-    
-  /* private */
-  int state;
-  sqfs *fs;
-  sqfs_name namebuf;
-  sqfs_stack stack;
+#include <string.h>
+
+void sqfs_dynstring_init(sqfs_dynstring *s) {
+  sqfs_array_init(s);
+}
+
+sqfs_err sqfs_dynstring_create(sqfs_dynstring *s, size_t initial) {
+  sqfs_err err;
+  if ((err = sqfs_array_create(s, sizeof(char), initial, NULL)))
+    return err;
+  return sqfs_array_append(s, NULL); /* room for terminator */
+}
+
+void sqfs_dynstring_destroy(sqfs_dynstring *s) {
+  sqfs_array_destroy(s);
+}
+
+size_t sqfs_dynstring_size(sqfs_dynstring *s) {
+  return sqfs_array_size(s) - 1;
+}
+
+char *sqfs_dynstring_string(sqfs_dynstring *s) {
+  char *c;
+  sqfs_array_first(s, &c); /* should always succeed */
+  c[sqfs_dynstring_size(s)] = '\0'; /* ensure nul-termination */
+  return c;
+}
+
+sqfs_err sqfs_dynstring_shrink(sqfs_dynstring *s, size_t shrink) {
+  if (shrink > sqfs_dynstring_size(s))
+    return SQFS_ERR; /* don't remove nul-terminator space! */
   
-  sqfs_dynstring path2;
-  size_t path_last_size;
-} sqfs_traverse;
+  return sqfs_array_shrink(s, shrink);
+}
 
-/* Begin a recursive traversal of a filesystem tree.
-   Every sub-item of the given inode will be traversed in-order, but not
-   this inode itself. */
-sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid);
-sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
-  sqfs_inode *inode);
+sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
+    size_t size) {
+  sqfs_err err;
+  char *last;
+  
+  if ((err = sqfs_array_grow(s, size, &last)))
+    return err;
+  
+  memcpy(last - 1, cat, size);
+  return SQFS_OK;
+}
 
-/* Clean up at any point during or after a traversal */
-void sqfs_traverse_close(sqfs_traverse *trv);
-
-/* Get the next item in the traversal. An item may be:
-   - A directory entry, in which case trv->entry will be filled
-   - A marker that a directory is finished, in which case trv->dir_end will
-     be true.
-   Returns false if there are no more items. */
-bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err);
-
-/* Get the path of the current item */
-char *sqfs_traverse_path(sqfs_traverse *trv);
-
-/* Don't recurse into the directory just returned. */
-sqfs_err sqfs_traverse_prune(sqfs_traverse *trv);
-
-#endif
+sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat) {
+  return sqfs_dynstring_concat_size(s, cat, strlen(cat));
+}

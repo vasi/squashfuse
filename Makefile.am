@@ -25,6 +25,7 @@ libsquashfuse_la_SOURCES =    \
   cache.c       cache.h       \
   decompress.c  decompress.h  \
   dir.c         dir.h         \
+  dynstring.c   dynstring.h   \
   file.c        file.h        \
   file_index.c  file_index.h  \
   fs.c          fs.h          \

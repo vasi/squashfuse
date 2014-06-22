@@ -72,8 +72,6 @@ static void sqfs_traverse_path_remove_name(sqfs_traverse *trv);
 static void sqfs_traverse_path_remove_sep(sqfs_traverse *trv);
 /* Set the size of the last path component */
 static void sqfs_traverse_path_set_name_size(sqfs_traverse *trv, size_t size);
-/* Add nul-terminator */
-static void sqfs_traverse_path_terminate(sqfs_traverse *trv);
 
 /* Descend into new directories, and ascend back */
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
@@ -85,7 +83,7 @@ static sqfs_err sqfs_traverse_ascend(sqfs_traverse *trv);
 static void sqfs_traverse_init(sqfs_traverse *trv) {
   sqfs_dentry_init(&trv->entry, trv->namebuf);
   sqfs_stack_init(&trv->stack);
-  sqfs_array_init(&trv->path);
+  sqfs_dynstring_init(&trv->path2);
   trv->state = TRAVERSE_ERROR;
 }
 
@@ -125,7 +123,7 @@ sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid) {
 
 void sqfs_traverse_close(sqfs_traverse *trv) {
   sqfs_stack_destroy(&trv->stack);
-  sqfs_array_destroy(&trv->path);
+  sqfs_dynstring_destroy(&trv->path2);
   sqfs_traverse_init(trv);
 }
 
@@ -203,54 +201,23 @@ sqfs_err sqfs_traverse_prune(sqfs_traverse *trv) {
 }
 
 char *sqfs_traverse_path(sqfs_traverse *trv) {
-  char *path;
-  if (sqfs_array_at(&trv->path, 0, &path))
-    return NULL;
-  return path;
+  return sqfs_dynstring_string(&trv->path2);
 }
 
 static sqfs_err sqfs_traverse_path_init(sqfs_traverse *trv) {
-  sqfs_err err;
-  char *last;
-  
-  err = sqfs_array_create(&trv->path, sizeof(char), TRAVERSE_DEFAULT_PATH_CAP,
-    NULL);
-  if (err)
-    return err;
-  
-  if ((err = sqfs_array_append(&trv->path, &last)))
-    return err;
-  
-  *last = '\0';
-  return SQFS_OK;
-}
-
-static void sqfs_traverse_path_terminate(sqfs_traverse *trv) {
-  char *last;
-  if (sqfs_array_last(&trv->path, &last))
-    return;
-  *last = '\0';
+  return sqfs_dynstring_create(&trv->path2, TRAVERSE_DEFAULT_PATH_CAP);
 }
 
 static sqfs_err sqfs_traverse_path_add(sqfs_traverse *trv,
     const char *str, size_t size) {
-  sqfs_err err;
-  char *last;
-  
-  if ((err = sqfs_array_grow(&trv->path, size, &last)))
-    return err;
-  
-  memcpy(last - 1, str, size);
-  sqfs_traverse_path_terminate(trv);
-  return err;
+  return sqfs_dynstring_concat_size(&trv->path2, str, size);
 }
 
 static void sqfs_traverse_path_remove(sqfs_traverse *trv, size_t size) {
-  size_t orig = sqfs_array_size(&trv->path);
-  if (size >= orig)
-    size = orig - 1;
-  sqfs_array_shrink(&trv->path, size);
-  sqfs_traverse_path_terminate(trv);
+  size_t shrink = sqfs_dynstring_size(&trv->path2);
+  if (shrink > size)
+    shrink = size;
+  sqfs_dynstring_shrink(&trv->path2, shrink);
 }
 
 static sqfs_err sqfs_traverse_path_add_name(sqfs_traverse *trv) {

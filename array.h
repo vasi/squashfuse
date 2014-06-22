@@ -70,7 +70,8 @@ sqfs_err sqfs_array_grow(sqfs_array *a, size_t grow, void *vout);
 /* Get the item at a given position, put its address into *(void**)vout */
 sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout);
 
-/* Get the last item in the array */
+/* Get the first/last item in the array */
+sqfs_err sqfs_array_first(sqfs_array *a, void *vout);
 sqfs_err sqfs_array_last(sqfs_array *a, void *vout);
 
 /* Append a new item. If vout is not null, put the new item's address into

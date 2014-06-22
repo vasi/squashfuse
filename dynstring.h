@@ -22,50 +22,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_TRAVERSE_H
-#define SQFS_TRAVERSE_H
+#ifndef SQFS_DYNSTRING_H
+#define SQFS_DYNSTRING_H
 
-#include "common.h"
+#include "array.h"
 
-#include "dir.h"
-#include "dynstring.h"
-#include "stack.h"
+/* A dynamically expanding string wrapper */
 
-typedef struct {
-  bool dir_end;
-  sqfs_dir_entry entry;
-    
-  /* private */
-  int state;
-  sqfs *fs;
-  sqfs_name namebuf;
-  sqfs_stack stack;
-  
-  sqfs_dynstring path2;
-  size_t path_last_size;
-} sqfs_traverse;
+typedef sqfs_array sqfs_dynstring;
 
-/* Begin a recursive traversal of a filesystem tree.
-   Every sub-item of the given inode will be traversed in-order, but not
-   this inode itself. */
-sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid);
-sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
-  sqfs_inode *inode);
+void sqfs_dynstring_init(sqfs_dynstring *s);
 
-/* Clean up at any point during or after a traversal */
-void sqfs_traverse_close(sqfs_traverse *trv);
+sqfs_err sqfs_dynstring_create(sqfs_dynstring *s, size_t initial);
+void sqfs_dynstring_destroy(sqfs_dynstring *s);
 
-/* Get the next item in the traversal. An item may be:
-   - A directory entry, in which case trv->entry will be filled
-   - A marker that a directory is finished, in which case trv->dir_end will
-     be true.
-   Returns false if there are no more items. */
-bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err);
+size_t sqfs_dynstring_size(sqfs_dynstring *s);
 
-/* Get the path of the current item */
-char *sqfs_traverse_path(sqfs_traverse *trv);
+/* Get the contents as a C-string */
+char *sqfs_dynstring_string(sqfs_dynstring *s);
 
-/* Don't recurse into the directory just returned. */
-sqfs_err sqfs_traverse_prune(sqfs_traverse *trv);
+sqfs_err sqfs_dynstring_shrink(sqfs_dynstring *s, size_t shrink);
+sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat);
+sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
+  size_t size);
 
 #endif

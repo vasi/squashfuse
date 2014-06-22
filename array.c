@@ -177,6 +177,10 @@ sqfs_err sqfs_array_last(sqfs_array *a, void *vout) {
   return sqfs_array_at(a, a->size - 1, vout);
 }
 
+sqfs_err sqfs_array_first(sqfs_array *a, void *vout) {
+  return sqfs_array_at(a, 0, vout);
+}
+
 sqfs_err sqfs_array_append(sqfs_array *a, void *vout) {
   return sqfs_array_grow(a, 1, vout);
 }
