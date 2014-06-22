@@ -324,8 +324,8 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll) {
     err = sqfs_ll_ino32exp_init(ll);
   } else {
     /* FIXME */
-    err = sqfs_ll_ino32_init(ll);
-    // err = sqfs_iidx_init(ll);
+    // err = sqfs_ll_ino32_init(ll);
+    err = sqfs_iidx_init(ll);
   }
   if (!ll->ino_register)
     ll->ino_register = ll->ino_fuse_num;

@@ -26,6 +26,7 @@
 
 #include "array.h"
 #include "hash.h"
+#include "squashfs_fs.h"
 #include "stack.h"
 #include "thread.h"
 
@@ -45,7 +46,6 @@ Instead of a 32-bit block location, we can then use a 23-bit block identifier.
 We will allocate these identifiers as-needed.
 
 TODO: Reserve some inodes, in case we run out of room for more block IDs.
-TODO: Handle root inode?
 */
 #define BITS_OFFSET_IGN 4
 #define BITS_OFFSET_KEEP (13-BITS_OFFSET_IGN)
@@ -93,11 +93,15 @@ static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
 static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx, sqfs_iidx_block_id bid,
   sqfs_iidx_offset_sig sig);
 
+/* Find the block info for a fuse_ino_t */
+static sqfs_err sqfs_iidx_info(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
+  sqfs_iidx_block_info **info, sqfs_iidx_block_loc **loc);
+
 /* Find an inode_id given a fuse_ino_t */
 static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
   sqfs_inode_id *iid);
 
-/* Get a reference to a fuse_ino_t for an inode id */
+/* Get a reference to the fuse_ino_t for an inode id */
 static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   sqfs_inode_id iid, fuse_ino_t *fi);
 
@@ -125,13 +129,35 @@ static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx, sqfs_iidx_block_id bid,
   return sig | (((bid + iidx->id_bias) << BITS_OFFSET_KEEP));
 }
 
+/* Find the block info for a fuse_ino_t */
+static sqfs_err sqfs_iidx_info(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
+    sqfs_iidx_block_info **info, sqfs_iidx_block_loc **loc) {
+  sqfs_err err;
+  sqfs_iidx_block_id bid;
+  sqfs_iidx_offset_sig sig;
+  
+  sqfs_iidx_decompose(iidx, fi, &bid, &sig);
+  
+  /* Find the block location */
+  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, loc)))
+    return err;
+  if (**loc == BLOCK_LOC_INVALID)
+    return SQFS_ERR;
+  
+  /* Find the block info */
+  if (!(*info = sqfs_hash_get(&iidx->loc_info, **loc)))
+    return SQFS_ERR;
+  
+  return SQFS_OK;
+}
+
 static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
     sqfs_inode_id *iid) {
   sqfs_err err;
   sqfs_iidx_block_id bid;
+  sqfs_iidx_offset_sig sig;
   sqfs_iidx_block_loc *loc;
   sqfs_iidx_block_info *info;
-  sqfs_iidx_offset_sig sig;
   off_t block;
   sqfs_md_cursor cur;
   
@@ -142,16 +168,8 @@ static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
   }
   
   sqfs_iidx_decompose(iidx, fi, &bid, &sig);
-  
-  /* Find the block location */
-  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, &loc)))
+  if ((err = sqfs_iidx_info(iidx, fs, fi, &info, &loc)))
     return err;
-  if (*loc == BLOCK_LOC_INVALID)
-    return SQFS_ERR;
-  
-  /* Find the block info */
-  if (!(info = sqfs_hash_get(&iidx->loc_info, *loc)))
-    return SQFS_ERR;
   
   /* Keep skipping til we've found the inode */
   block = *loc + fs->sb.inode_table_start;
@@ -192,7 +210,12 @@ static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
   *locp = loc;
   
   /* Create the block info */
-  /*FIXME*/
+  if ((err = sqfs_hash_add(&iidx->loc_info, loc, info)))
+    return err;
+  (*info)->refcount = 0;
+  (*info)->block_id = bid;
+  (*info)->min_offset = SQUASHFS_METADATA_SIZE;
+  
   return SQFS_OK;
 }
 
@@ -201,6 +224,7 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   sqfs_err err;
   sqfs_iidx_block_loc loc;
   sqfs_iidx_block_info *info;
+  uint16_t offset;
   
   /* The root always goes to the root */
   if (iid == sqfs_inode_root(fs)) {
@@ -210,6 +234,7 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   
   /* Check if we already have this block */
   loc = (iid >> 16);
+  offset = (iid & 0xffff);
   info = sqfs_hash_get(&iidx->loc_info, loc);
   
   /* If we don't have it, allocate an ID for it */
@@ -218,18 +243,23 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
       return err;
   }
   
-  /* TODO */
+  /* Update the location info */
+  info->refcount++;
+  if (info->min_offset > offset)
+    info->min_offset = offset;
+  
+  *fi = sqfs_iidx_compose(iidx, info->block_id, offset >> BITS_OFFSET_IGN);
   return SQFS_OK;
 }
 
 
-static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
   sqfs_inode_id iid;
   sqfs_err err;
   
   if (sqfs_iidx_lock(ll))
     return SQFS_INODE_NONE;
-  err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, i, &iid);
+  err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, fi, &iid);
   sqfs_iidx_unlock(ll);
   return err ? SQFS_INODE_NONE : iid;
 }
@@ -239,10 +269,47 @@ static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
 }
 
 static fuse_ino_t sqfs_iidx_register(sqfs_ll *ll, sqfs_dir_entry *e) {
-  return 0; /* FIXME */
+  fuse_ino_t fi;
+  sqfs_err err;
+  
+  if (sqfs_iidx_lock(ll))
+    return FUSE_INODE_NONE;
+  err = sqfs_iidx_ref(ll->ino_data, &ll->fs, e->inode, &fi);
+  sqfs_iidx_unlock(ll);
+  return err ? FUSE_INODE_NONE : fi;
 }
 
-static void sqfs_iidx_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
+static void sqfs_iidx_forget(sqfs_ll *ll, fuse_ino_t fi, size_t refs) {
+  sqfs_iidx_block_id *bid;
+  sqfs_iidx_block_loc *loc;
+  sqfs_iidx_block_info *info;
+  sqfs_iidx *iidx = ll->ino_data;
+  
+  if (fi == FUSE_ROOT_ID)
+    return;
+  if (sqfs_iidx_lock(ll))
+    return;
+  
+  if (sqfs_iidx_info(iidx, &ll->fs, fi, &info, &loc))
+    goto done;
+  
+  /* Decrement the refcount, and possibly deallocate the block ID */
+  info->refcount -= refs;
+  if (info->refcount == 0) {
+    /* Remove the block info */
+    if (sqfs_hash_remove(&iidx->loc_info, *loc))
+      goto done;
+
+    /* Add to the freelist */
+    if (sqfs_stack_push(&iidx->id_freelist, &bid))
+      goto done;
+    *bid = info->block_id;
+
+    *loc = BLOCK_LOC_INVALID; /* Mark unused in id_to_loc */
+  }
+  
+done:
+  sqfs_iidx_unlock(ll);
 }
 
 static void sqfs_iidx_destroy(sqfs_ll *ll) {
