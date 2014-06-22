@@ -216,13 +216,46 @@ static void sqfs_decode_dev(sqfs_inode *i, uint32_t rdev) {
 }
 
 
-static sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode,
-    sqfs_md_cursor *cur);
-
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
   sqfs_md_cursor cur;
   sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
   return sqfs_inode_get_cur(fs, inode, &cur);
+}
+
+sqfs_err sqfs_inode_skip(sqfs *fs, sqfs_md_cursor *cur) {
+  sqfs_err err;
+  sqfs_inode inode;
+  size_t i;
+  
+  if ((err = sqfs_inode_get_cur(fs, &inode, cur)))
+    return err;
+  *cur = inode.next;
+  
+  if (S_ISDIR(inode.base.mode)) { /* Skip dir index */
+    struct squashfs_dir_index idx;
+    for (i = inode.xtra.dir.idx_count; i > 0; --i) {
+      if ((err = sqfs_md_read(fs, cur, &idx, sizeof(idx))))
+        return err;
+      sqfs_swapin_dir_index(&idx);
+      if ((err = sqfs_md_read(fs, cur, NULL, idx.size + 1)))
+        return err;
+    }
+  } else if (S_ISLNK(inode.base.mode)) { /* Skip link target */
+    if ((err = sqfs_md_read(fs, cur, NULL, inode.xtra.symlink_size)))
+      return err;
+    
+    if (inode.base.inode_type == SQUASHFS_LSYMLINK_TYPE) {
+      if ((err = sqfs_md_read(fs, cur, NULL, sizeof(inode.xattr))))
+        return err;
+    }
+  } else if (S_ISREG(inode.base.mode)) { /* Skip block list */
+    size_t bytes = sqfs_blocklist_count(fs, &inode) *
+        sizeof(sqfs_blocklist_entry);
+    if ((err = sqfs_md_read(fs, cur, NULL, bytes)))
+      return err;
+  }
+  
+  return SQFS_OK;
 }
 
 
@@ -232,8 +265,7 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
   if (err) return err; \
   sqfs_swapin_##_type##_inode(&x)
 
-static sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode,
-    sqfs_md_cursor *cur) {
+sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode, sqfs_md_cursor *cur) {
   sqfs_err err = SQFS_OK;
   
   memset(inode, 0, sizeof(*inode));

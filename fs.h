@@ -92,9 +92,13 @@ void sqfs_destroy(sqfs *fs);
 void sqfs_version(sqfs *fs, int *major, int *minor);
 sqfs_compression_type sqfs_compression(sqfs *fs);
 
-void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id,sqfs_off_t base);
+void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id,
+  sqfs_off_t base);
 
 sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size);
+
+sqfs_err sqfs_inode_skip(sqfs *fs, sqfs_md_cursor *cur);
+sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode, sqfs_md_cursor *cur);
 
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 
