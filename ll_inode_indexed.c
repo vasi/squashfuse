@@ -167,12 +167,9 @@ static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
     return SQFS_OK;
   }
   
-  fprintf(stderr, "SQFS: fuse_ino_t = %lu\n", fi);
   sqfs_iidx_decompose(iidx, fi, &bid, &sig);
-  fprintf(stderr, "   bid = %d, off = %d\n", bid, sig);
   if ((err = sqfs_iidx_info(iidx, fs, fi, &info, &loc)))
     return err;
-  fprintf(stderr, "   loc = %d\n", *loc);
   
   /* Keep skipping til we've found the inode */
   block = *loc + fs->sb.inode_table_start;
@@ -181,7 +178,6 @@ static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
   while (cur.block == block) {
     if ((cur.offset >> BITS_OFFSET_IGN) == sig) { /* Found it! */
       *iid = (((sqfs_inode_id)*loc) << 16) | cur.offset;
-      fprintf(stderr, "   iid = %lld\n", *iid);
       return SQFS_OK;
     }
     
@@ -197,20 +193,17 @@ static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
   sqfs_iidx_block_loc *locp;
   sqfs_iidx_block_id bid, *bidp;
   
-  fprintf(stderr, "   ALLOCATING\n");
   if (sqfs_stack_top(&iidx->id_freelist, &bidp) == SQFS_OK) {
     /* Reuse an ID in the freelist */
     bid = *bidp;
-    fprintf(stderr, "      freelist -> %u\n", bid);
     sqfs_stack_pop(&iidx->id_freelist);
   } else {
     /* Nothing in the freelist, append to the array */
     bid = sqfs_array_size(&iidx->id_to_loc);
-    fprintf(stderr, "      new -> %u\n", bid);
     if ((err = sqfs_array_append(&iidx->id_to_loc, NULL)))
       return err;
   }
-
+  
   /* Map the ID to the location */
   if ((err = sqfs_array_at(&iidx->id_to_loc, bid, &locp)))
     return err;
@@ -223,6 +216,10 @@ static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
   (*info)->block_id = bid;
   (*info)->min_offset = SQUASHFS_METADATA_SIZE;
   
+  fprintf(stderr, "alloc: %6zu, free = %6zu\n",
+    sqfs_hash_size(&iidx->loc_info),
+    sqfs_stack_size(&iidx->id_freelist));
+
   return SQFS_OK;
 }
 
@@ -242,8 +239,6 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   /* Check if we already have this block */
   loc = (iid >> 16);
   offset = (iid & 0xffff);
-  fprintf(stderr, "REF: iid = %lld\n", iid);
-  fprintf(stderr, "   loc = %u, off = %u\n", loc, offset);
   info = sqfs_hash_get(&iidx->loc_info, loc);
   
   /* If we don't have it, allocate an ID for it */
@@ -257,10 +252,7 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   if (info->min_offset > offset)
     info->min_offset = offset;
   
-  fprintf(stderr, "   bid = %d, off = %d\n", info->block_id,
-    offset >> BITS_OFFSET_IGN);
   *fi = sqfs_iidx_compose(iidx, info->block_id, offset >> BITS_OFFSET_IGN);
-  fprintf(stderr, "   fi = %lu\n", *fi);
   return SQFS_OK;
 }
 
@@ -323,6 +315,10 @@ static void sqfs_iidx_forget(sqfs_ll *ll, fuse_ino_t fi, size_t refs) {
     *bid = info->block_id;
 
     *loc = BLOCK_LOC_INVALID; /* Mark unused in id_to_loc */
+
+    fprintf(stderr, "forget: %6zu, free = %6zu\n",
+      sqfs_hash_size(&iidx->loc_info),
+      sqfs_stack_size(&iidx->id_freelist));
   }
   
 done:

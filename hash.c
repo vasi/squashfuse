@@ -147,3 +147,7 @@ sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k) {
   }
   return SQFS_OK;
 }
+
+size_t sqfs_hash_size(sqfs_hash *h) {
+  return h->size;
+}

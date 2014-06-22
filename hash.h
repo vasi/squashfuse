@@ -58,6 +58,7 @@ void sqfs_hash_init(sqfs_hash *h);
 sqfs_err sqfs_hash_create(sqfs_hash *h, size_t vsize, size_t initial);
 void sqfs_hash_destroy(sqfs_hash *h);
 
+size_t sqfs_hash_size(sqfs_hash *h);
 sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);
 
 sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value_p vp);
