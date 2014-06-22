@@ -38,6 +38,7 @@
  */
 typedef uint32_t sqfs_hash_key;
 typedef void *sqfs_hash_value;
+typedef void *sqfs_hash_value_p;
 
 typedef struct sqfs_hash_bucket {
   struct sqfs_hash_bucket *next;
@@ -59,7 +60,7 @@ void sqfs_hash_destroy(sqfs_hash *h);
 
 sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);
 
-sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value v);
+sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value_p vp);
 sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k);
 
 #endif

@@ -204,20 +204,20 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
   sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache,
     sqfs_dentry_inode_num(e));
   if (ie) {
-    sqfs_mutex_unlock(&map->mutex);
     ++ie->refcount;
   } else {
-    sqfs_err err = SQFS_OK;
     sqfs_inode_id i = sqfs_dentry_inode(e);
-    sqfs_ll_inode_entry nie;
-    nie.ino_hi = INODE_HI(i);
-    nie.ino_lo = INODE_LO(i);
-    nie.refcount = 1;
-    err = sqfs_hash_add(&map->icache, sqfs_dentry_inode_num(e), &nie);
-    sqfs_mutex_unlock(&map->mutex);
-    if (err)
+    sqfs_ll_inode_entry *nie;
+    if (sqfs_hash_add(&map->icache, sqfs_dentry_inode_num(e), &nie)) {
+      sqfs_mutex_unlock(&map->mutex);
       return FUSE_INODE_NONE;
+    }
+    
+    nie->ino_hi = INODE_HI(i);
+    nie->ino_lo = INODE_LO(i);
+    nie->refcount = 1;
   }
+  sqfs_mutex_unlock(&map->mutex);
   
   return sqfs_ll_ino32_fuse_num(ll, e);
 }

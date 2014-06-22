@@ -24,24 +24,28 @@
  */
 #include "hash.h"
 
+#include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 
 static size_t sqfs_hash_hash(sqfs_hash *h, sqfs_hash_key k) {
   return (k & (h->capacity - 1));
 }
 
-static sqfs_err sqfs_hash_add_internal(sqfs_hash *h,
-    sqfs_hash_key k, sqfs_hash_value v) {
-  size_t hash = sqfs_hash_hash(h, k);
-  sqfs_hash_bucket *b = malloc(sizeof(sqfs_hash_bucket) + h->value_size);
-  if (!b)
-    return SQFS_ERR;
-  b->key = k;
-  memcpy(&b->value, v, h->value_size);
+static sqfs_err sqfs_hash_add_bucket(sqfs_hash *h, sqfs_hash_bucket *b,
+    sqfs_hash_key k, sqfs_hash_value_p vp) {
+  size_t hash = sqfs_hash_hash(h, b ? b->key : k);
+  if (!b) {
+    if (!(b = malloc(offsetof(sqfs_hash_bucket, value) + h->value_size)))
+      return SQFS_ERR;
+    b->key = k;
+  }
+  
   b->next = h->buckets[hash];
   h->buckets[hash] = b;
   ++h->size;
+  
+  if (vp)
+    *(sqfs_hash_value*)vp = &b->value;
   
   return SQFS_OK;
 }
@@ -60,10 +64,7 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
     while (b) {
       /* Move the bucket */
       sqfs_hash_bucket *n = b->next;
-      size_t hash = sqfs_hash_hash(h, b->key);
-      b->next = h->buckets[hash];
-      h->buckets[hash] = b;
-      ++h->size;
+      sqfs_hash_add_bucket(h, b, 0, NULL);
       b = n;
     }
   }
@@ -117,13 +118,13 @@ sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k) {
   return NULL;
 }
 
-sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value v) {
+sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value_p vp) {
   if (h->size >= h->capacity) {
     sqfs_err err = sqfs_hash_double(h);
     if (err)
       return err;
   }
-  return sqfs_hash_add_internal(h, k, v);
+  return sqfs_hash_add_bucket(h, NULL, k, vp);
 }
 
 sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k) {
