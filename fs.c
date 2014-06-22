@@ -215,23 +215,32 @@ static void sqfs_decode_dev(sqfs_inode *i, uint32_t rdev) {
   i->xtra.dev.minor = (rdev & 0xff) | ((rdev >> 12) & 0xfff00);
 }
 
+
+static sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode,
+    sqfs_md_cursor *cur);
+
+sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
+  sqfs_md_cursor cur;
+  sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
+  return sqfs_inode_get_cur(fs, inode, &cur);
+}
+
+
 #define INODE_TYPE(_type) \
   struct squashfs_##_type##_inode x; \
   err = sqfs_md_read(fs, &inode->next, &x, sizeof(x)); \
   if (err) return err; \
   sqfs_swapin_##_type##_inode(&x)
 
-sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
-  sqfs_md_cursor cur;
+static sqfs_err sqfs_inode_get_cur(sqfs *fs, sqfs_inode *inode,
+    sqfs_md_cursor *cur) {
   sqfs_err err = SQFS_OK;
   
   memset(inode, 0, sizeof(*inode));
   inode->xattr = SQUASHFS_INVALID_XATTR;
+  inode->next = *cur;
   
-  sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
-  inode->next = cur;
-  
-  err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
+  err = sqfs_md_read(fs, cur, &inode->base, sizeof(inode->base));
   if (err)
     return err;
   sqfs_swapin_base_inode(&inode->base);
@@ -286,11 +295,11 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
       
       if (inode->base.inode_type == SQUASHFS_LSYMLINK_TYPE) {
         /* skip symlink target */
-        cur = inode->next;
-        err = sqfs_md_read(fs, &cur, NULL, inode->xtra.symlink_size);
+        *cur = inode->next;
+        err = sqfs_md_read(fs, cur, NULL, inode->xtra.symlink_size);
         if (err)
           return err;
-        err = sqfs_md_read(fs, &cur, &inode->xattr, sizeof(inode->xattr));
+        err = sqfs_md_read(fs, cur, &inode->xattr, sizeof(inode->xattr));
         if (err)
           return err;
         sqfs_swapin32(&inode->xattr);
