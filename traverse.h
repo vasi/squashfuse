@@ -41,7 +41,7 @@ typedef struct {
   sqfs_name namebuf;
   sqfs_stack stack;
   
-  sqfs_dynstring path2;
+  sqfs_dynstring path;
   size_t path_last_size;
 } sqfs_traverse;
 
