@@ -27,6 +27,7 @@ SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
 # Decompression
+SQ_DECOMPRESSORS
 SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h])
 SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
 SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])

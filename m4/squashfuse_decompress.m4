@@ -30,6 +30,8 @@
 AC_DEFUN([SQ_CHECK_DECOMPRESS],[
   SQ_SAVE_FLAGS
   
+  sq_dir="$sq_decomp_prefix"
+  
   sq_want=yes
   sq_specified=no
   AC_ARG_WITH(m4_tolower($1),
@@ -39,9 +41,13 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
       sq_want=no
     ],[
       sq_specified=yes
-      CPPFLAGS="$CPPFLAGS -I$withval/include"
-      LIBS="$LIBS -L$withval/lib"
+      sq_dir="$withval"
     ])
+  ])
+
+  AS_IF([test "x$sq_dir" = x],,[
+    CPPFLAGS="$CPPFLAGS -I$sq_dir/include"
+    LIBS="$LIBS -L$sq_dir/lib"
   ])
   
   sq_dec_ok=
@@ -63,4 +69,11 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
     ])
   ])
   SQ_KEEP_FLAGS($1,[$sq_dec_ok])
+])
+
+AC_DEFUN([SQ_DECOMPRESSORS],[
+  AC_ARG_WITH([decompressors],
+    [AS_HELP_STRING([--with-decompressors],[decompressor prefix directory])],
+    [sq_decomp_prefix="$withval"]
+  )
 ])

@@ -78,8 +78,7 @@ brackets, eg: [0.1]
     - Homebrew
       brew install lzo xz lz4 osxfuse
       # follow instructions from `brew info osxfuse'
-  + Configure: If using a package manager, use --with-lzo=/wherever and/or
-    --with-lz4=/wherever
+  + Configure: If using a package manager, use --with-decompressors=/wherever
   + Notes:
     - OS X uses a different naming scheme for extended attributes, so
       they may not be very useful
@@ -97,7 +96,7 @@ brackets, eg: [0.1]
       - On versions less than 10.0, also fusefs-kmod
     - apt-get: Same packages as Debian Linux
       - Also need kfreebsd-headers-9 fuse4bsd fuse4bsd-dkms
-  + Configure: ./configure --with-lzo=/usr/local
+  + Configure: ./configure --with-decompressors=/usr/local
   + Notes:
     - Need to load the kernel module: `kldload fuse'
     - Set `sysctl vfs.usermount=1' for non-root
@@ -112,7 +111,7 @@ brackets, eg: [0.1]
   + Packages: From pkgsrc: lzo
     - For the low-level API, also install perfuse fuse on 6.1
       (libperfuse libfuse on 6.0)
-  + Configure: ./configure --with-fuse=/usr/pkg --with-lzo=/usr/pkg
+  + Configure: ./configure --with-fuse=/usr/pkg --with-decompressors=/usr/pkg
   + Notes:
     - For low-level, set `sysctl -w kern.sbmax=$n', where n is at least 540672
     - Low-level is slightly buggy, prints warning messages
@@ -163,7 +162,7 @@ brackets, eg: [0.1]
   + Versions: OpenBSD 5.4 and later
   + Tested on: OpenBSD 5.5 / amd64 [0.2]
   + Packages: lzo2 lz4 xz
-  + Configure: ./configure --with-lzo=/usr/local --with-lz4=/usr/local
+  + Configure: ./configure --with-decompressors=/usr/local
   + Notes:
     - Mounting requires root
     - No extended attributes support
@@ -175,7 +174,7 @@ brackets, eg: [0.1]
   + Versions: DragonflyBSD 3.2 and later
   + Tested on: DragonflyBSD 3.8 / amd64 [0.2]
   + Packages: lzo2
-  + Configure: ./configure --with-lzo=/usr/local
+  + Configure: ./configure --with-decompressors=/usr/local
   + Notes:
     - Need to load kernel module: `kldload puffs`
     - Mounting requires root
@@ -187,7 +186,7 @@ brackets, eg: [0.1]
   + Tested on: Minix 3.2.1 [0.2]
   + Packages: lzo
   + Configure
-    - ./configure --with-lzo=/usr/pkg
+    - ./configure --with-decompressors=/usr/pkg
   + Usage
     - Copy the `squashfuse' executable to /usr/pkg/bin/squashfuse and to
       /usr/pkg/bin/mount.squashfuse
