@@ -248,7 +248,7 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
     
   map = malloc(sizeof(sqfs_ll_inode_map));
   map->root = inode.base.inode_number;
-  sqfs_hash_init(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
+  sqfs_hash_create(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
     SQFS_ICACHE_INITIAL);
     
   ll->ino_sqfs = sqfs_ll_ino32_sqfs;

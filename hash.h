@@ -52,7 +52,9 @@ typedef struct {
   sqfs_hash_bucket **buckets;
 } sqfs_hash;
 
-sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial);
+void sqfs_hash_init(sqfs_hash *h);
+
+sqfs_err sqfs_hash_create(sqfs_hash *h, size_t vsize, size_t initial);
 void sqfs_hash_destroy(sqfs_hash *h);
 
 sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);

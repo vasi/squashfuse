@@ -48,7 +48,7 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
   size_t i;
   sqfs_err err;
   
-  if ((err = sqfs_hash_init(h, h->value_size, oc * 2)))
+  if ((err = sqfs_hash_create(h, h->value_size, oc * 2)))
     return err;
   
   for (i = 0; i < oc; ++i) {
@@ -67,8 +67,14 @@ static sqfs_err sqfs_hash_double(sqfs_hash *h) {
   return err;
 }
 
-sqfs_err sqfs_hash_init(sqfs_hash *h, size_t vsize, size_t initial) {
-  memset(h, 0, sizeof(*h));
+void sqfs_hash_init(sqfs_hash *h) {
+  h->value_size = 0;
+  h->capacity = h->size = 0;
+  h->buckets = NULL;
+}
+
+sqfs_err sqfs_hash_create(sqfs_hash *h, size_t vsize, size_t initial) {
+  sqfs_hash_init(h);
   if ((initial & (initial - 1))) /* not power of two? */
     return SQFS_ERR;
   
@@ -92,6 +98,7 @@ void sqfs_hash_destroy(sqfs_hash *h) {
     }
   }
   free(h->buckets);
+  sqfs_hash_init(h);
 }
 
 sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k) {
