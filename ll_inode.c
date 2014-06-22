@@ -26,6 +26,7 @@
 
 #include "hash.h"
 #include "nonstd.h"
+#include "thread.h"
 
 #include <errno.h>
 #include <stddef.h>
@@ -138,6 +139,7 @@ static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
 typedef struct {
   sqfs_inode_num root;
   sqfs_hash icache;
+  sqfs_mutex mutex;
 } sqfs_ll_inode_map;
 
 /* Pack tightly to save memory */
@@ -185,7 +187,9 @@ static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
   map = ll->ino_data;
   n = sqfs_ll_ino32_fuse2num(ll, i);
   
+  sqfs_mutex_lock(&map->mutex);
   ie = sqfs_hash_get(&map->icache, n);
+  sqfs_mutex_unlock(&map->mutex);
   return ie ? IE_INODE(ie) : SQFS_INODE_NONE;
 }
 
@@ -196,9 +200,11 @@ static fuse_ino_t sqfs_ll_ino32_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
 static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
   sqfs_ll_inode_map *map = ll->ino_data;
   
+  sqfs_mutex_lock(&map->mutex);
   sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache,
     sqfs_dentry_inode_num(e));
   if (ie) {
+    sqfs_mutex_unlock(&map->mutex);
     ++ie->refcount;
   } else {
     sqfs_err err = SQFS_OK;
@@ -208,6 +214,7 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
     nie.ino_lo = INODE_LO(i);
     nie.refcount = 1;
     err = sqfs_hash_add(&map->icache, sqfs_dentry_inode_num(e), &nie);
+    sqfs_mutex_unlock(&map->mutex);
     if (err)
       return FUSE_INODE_NONE;
   }
@@ -219,19 +226,21 @@ static void sqfs_ll_ino32_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
   sqfs_ll_inode_map *map = ll->ino_data;
   sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
   
+  sqfs_mutex_lock(&map->mutex);
   sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
-  if (!ie)
-    return;
-  
-  if (ie->refcount > refs) {
-    ie->refcount -= refs;
-  } else {
-    sqfs_hash_remove(&map->icache, n);
+  if (ie) {
+    if (ie->refcount > refs) {
+      ie->refcount -= refs;
+    } else {
+      sqfs_hash_remove(&map->icache, n);
+    }
   }
+  sqfs_mutex_unlock(&map->mutex);
 }
 
 static void sqfs_ll_ino32_destroy(sqfs_ll *ll) {
   sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_mutex_destroy(&map->mutex);
   sqfs_hash_destroy(&map->icache);
   free(map);
 }
@@ -247,6 +256,7 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
   map->root = inode.base.inode_number;
   sqfs_hash_create(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
     SQFS_ICACHE_INITIAL);
+  sqfs_mutex_init(&map->mutex);
     
   ll->ino_sqfs = sqfs_ll_ino32_sqfs;
   ll->ino_fuse_num = sqfs_ll_ino32_fuse_num;
