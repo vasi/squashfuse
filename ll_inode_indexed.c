@@ -27,6 +27,7 @@
 #include "array.h"
 #include "hash.h"
 #include "stack.h"
+#include "thread.h"
 
 #include <limits.h>
 #include <stddef.h>
@@ -78,8 +79,13 @@ typedef struct {
   
   /* Bias of block IDs when forming fuse_ino_t */
   size_t id_bias;
+  
+  sqfs_mutex mutex;
 } sqfs_iidx;
 
+/* Lock/unlock our data structures */
+static sqfs_err sqfs_iidx_lock(sqfs_ll *ll);
+static void sqfs_iidx_unlock(sqfs_ll *ll);
 
 /* Decompose/decompose a fuse_ino_t into the block ID and offset parts */
 static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
@@ -99,6 +105,14 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
 static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
   sqfs_iidx_block_info **info);
 
+
+static sqfs_err sqfs_iidx_lock(sqfs_ll *ll) {
+  return sqfs_mutex_lock(&((sqfs_iidx*)ll->ino_data)->mutex);
+}
+
+static void sqfs_iidx_unlock(sqfs_ll *ll) {
+  sqfs_mutex_unlock(&((sqfs_iidx*)ll->ino_data)->mutex);
+}
 
 static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
     sqfs_iidx_block_id *bid, sqfs_iidx_offset_sig *sig) {
@@ -211,7 +225,12 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
 
 static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t i) {
   sqfs_inode_id iid;
-  sqfs_err err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, i, &iid);
+  sqfs_err err;
+  
+  if (sqfs_iidx_lock(ll))
+    return SQFS_INODE_NONE;
+  err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, i, &iid);
+  sqfs_iidx_unlock(ll);
   return err ? SQFS_INODE_NONE : iid;
 }
 
@@ -232,6 +251,7 @@ static void sqfs_iidx_destroy(sqfs_ll *ll) {
     sqfs_array_destroy(&iidx->id_to_loc);
     sqfs_stack_destroy(&iidx->id_freelist);
     sqfs_hash_destroy(&iidx->loc_info);
+    sqfs_mutex_destroy(&iidx->mutex);
     free(iidx);
   }
 }
@@ -247,6 +267,7 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   sqfs_array_init(&iidx->id_to_loc);
   sqfs_stack_init(&iidx->id_freelist);
   sqfs_hash_init(&iidx->loc_info);
+  sqfs_mutex_init(&iidx->mutex);
   
   err = sqfs_array_create(&iidx->id_to_loc, sizeof(sqfs_iidx_block_loc),
     0, NULL);
