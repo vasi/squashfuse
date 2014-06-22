@@ -29,6 +29,9 @@
 
 #include <fuse_lowlevel.h>
 
+#define FUSE_INODE_NONE 0
+#define SQFS_INODE_NONE 1
+
 typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
   sqfs fs;
@@ -48,9 +51,11 @@ struct sqfs_ll {
   void (*ino_destroy)(sqfs_ll *ll);
 };
 
+/* Setup ll for indexed inodes */
+sqfs_err sqfs_iidx_init(sqfs_ll *ll);
+
 sqfs_err sqfs_ll_init(sqfs_ll *ll);
 void sqfs_ll_destroy(sqfs_ll *ll);
-
 
 /* Get an inode from an sqfs_ll */
 sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i);

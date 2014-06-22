@@ -135,9 +135,6 @@ static sqfs_err sqfs_ll_ino64_init(sqfs_ll *ll) {
  */
 #define SQFS_ICACHE_INITIAL 32
 
-#define FUSE_INODE_NONE 0
-#define SQFS_INODE_NONE 1
-
 typedef struct {
   sqfs_inode_num root;
   sqfs_hash icache;
@@ -316,7 +313,9 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll) {
   } else if (sqfs_export_ok(&ll->fs)) {
     err = sqfs_ll_ino32exp_init(ll);
   } else {
+    /* FIXME */
     err = sqfs_ll_ino32_init(ll);
+    // err = sqfs_iidx_init(ll);
   }
   if (!ll->ino_register)
     ll->ino_register = ll->ino_fuse_num;

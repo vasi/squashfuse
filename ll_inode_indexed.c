@@ -28,6 +28,7 @@
 #include "hash.h"
 #include "stack.h"
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -46,8 +47,12 @@ TODO: Reserve some inodes, in case we run out of room for more block IDs.
 TODO: Handle root inode?
 */
 #define BITS_OFFSET_IGN 4
-#define BITS_OFFSET_KEEP (13-OFFSET_BITS_IGNORE)
+#define BITS_OFFSET_KEEP (13-BITS_OFFSET_IGN)
 #define BITS_BLOCK (32-BITS_OFFSET_KEEP)
+
+#define MASK_OFFSET_KEEP ((1<<BITS_OFFSET_KEEP)-1)
+
+#define BLOCK_LOC_INVALID UINT_MAX
 
 typedef uint32_t sqfs_iidx_offset_sig;  /* Significant bits of offset */
 typedef uint32_t sqfs_iidx_block_id;    /* Block identifier */
@@ -59,7 +64,7 @@ typedef struct {
   uint16_t min_offset; /* The smallest known inode offset in this block */
   
   char end_of_struct;
-} sqfs_iidx_entry;
+} sqfs_iidx_block_info;
 
 typedef struct {
   /* Mapping from block ID -> block location */
@@ -76,6 +81,160 @@ typedef struct {
 } sqfs_iidx;
 
 
+/* Decompose/decompose a fuse_ino_t into the block ID and offset parts */
+static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
+  sqfs_iidx_block_id *bid, sqfs_iidx_offset_sig *sig);
+static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx, sqfs_iidx_block_id bid,
+  sqfs_iidx_offset_sig sig);
+
+/* Find an inode_id given a fuse_ino_t */
+static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
+  sqfs_inode_id *iid);
+
+/* Get a reference to a fuse_ino_t for an inode id */
+static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
+  sqfs_inode_id iid, fuse_ino_t *fi);
+
+/* Allocate a new block ID */
+static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
+  sqfs_iidx_block_info **info);
+
+
+static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
+    sqfs_iidx_block_id *bid, sqfs_iidx_offset_sig *sig) {
+  *bid = (fi >> BITS_OFFSET_KEEP) - iidx->id_bias;
+  *sig = (fi & MASK_OFFSET_KEEP);
+}
+
+static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx, sqfs_iidx_block_id bid,
+    sqfs_iidx_offset_sig sig) {
+  return sig | (((bid + iidx->id_bias) << BITS_OFFSET_KEEP));
+}
+
+static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
+    sqfs_inode_id *iid) {
+  sqfs_err err;
+  sqfs_iidx_block_id bid;
+  sqfs_iidx_block_loc *loc;
+  sqfs_iidx_block_info *info;
+  sqfs_iidx_offset_sig sig;
+  off_t block;
+  sqfs_md_cursor cur;
+  
+  /* The root always goes to the root */
+  if (fi == FUSE_ROOT_ID) {
+    *iid = sqfs_inode_root(fs);
+    return SQFS_OK;
+  }
+  
+  sqfs_iidx_decompose(iidx, fi, &bid, &sig);
+  
+  /* Find the block location */
+  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, &loc)))
+    return err;
+  if (*loc == BLOCK_LOC_INVALID)
+    return SQFS_ERR;
+  
+  /* Find the block info */
+  if (!(info = sqfs_hash_get(&iidx->loc_info, *loc)))
+    return SQFS_ERR;
+  
+  /* Keep skipping til we've found the inode */
+  block = *loc + fs->sb.inode_table_start;
+  cur.block = block;
+  cur.offset = info->min_offset;
+  while (cur.block == block) {
+    if ((cur.offset >> BITS_OFFSET_IGN) == sig) { /* Found it! */
+      *iid = (*loc << 16) | cur.offset;
+      return SQFS_OK;
+    }
+    
+    if ((err = sqfs_inode_skip(fs, &cur)))
+      return err;
+  }
+  return SQFS_ERR; /* Not found */
+}
+
+static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
+    sqfs_iidx_block_info **info) {
+  sqfs_err err;
+  sqfs_iidx_block_loc *locp;
+  sqfs_iidx_block_id bid, *bidp;
+  
+  if (sqfs_stack_top(&iidx->id_freelist, &bidp) == SQFS_OK) {
+    /* Reuse an ID in the freelist */
+    bid = *bidp;
+    sqfs_stack_pop(&iidx->id_freelist);
+  } else {
+    /* Nothing in the freelist, append to the array */
+    bid = sqfs_array_size(&iidx->id_to_loc);
+    if ((err = sqfs_array_append(&iidx->id_to_loc, NULL)))
+      return err;
+  }
+
+  /* Map the ID to the location */
+  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, &locp)))
+    return err;
+  *locp = loc;
+  
+  /* Create the block info */
+  /*FIXME*/
+  return SQFS_OK;
+}
+
+static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
+    sqfs_inode_id iid, fuse_ino_t *fi) {
+  sqfs_err err;
+  sqfs_iidx_block_loc loc;
+  sqfs_iidx_block_info *info;
+  
+  /* The root always goes to the root */
+  if (iid == sqfs_inode_root(fs)) {
+    *fi = FUSE_ROOT_ID;
+    return SQFS_OK;
+  }
+  
+  /* Check if we already have this block */
+  loc = (iid >> 16);
+  info = sqfs_hash_get(&iidx->loc_info, loc);
+  
+  /* If we don't have it, allocate an ID for it */
+  if (!info) {
+    if ((err = sqfs_iidx_allocate(iidx, loc, &info)))
+      return err;
+  }
+  
+  /* TODO */
+  return SQFS_OK;
+}
+
+
+static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t i) {
+  sqfs_inode_id iid;
+  sqfs_err err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, i, &iid);
+  return err ? SQFS_INODE_NONE : iid;
+}
+
+static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
+  return FUSE_INODE_NONE; /* Unknown FUSE inode */
+}
+
+static fuse_ino_t sqfs_iidx_register(sqfs_ll *ll, sqfs_dir_entry *e) {
+  return 0; /* FIXME */
+}
+
+static void sqfs_iidx_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
+}
+
+static void sqfs_iidx_destroy(sqfs_ll *ll) {
+  sqfs_iidx *iidx = ll->ino_data;
+  if (iidx) {
+    sqfs_array_destroy(&iidx->id_to_loc);
+    sqfs_stack_destroy(&iidx->id_freelist);
+    sqfs_hash_destroy(&iidx->loc_info);
+    free(iidx);
+  }
+}
 
 sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   sqfs_err err;
@@ -83,6 +242,7 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   
   if (!(iidx = malloc(sizeof(*iidx))))
     return SQFS_ERR;
+  ll->ino_data = iidx;
   
   sqfs_array_init(&iidx->id_to_loc);
   sqfs_stack_init(&iidx->id_freelist);
@@ -99,22 +259,21 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
     goto error;
 
   err = sqfs_hash_create(&iidx->loc_info,
-    offsetof(sqfs_iidx_entry, end_of_struct), 0);
+    offsetof(sqfs_iidx_block_info, end_of_struct), 0);
   if (err)
     goto error;
   
-  // ll->ino_sqfs = sqfs_iidx_sqfs;
-  // ll->ino_fuse_num = sqfs_iidx_fuse_num;
-  // ll->ino_register = sqfs_ll_iidx_register;
-  // ll->ino_forget = sqfs_ll_iidx_forget;
-  // ll->ino_destroy = sqfs_ll_iidx_destroy;
-  // ll->ino_data = iidx;
+  iidx->id_bias = 1; /* FIXME: reserve space */
+  
+  ll->ino_sqfs = sqfs_iidx_sqfs;
+  ll->ino_fuse_num = sqfs_iidx_fuse_num;
+  ll->ino_register = sqfs_iidx_register;
+  ll->ino_forget = sqfs_iidx_forget;
+  ll->ino_destroy = sqfs_iidx_destroy;
   
   return SQFS_OK;
 
 error:
-  sqfs_stack_destroy(&iidx->id_freelist);
-  sqfs_array_destroy(&iidx->id_to_loc);
-  sqfs_hash_destroy(&iidx->loc_info);
+  sqfs_iidx_destroy(ll);
   return err;
 }
