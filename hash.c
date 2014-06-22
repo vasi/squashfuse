@@ -27,6 +27,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#define HASH_DEFAULT_INITIAL 8
+
 static size_t sqfs_hash_hash(sqfs_hash *h, sqfs_hash_key k) {
   return (k & (h->capacity - 1));
 }
@@ -83,6 +85,9 @@ sqfs_err sqfs_hash_create(sqfs_hash *h, size_t vsize, size_t initial) {
   sqfs_hash_init(h);
   if ((initial & (initial - 1))) /* not power of two? */
     return SQFS_ERR;
+  
+  if (initial == 0)
+    initial = HASH_DEFAULT_INITIAL;
   
   h->buckets = calloc(initial, sizeof(sqfs_hash_bucket*));
   if (!h->buckets)

@@ -167,9 +167,12 @@ static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
     return SQFS_OK;
   }
   
+  fprintf(stderr, "SQFS: fuse_ino_t = %lu\n", fi);
   sqfs_iidx_decompose(iidx, fi, &bid, &sig);
+  fprintf(stderr, "   bid = %d, off = %d\n", bid, sig);
   if ((err = sqfs_iidx_info(iidx, fs, fi, &info, &loc)))
     return err;
+  fprintf(stderr, "   loc = %d\n", *loc);
   
   /* Keep skipping til we've found the inode */
   block = *loc + fs->sb.inode_table_start;
@@ -177,7 +180,8 @@ static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
   cur.offset = info->min_offset;
   while (cur.block == block) {
     if ((cur.offset >> BITS_OFFSET_IGN) == sig) { /* Found it! */
-      *iid = (*loc << 16) | cur.offset;
+      *iid = (((sqfs_inode_id)*loc) << 16) | cur.offset;
+      fprintf(stderr, "   iid = %lld\n", *iid);
       return SQFS_OK;
     }
     
@@ -193,13 +197,16 @@ static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
   sqfs_iidx_block_loc *locp;
   sqfs_iidx_block_id bid, *bidp;
   
+  fprintf(stderr, "   ALLOCATING\n");
   if (sqfs_stack_top(&iidx->id_freelist, &bidp) == SQFS_OK) {
     /* Reuse an ID in the freelist */
     bid = *bidp;
+    fprintf(stderr, "      freelist -> %u\n", bid);
     sqfs_stack_pop(&iidx->id_freelist);
   } else {
     /* Nothing in the freelist, append to the array */
     bid = sqfs_array_size(&iidx->id_to_loc);
+    fprintf(stderr, "      new -> %u\n", bid);
     if ((err = sqfs_array_append(&iidx->id_to_loc, NULL)))
       return err;
   }
@@ -235,6 +242,8 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   /* Check if we already have this block */
   loc = (iid >> 16);
   offset = (iid & 0xffff);
+  fprintf(stderr, "REF: iid = %lld\n", iid);
+  fprintf(stderr, "   loc = %u, off = %u\n", loc, offset);
   info = sqfs_hash_get(&iidx->loc_info, loc);
   
   /* If we don't have it, allocate an ID for it */
@@ -248,7 +257,10 @@ static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
   if (info->min_offset > offset)
     info->min_offset = offset;
   
+  fprintf(stderr, "   bid = %d, off = %d\n", info->block_id,
+    offset >> BITS_OFFSET_IGN);
   *fi = sqfs_iidx_compose(iidx, info->block_id, offset >> BITS_OFFSET_IGN);
+  fprintf(stderr, "   fi = %lu\n", *fi);
   return SQFS_OK;
 }
 
@@ -265,7 +277,12 @@ static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
 }
 
 static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-  return FUSE_INODE_NONE; /* Unknown FUSE inode */
+  /* We don't want to allocate a new block info, so just return more-or-less
+     the inode number. It should be ok. */
+  if (sqfs_dentry_inode(e) == sqfs_inode_root(&ll->fs))
+    return FUSE_ROOT_ID;
+  
+  return sqfs_dentry_inode_num(e) + 2; /* FIXME */
 }
 
 static fuse_ino_t sqfs_iidx_register(sqfs_ll *ll, sqfs_dir_entry *e) {
@@ -274,7 +291,7 @@ static fuse_ino_t sqfs_iidx_register(sqfs_ll *ll, sqfs_dir_entry *e) {
   
   if (sqfs_iidx_lock(ll))
     return FUSE_INODE_NONE;
-  err = sqfs_iidx_ref(ll->ino_data, &ll->fs, e->inode, &fi);
+  err = sqfs_iidx_ref(ll->ino_data, &ll->fs, sqfs_dentry_inode(e), &fi);
   sqfs_iidx_unlock(ll);
   return err ? FUSE_INODE_NONE : fi;
 }
@@ -351,7 +368,7 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   if (err)
     goto error;
   
-  iidx->id_bias = 1; /* FIXME: reserve space */
+  iidx->id_bias = 1 << 9; /* FIXME: reserve space */
   
   ll->ino_sqfs = sqfs_iidx_sqfs;
   ll->ino_fuse_num = sqfs_iidx_fuse_num;
