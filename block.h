@@ -38,6 +38,9 @@ typedef struct {
   char data[1];
 } sqfs_block;
 
+/* Put in pos the position of the next metadata block after pos */
+sqfs_err sqfs_md_skip(sqfs *fs, off_t *pos);
+
 /* Initialize a block cache, with an initial and maximum capacity */
 sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t block_size,
   size_t initial, size_t max);

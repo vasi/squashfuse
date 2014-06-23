@@ -45,6 +45,18 @@ static void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size) {
     *size = SQUASHFS_COMPRESSED_BIT;
 }
 
+sqfs_err sqfs_md_skip(sqfs *fs, off_t *pos) {
+  bool compressed;
+  uint16_t hdr, size;
+  
+  if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
+    return SQFS_ERR;
+  
+  sqfs_md_header(hdr, &compressed, &size);
+  *pos += sizeof(hdr) + size;
+  return SQFS_OK;
+}
+
 void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size) {
   *compressed = !(hdr & SQUASHFS_COMPRESSED_BIT_BLOCK);
   *size = hdr & ~SQUASHFS_COMPRESSED_BIT_BLOCK;
