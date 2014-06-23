@@ -320,7 +320,7 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll) {
   sqfs_err err = SQFS_OK;
   if (sizeof(fuse_ino_t) >= SQFS_INODE_ID_BYTES) {
     err = sqfs_ll_ino64_init(ll);
-  } else if (sqfs_export_ok(&ll->fs)) {
+  } else if (0 && sqfs_export_ok(&ll->fs)) {
     err = sqfs_ll_ino32exp_init(ll);
   } else {
     /* FIXME */
