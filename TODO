@@ -38,10 +38,6 @@ Performance
 	Speculative read-ahead? Trust OS to do it?
 	Caching and threading strategy delegation?
 		eg: Small caches for low-memory; huge caches for complete extraction 
-	Profile for optimization opportunities
-  32-bit inode memory bug workaround
-    Use 23 bit block ID + 9 bit offset ID
-      Doesn't work well when there are few inodes per block
 
 Platform support
 	Known bad

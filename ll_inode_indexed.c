@@ -43,8 +43,6 @@ Instead of a 32-bit block location, we can then use a 23-bit block identifier.
 We will read all the block locations at startup, in groups of N. Then
 the last log(N) bits of the block ID will indicate the block within a group,
 and the first 23-log(N) will indicate the group.
-
-TODO: Reserve some inodes, in case we run out of room for more block IDs.
 */
 #define BITS_OFFSET_IGN 4
 #define BITS_OFFSET_KEEP (13-BITS_OFFSET_IGN)
@@ -52,7 +50,7 @@ TODO: Reserve some inodes, in case we run out of room for more block IDs.
 
 #define MASK_OFFSET_KEEP ((1<<BITS_OFFSET_KEEP)-1)
 
-#define MAX_BLOCK_GROUPS 8192
+#define MAX_BLOCK_GROUPS MAX_CACHED_INODES
 #define BLOCK_IDX_INVALID UINT16_MAX
 
 typedef uint32_t offset_sig;  /* Significant bits of offset */
