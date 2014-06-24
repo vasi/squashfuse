@@ -222,10 +222,10 @@ Squashfuse has low memory usage, generally around 400 KB of heap for
 
 3d. Known bugs
 --------------
-- On 32-bit systems with a large inode cache, when mounting a large SquashFS
-  archive created with the "-no-exports" option, squashfuse_ll may use more
-  memory that normal--up to tens of MB. This is due to a bug in the FUSE API,
-  scheduled for a fix in FUSE 3.
+- On 32-bit systems, when mounting a SquashFS archive containing millions of
+  inodes, created with the "-no-exports" option, squashfuse_ll may be slower
+  than usual. This is due to a bug in the FUSE API, scheduled for a fix in
+  FUSE 3.
 
 
 4. References
