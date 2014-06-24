@@ -41,7 +41,16 @@ struct sqfs_hl {
 };
 
 
+#if HAVE_STRUCT_FUSE_FILE_INFO
+  typedef struct fuse_file_info *sqfs_file_info;
+#else
+  typedef int sqfs_file_info;
+#endif
+
 /* Global user-data, for broken FUSE implementations */
+#if !HAVE_STRUCT_FUSE_OPERATIONS_INIT && !SQFS_CONTEXT_BROKEN
+  #define SQFS_CONTEXT_BROKEN 1
+#endif
 #if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   static sqfs_hl *gHL;
 #endif
@@ -79,8 +88,8 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 
 /* Get the filehandle that should be in the fileinfo */
 static sqfs_err sqfs_hl_fh(sqfs **fs, sqfs_inode **inode, const char *path,
-    struct fuse_file_info *fi) {
-#if SQFS_CONTEXT_BROKEN
+    sqfs_file_info fi) {
+#if SQFS_CONTEXT_BROKEN || !HAVE_STRUCT_FUSE_FILE_INFO
   (void)fi;
   return sqfs_hl_lookup(fs, *inode, path);
 #else
@@ -91,6 +100,32 @@ static sqfs_err sqfs_hl_fh(sqfs **fs, sqfs_inode **inode, const char *path,
 #endif
 }
 
+/* Abstract out things that use fuse_file_info */
+static void sqfs_hl_set_fh(sqfs_file_info fi, void *fh) {
+  #if HAVE_STRUCT_FUSE_FILE_INFO
+    fi->fh = (intptr_t)fh;
+  #else
+    free(fh);
+  #endif
+}
+static void sqfs_hl_free_fh(sqfs_file_info fi) {
+  #if HAVE_STRUCT_FUSE_FILE_INFO
+    free((void*)(intptr_t)fi->fh);
+    fi->fh = 0;
+  #else
+    (void)fi;
+  #endif
+}
+static int sqfs_hl_flags(sqfs_file_info fi) {
+  #if HAVE_STRUCT_FUSE_FILE_INFO
+    return fi->flags;
+  #else
+    return fi;
+  #endif
+}
+
+
+#if HAVE_STRUCT_FUSE_OPERATIONS_INIT
 
 static void sqfs_hl_op_destroy(void *user_data) {
   sqfs_hl *hl = sqfs_user_data(user_data);
@@ -99,7 +134,7 @@ static void sqfs_hl_op_destroy(void *user_data) {
 }
 
 static void *sqfs_hl_op_init(
-#ifdef HAVE_FUSE_INIT_USER_DATA
+#if HAVE_FUSE_INIT_USER_DATA
     struct fuse_conn_info *SQFS_UNUSED(conn)
 #endif
     ) {
@@ -109,6 +144,9 @@ static void *sqfs_hl_op_init(
   return fuse_get_context()->private_data;
 #endif
 }
+
+#endif /* INIT */
+
 
 static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
   sqfs *fs;
@@ -125,7 +163,39 @@ static int sqfs_hl_op_getattr(const char *path, struct stat *st) {
   return 0;
 }
 
-static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
+
+typedef bool (*sqfs_filler)(sqfs_dir_entry *entry, void *subfiller, void *buf,
+  void *data);
+
+static int sqfs_hl_dir_common(const char *path, sqfs_file_info fi,
+    off_t offset, sqfs_filler filler, void *subfiller, void *buf, void *data) {
+  sqfs_err err;
+  sqfs *fs;
+  sqfs_dir dir;
+  sqfs_name namebuf;
+  sqfs_dir_entry entry;
+  sqfs_inode inode, *inodep = &inode;
+
+  if (sqfs_hl_fh(&fs, &inodep, path, fi))
+    return -ENOENT;
+
+  if (sqfs_dir_open(fs, inodep, &dir, offset))
+    return -EINVAL;
+
+  sqfs_dentry_init(&entry, namebuf);
+  while (sqfs_dir_next(fs, &dir, &entry, &err)) {
+    if (filler(&entry, subfiller, buf, data))
+      return 0;
+  }
+  if (err)
+    return -EIO;
+  return 0;
+}
+
+
+#if HAVE_STRUCT_FUSE_OPERATIONS_READDIR
+
+static int sqfs_hl_op_opendir(const char *path, sqfs_file_info fi) {
   sqfs *fs;
   sqfs_inode *inode;
   
@@ -143,64 +213,64 @@ static int sqfs_hl_op_opendir(const char *path, struct fuse_file_info *fi) {
     return -ENOTDIR;
   }
   
-  fi->fh = (intptr_t)inode;
+  sqfs_hl_set_fh(fi, inode);
   return 0;
 }
 
 static int sqfs_hl_op_releasedir(const char *SQFS_UNUSED(path),
-    struct fuse_file_info *fi) {
-  free((sqfs_inode*)(intptr_t)fi->fh);
-  fi->fh = 0;
+    sqfs_file_info fi) {
+  sqfs_hl_free_fh(fi);
   return 0;
+}
+
+static bool sqfs_hl_readdir_filler(sqfs_dir_entry *entry, void *filler,
+    void *buf, void *data) {
+  struct stat *stp = (struct stat*)data;
+  sqfs_off_t doff = 0;
+
+  #if !SQFS_READDIR_NO_OFFSET
+    doff = sqfs_dentry_next_offset(entry);
+    stp->st_mode = sqfs_dentry_mode(entry);
+  #endif
+
+  return ((fuse_fill_dir_t)filler)(buf, sqfs_dentry_name(entry), stp, doff);
 }
 
 static int sqfs_hl_op_readdir(const char *path, void *buf,
-    fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
-  sqfs_err err;
-  sqfs *fs;
-  sqfs_dir dir;
-  sqfs_name namebuf;
-  sqfs_dir_entry entry;
-  sqfs_inode inode, *inodep;
-  struct stat st, *stp;
-  sqfs_off_t doff;
-  
-  stp = &st;
-  inodep = &inode;
-
-#if SQFS_READDIR_NO_OFFSET
-  stp = NULL;
-  offset = 0;
-#endif
-  
-  if (sqfs_hl_fh(&fs, &inodep, path, fi))
-    return -ENOENT;
-
-  if (sqfs_dir_open(fs, inodep, &dir, offset))
-    return -EINVAL;
-  
+    fuse_fill_dir_t filler, off_t offset, sqfs_file_info fi) {
+  struct stat st, *stp = &st;
   memset(&st, 0, sizeof(st));
-  doff = 0;
-  sqfs_dentry_init(&entry, namebuf);
-  while (sqfs_dir_next(fs, &dir, &entry, &err)) {
-    #if !SQFS_READDIR_NO_OFFSET
-      doff = sqfs_dentry_next_offset(&entry);
-      st.st_mode = sqfs_dentry_mode(&entry);
-    #endif
-    if (filler(buf, sqfs_dentry_name(&entry), stp, doff))
-      return 0;
-  }
-  if (err)
-    return -EIO;
-  return 0;
+  #if SQFS_READDIR_NO_OFFSET
+    stp = NULL;
+    offset = 0;
+  #endif
+  
+  return sqfs_hl_dir_common(path, fi, offset, sqfs_hl_readdir_filler, filler,
+    buf, stp);
 }
 
-static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
+#else /* !READDIR */
+
+static bool sqfs_hl_getdir_filler(sqfs_dir_entry *entry, void *filler,
+    void *buf, void *data) {
+  return ((fuse_dirfil_t)filler)(buf, sqfs_dentry_name(entry), 0);
+}
+
+static int sqfs_hl_op_getdir(const char *path, fuse_dirh_t dh,
+    fuse_dirfil_t filler) {
+  return sqfs_hl_dir_common(path, 0, 0, sqfs_hl_getdir_filler, filler,
+    dh, NULL);
+}
+
+#endif /* !READDIR */
+
+
+static int sqfs_hl_op_open(const char *path, sqfs_file_info fi) {
   sqfs *fs;
   sqfs_inode *inode;
   
 #ifndef SQFS_OPEN_BAD_FLAGS
-  if ((fi->flags & O_ACCMODE) != O_RDONLY)
+  if ((sqfs_hl_flags(fi) & O_ACCMODE) != O_RDONLY)
     return -EROFS;
 #endif
   
@@ -218,22 +288,28 @@ static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
     return -EISDIR;
   }
   
-  fi->fh = (intptr_t)inode;
+  sqfs_hl_set_fh(fi, inode);
   return 0;
 }
 
 static int sqfs_hl_op_release(const char *SQFS_UNUSED(path),
-    struct fuse_file_info *fi) {
-  free((sqfs_inode*)(intptr_t)fi->fh);
-  fi->fh = 0;
+    sqfs_file_info fi) {
+  sqfs_hl_free_fh(fi);
   return 0;
 }
 
 static int sqfs_hl_op_read(const char *path, char *buf,
-    size_t size, off_t off, struct fuse_file_info *fi) {
+size_t size, off_t off
+#if HAVE_STRUCT_FUSE_FILE_INFO
+, sqfs_file_info fi
+#endif
+) {
   sqfs *fs;
   sqfs_inode inode, *inodep = &inode;
   off_t osize;
+  #if !HAVE_STRUCT_FUSE_FILE_INFO
+    sqfs_file_info fi = 0;
+  #endif
   
   if (sqfs_hl_fh(&fs, &inodep, path, fi))
     return -ENOENT;
@@ -274,7 +350,7 @@ static int sqfs_hl_op_listxattr(const char *path, char *buf, size_t size) {
 
 static int sqfs_hl_op_getxattr(const char *path, const char *name,
     char *value, size_t size
-#ifdef FUSE_XATTR_POSITION
+#if FUSE_XATTR_POSITION
     , uint32_t position
 #endif
     ) {
@@ -282,7 +358,7 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
   sqfs_inode inode;
   size_t real = size;
 
-#ifdef FUSE_XATTR_POSITION
+#if FUSE_XATTR_POSITION
   if (position != 0) /* We don't support resource forks */
     return -EINVAL;
 #endif
@@ -329,12 +405,18 @@ int main(int argc, char *argv[]) {
   int ret;
   
   memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
+#if HAVE_STRUCT_FUSE_OPERATIONS_INIT
   sqfs_hl_ops.init        = sqfs_hl_op_init;
   sqfs_hl_ops.destroy     = sqfs_hl_op_destroy;
+#endif
   sqfs_hl_ops.getattr     = sqfs_hl_op_getattr;
+#if HAVE_STRUCT_FUSE_OPERATIONS_READDIR
   sqfs_hl_ops.opendir     = sqfs_hl_op_opendir;
   sqfs_hl_ops.releasedir  = sqfs_hl_op_releasedir;
   sqfs_hl_ops.readdir     = sqfs_hl_op_readdir;
+#else
+  sqfs_hl_ops.getdir      = sqfs_hl_op_getdir;
+#endif
   sqfs_hl_ops.open        = sqfs_hl_op_open;
   sqfs_hl_ops.release     = sqfs_hl_op_release;
   sqfs_hl_ops.read        = sqfs_hl_op_read;
@@ -358,7 +440,7 @@ int main(int argc, char *argv[]) {
 #if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   gHL = hl;
 #endif
-#ifdef HAVE_FUSE_INIT_USER_DATA
+#if HAVE_FUSE_INIT_USER_DATA
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
 #else
   ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops);

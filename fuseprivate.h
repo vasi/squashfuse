@@ -28,11 +28,21 @@
 #include "squashfuse.h"
 
 #include <fuse.h>
+#ifdef HAVE_FUSE_OPT_H
+  #include <fuse_opt.h>
+#else
+  struct fuse_args {
+    int argc;
+    char **argv;
+    int allocated;
+  };
+  #define FUSE_OPT_KEY_OPT -1
+  #define FUSE_OPT_KEY_NONOPT -2
+#endif
 
 #include <sys/stat.h>
 
 /* Common functions for FUSE high- and low-level clients */
-
 
 /* Fill in a stat structure. Does not set st_ino */
 sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);

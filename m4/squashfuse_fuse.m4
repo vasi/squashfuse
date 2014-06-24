@@ -53,7 +53,6 @@ AC_DEFUN([SQ_TRY_FUSE_LIBS],[
     AC_CACHE_CHECK([for FUSE header],[sq_cv_hdr],[
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
           #include <fuse.h>
-          #include <fuse_opt.h>
         ])],
         [AS_VAR_SET([sq_cv_hdr],[yes])],
         [AS_VAR_SET([sq_cv_hdr],[no])]
@@ -287,7 +286,13 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
     AC_DEFINE([HAVE_FUSE_INIT_USER_DATA],1,
         [Define if op.init() takes a user_data parameter])
   ])
-
+  
+  AC_CHECK_HEADERS([fuse_opt.h])
+  AC_CHECK_TYPES([struct fuse_file_info],,,[#include <fuse.h>])
+  AC_CHECK_MEMBERS(
+    [struct fuse_operations.readdir, struct fuse_operations.init],,,
+    [#include <fuse.h>])
+  
   AS_IF([test "x$enable_low_level" = xyes],[
     AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
       [#include <fuse_lowlevel.h>])
