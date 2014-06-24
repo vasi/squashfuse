@@ -288,13 +288,27 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
   AS_IF([test "x$sq_cv_decl_fuse_user_data" = xyes],[
     AC_DEFINE([HAVE_FUSE_INIT_USER_DATA],1,
         [Define if op.init() takes a user_data parameter])
+  ],[
+    AC_CACHE_CHECK([for fuse_main return value],
+        [sq_cv_decl_fuse_main_return],[
+      AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <fuse.h>],
+          [int ret = fuse_main(0,0,0)])],
+        [sq_cv_decl_fuse_main_return=yes],
+        [sq_cv_decl_fuse_main_return=no])
+    ])
+    AS_IF([test "x$sq_cv_decl_fuse_main_return" = xyes],[
+      AC_DEFINE([HAVE_FUSE_MAIN_RETURN],1,
+          [Define if fuse_main() returns an int])
+    ])
   ])
   
   AC_CHECK_HEADERS([fuse_opt.h])
   AC_CHECK_TYPES([struct fuse_file_info],,,[#include <fuse.h>])
-  AC_CHECK_MEMBERS(
-    [struct fuse_operations.readdir, struct fuse_operations.init],,,
-    [#include <fuse.h>])
+  AC_CHECK_MEMBERS([
+      struct fuse_operations.readdir,
+      struct fuse_operations.init,
+      struct fuse_operations.listxattr],,,[#include <fuse.h>])
 
   AC_CACHE_CHECK([for inode argument to fuse_dirfil_t],
       [sq_cv_decl_fuse_dirfil_t_inode],[

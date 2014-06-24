@@ -338,6 +338,9 @@ static int sqfs_hl_op_readlink(const char *path, char *buf, size_t size) {
   return 0;
 }
 
+
+#if HAVE_STRUCT_FUSE_OPERATIONS_LISTXATTR
+
 static int sqfs_hl_op_listxattr(const char *path, char *buf, size_t size) {
   sqfs *fs;
   sqfs_inode inode;
@@ -379,6 +382,9 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
   return real;
 }
 
+#endif /* LISTXATTR */
+
+
 static sqfs_hl *sqfs_hl_open(const char *path) {
   sqfs_hl *hl;
   
@@ -406,7 +412,7 @@ int main(int argc, char *argv[]) {
   struct fuse_args args;
   sqfs_opts opts;
   sqfs_hl *hl;
-  int ret;
+  int ret = 0;
   
   memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
 #if HAVE_STRUCT_FUSE_OPERATIONS_INIT
@@ -425,8 +431,10 @@ int main(int argc, char *argv[]) {
   sqfs_hl_ops.release     = sqfs_hl_op_release;
   sqfs_hl_ops.read        = sqfs_hl_op_read;
   sqfs_hl_ops.readlink    = sqfs_hl_op_readlink;
+#if HAVE_STRUCT_FUSE_OPERATIONS_LISTXATTR
   sqfs_hl_ops.listxattr   = sqfs_hl_op_listxattr;
   sqfs_hl_ops.getxattr    = sqfs_hl_op_getxattr;
+#endif
   
   if (sqfs_opt_parse(&args, argc, argv, &opts))
     sqfs_usage(argv[0], true);
@@ -444,11 +452,14 @@ int main(int argc, char *argv[]) {
 #if SQFS_CONTEXT_BROKEN || !HAVE_FUSE_INIT_USER_DATA
   gHL = hl;
 #endif
-#if HAVE_FUSE_INIT_USER_DATA
-  ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
-#else
-  ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops);
+#if HAVE_FUSE_INIT_USER_DATA || HAVE_FUSE_MAIN_RETURN
+  ret =
 #endif
+  fuse_main(args.argc, args.argv, &sqfs_hl_ops
+#if HAVE_FUSE_INIT_USER_DATA
+    , hl
+#endif
+  );
   
   sqfs_opt_free(&args);
   return ret;
