@@ -168,12 +168,20 @@ static sqfs_err sqfs_iidx_find_block(sqfs_iidx *iidx, sqfs *fs,
 
 
 static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
-  block_group *group;
+  /* Input components */
   block_grp grp;
-  block_idx idx, fidx;
+  block_idx idx;
   offset_sig sig;
+  
+  /* Output components */
+  block_pos bpos;
+  sqfs_inode_id ret;
+  
+  block_idx fidx;   /* Index of first known inode in this group */
   sqfs_off_t pos;
   sqfs_md_cursor cur;
+  
+  block_group *group;
   sqfs_iidx *iidx = ll->ino_data;
   
   if (fi == FUSE_ROOT_ID)
@@ -188,9 +196,12 @@ static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
   /* Get a cursor */
   pos = group->pos + ll->fs.sb.inode_table_start;
   fidx = group->first_idx;
+  if (fidx > idx)
+    return SQFS_INODE_NONE;
   while (fidx--) {
     if (sqfs_md_skip(&ll->fs, &pos))
       return SQFS_INODE_NONE;
+    --idx;
   }
   cur.block = pos;
   cur.offset = group->first_offset;
@@ -218,17 +229,25 @@ static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
       pos = cur.block;
     }
   }
+  bpos = cur.block - ll->fs.sb.inode_table_start;
   
-  return ((cur.block - ll->fs.sb.inode_table_start) << 16) | cur.offset;
+  ret = (((sqfs_inode_id)bpos) << 16) | cur.offset;
+  return ret;
 }
 
 static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-  block_group *group;
-  block_grp grp;
-  block_idx idx;
+  /* Input components */
   block_pos pos;
   uint16_t offset;
-  sqfs_off_t dpos, ipos;
+  
+  /* Output components */
+  block_grp grp;
+  block_idx idx;
+  offset_sig sig;
+  fuse_ino_t ret;
+  
+  sqfs_off_t dpos, ipos; /* Block positions, for skipping */
+  block_group *group;
   sqfs_iidx *iidx = ll->ino_data;
   sqfs_inode_id iid = sqfs_dentry_inode(e);
   
@@ -260,8 +279,10 @@ static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
     group->first_idx = idx;
     group->first_offset = offset;
   }
+  sig = offset >> BITS_OFFSET_IGN;
   
-  return sqfs_iidx_compose(iidx, grp, idx, offset >> BITS_OFFSET_IGN);
+  ret = sqfs_iidx_compose(iidx, grp, idx, sig);
+  return ret;
 }
 
 static void sqfs_iidx_destroy(sqfs_ll *ll) {
