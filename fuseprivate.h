@@ -44,6 +44,9 @@
 
 /* Common functions for FUSE high- and low-level clients */
 
+/* Ugly hack to work around very old fuse */
+#define SQFS_ENV_IMAGE "_SQFS_ENV_IMAGE"
+
 /* Fill in a stat structure. Does not set st_ino */
 sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
 

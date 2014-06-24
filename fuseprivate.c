@@ -369,6 +369,7 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
       if (!(opts->image = malloc(strlen(arg) + 1)))
         return -1;
       strcpy(opts->image, arg);
+      setenv(SQFS_ENV_IMAGE, opts->image, 1); /* Hack for old FUSE */
       return 0;
     }
   } else if (key == FUSE_OPT_KEY_OPT) {
@@ -380,12 +381,23 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
 
 sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
     sqfs_opts *opts) {
+  sqfs_err err = SQFS_OK;
   opts->progname = argv[0];
   opts->image = NULL;
   opts->mountpoint = 0;
 #if SQFS_CONTEXT_BROKEN
   gOpts = opts;
 #endif
+
+  /* Terrible hack for ancient FUSE that munges our command-line */
+  {
+    const char *env_image = getenv(SQFS_ENV_IMAGE);
+    if (env_image) {
+      opts->image = malloc(strlen(env_image) + 1);
+      strcpy(opts->image, env_image);
+      unsetenv(SQFS_ENV_IMAGE);
+    }
+  }
 
 #if HAVE_FUSE_OPT_PARSE
   {
@@ -397,25 +409,25 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
   
     if (fuse_opt_parse(outargs, opts, specs, sqfs_opt_proc) == -1)
       return SQFS_ERR;
-
-    #ifdef SQFS_NO_POSITIONAL_ARGS
-    {
-      char *scan_image = sqfs_opt_scan_image(argc, argv);
-      if (scan_image) {
-        free(opts->image);
-        opts->image = scan_image;
-      }
-    }
-    #endif
-    
-    #ifdef SQFS_MUST_ALLOW_OTHER
-      sqfs_opt_add_arg(outargs, "-oallow_other");
-    #endif
-    
-    return SQFS_OK;
   }
 #else
   /* Ersatz fuse_opt_parse, just enough for our needs */
-  return sqfs_opt_parse_ersatz(outargs, argc, argv, opts);
+  err = sqfs_opt_parse_ersatz(outargs, argc, argv, opts);
 #endif
+
+#ifdef SQFS_NO_POSITIONAL_ARGS
+  {
+    char *scan_image = sqfs_opt_scan_image(argc, argv);
+    if (scan_image) {
+      free(opts->image);
+      opts->image = scan_image;
+    }
+  }
+#endif
+  
+#ifdef SQFS_MUST_ALLOW_OTHER
+  sqfs_opt_add_arg(outargs, "-oallow_other");
+#endif
+  
+  return err;
 }

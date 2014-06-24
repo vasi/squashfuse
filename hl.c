@@ -40,7 +40,12 @@ struct sqfs_hl {
   sqfs_inode root;
 };
 
+/* On ancient FUSE, off_t is 32-bit, but there's no good way to detect it */
+#if !HAVE_STRUCT_FUSE_OPERATIONS_RELEASE
+  #define FUSE_32BIT 1
+#endif
 
+/* Get the appropriate flags argument for our FUSE version */
 #if HAVE_STRUCT_FUSE_FILE_INFO
   typedef struct fuse_file_info *sqfs_file_info;
 #else
@@ -108,6 +113,7 @@ static void sqfs_hl_set_fh(sqfs_file_info fi, void *fh) {
     free(fh);
   #endif
 }
+#if HAVE_STRUCT_FUSE_OPERATIONS_READDIR || HAVE_STRUCT_FUSE_OPERATIONS_RELEASE
 static void sqfs_hl_free_fh(sqfs_file_info fi) {
   #if HAVE_STRUCT_FUSE_FILE_INFO
     free((void*)(intptr_t)fi->fh);
@@ -116,6 +122,7 @@ static void sqfs_hl_free_fh(sqfs_file_info fi) {
     (void)fi;
   #endif
 }
+#endif
 static int sqfs_hl_flags(sqfs_file_info fi) {
   #if HAVE_STRUCT_FUSE_FILE_INFO
     return fi->flags;
@@ -296,23 +303,32 @@ static int sqfs_hl_op_open(const char *path, sqfs_file_info fi) {
   return 0;
 }
 
+
+#if HAVE_STRUCT_FUSE_OPERATIONS_RELEASE
+
 static int sqfs_hl_op_release(const char *SQFS_UNUSED(path),
     sqfs_file_info fi) {
   sqfs_hl_free_fh(fi);
   return 0;
 }
 
-static int sqfs_hl_op_read(const char *path, char *buf,
-size_t size, off_t off
+#endif
+
+
+static int sqfs_hl_op_read(const char *path, char *buf, size_t size, off_t off
 #if HAVE_STRUCT_FUSE_FILE_INFO
-, sqfs_file_info fi
+  , sqfs_file_info fi
 #endif
 ) {
   sqfs *fs;
   sqfs_inode inode, *inodep = &inode;
   off_t osize;
+  
   #if !HAVE_STRUCT_FUSE_FILE_INFO
     sqfs_file_info fi = 0;
+  #endif
+  #if FUSE_32BIT
+    off = off & UINT32_MAX;
   #endif
   
   if (sqfs_hl_fh(&fs, &inodep, path, fi))
@@ -428,7 +444,9 @@ int main(int argc, char *argv[]) {
   sqfs_hl_ops.getdir      = sqfs_hl_op_getdir;
 #endif
   sqfs_hl_ops.open        = sqfs_hl_op_open;
+#if HAVE_STRUCT_FUSE_OPERATIONS_RELEASE
   sqfs_hl_ops.release     = sqfs_hl_op_release;
+#endif
   sqfs_hl_ops.read        = sqfs_hl_op_read;
   sqfs_hl_ops.readlink    = sqfs_hl_op_readlink;
 #if HAVE_STRUCT_FUSE_OPERATIONS_LISTXATTR

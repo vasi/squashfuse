@@ -308,7 +308,8 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
   AC_CHECK_MEMBERS([
       struct fuse_operations.readdir,
       struct fuse_operations.init,
-      struct fuse_operations.listxattr],,,[#include <fuse.h>])
+      struct fuse_operations.listxattr,
+      struct fuse_operations.release],,,[#include <fuse.h>])
 
   AC_CACHE_CHECK([for inode argument to fuse_dirfil_t],
       [sq_cv_decl_fuse_dirfil_t_inode],[
