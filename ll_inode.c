@@ -81,6 +81,10 @@ and whether or not the squashfs archive has an export table:
    But we have to maintain our own mapping of
    sqfs_inode_number -> sqfs_inode_id, which can use quite a lot of memory.
 
+4. On 32-bit systems, no export: fuse_ino_t holds an index into a list of
+   metadata blocks. This strategy is used when #3 would use too much memory,
+   but it's a fair bit slower. This is implemented in ll_inode_indexed.c.
+
 */
 
 
