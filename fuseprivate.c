@@ -39,7 +39,7 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
     struct fuse_args *outargs);
 
 
-#if __minix || !HAVE_FUSE_OPT_PARSE
+#if SQFS_NO_POSITIONAL_ARGS || !HAVE_FUSE_OPT_PARSE
   #define NEED_OPT_SCAN 1
 #endif
 #if NEED_OPT_SCAN
@@ -59,7 +59,7 @@ static sqfs_err sqfs_opt_scan(void *ctx, sqfs_opt_scan_proc proc, int argc,
 
 /* Scan for -o image=something arguments, if necessary,
    without fuse_opt_parse() */
-#ifdef __minix
+#ifdef SQFS_NO_POSITIONAL_ARGS
 static char *sqfs_opt_scan_image(int argc, char **argv);
 #endif
 
@@ -194,7 +194,7 @@ static sqfs_err sqfs_opt_scan(void *ctx, sqfs_opt_scan_proc proc, int argc,
 #endif
 
 
-#ifdef __minix
+#ifdef SQFS_NO_POSITIONAL_ARGS
 /* This is only needed on Minix, where opt-parsing in FUSE is terrible. We
    can't provide a non-block-device as an argument, so we need to use
    -o image=foo.squashfs . And fuse_opt_proc() doesn't behave. Wheeeee! */
@@ -398,7 +398,7 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
     if (fuse_opt_parse(outargs, opts, specs, sqfs_opt_proc) == -1)
       return SQFS_ERR;
 
-    #ifdef __minix
+    #ifdef SQFS_NO_POSITIONAL_ARGS
     {
       char *scan_image = sqfs_opt_scan_image(argc, argv);
       if (scan_image) {
@@ -406,6 +406,10 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
         opts->image = scan_image;
       }
     }
+    #endif
+    
+    #ifdef SQFS_MUST_ALLOW_OTHER
+      sqfs_opt_add_arg(outargs, "-oallow_other");
     #endif
     
     return SQFS_OK;

@@ -20,7 +20,6 @@ These are only supported by the squashfuse_ls demo:
 
 These don't seem to work yet:
 * Solaris
-* QNX
 
 These don't have FUSE:
 * iOS
@@ -229,6 +228,18 @@ brackets, eg: [0.1]
     - Random things aren't working, eg: 'cat my-sym-link' acts like
       'readlink my-sym-link'.
     - Is a bit crashy, for unknown reasons. Clues are welcomed!
+
+* QNX
+  + Versions: 6.5 and higher
+  + Tested on: QNX 6.5 [0.2]
+  + Requirements: qfuse http://community.qnx.com/sf/wiki/do/viewPage/projects.qnx_community_fuse_project/wiki/HomePage
+  + Configure
+    - Configure with the environment variable ACCEPT_INFERIOR_RM_PROGRAM=yes
+  + Notes
+    - Mounting requires root
+    - No extended attributes support
+    - The low-level driver doesn't seem to work
+    - Is rather crashy
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows

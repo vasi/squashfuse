@@ -199,8 +199,10 @@ static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
   sqfs *fs;
   sqfs_inode *inode;
   
+#ifndef SQFS_OPEN_BAD_FLAGS
   if ((fi->flags & O_ACCMODE) != O_RDONLY)
     return -EROFS;
+#endif
   
   inode = malloc(sizeof(*inode));
   if (!inode)

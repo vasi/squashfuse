@@ -369,23 +369,31 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
   SQ_RESTORE_FLAGS
 ])
 
+# SQ_FUSE_PLATFORM([MACRO],[PLATFORMS],[MSG])
+#
+# Check if the target matches PLATFORMS, defining MACRO if so
+AC_DEFUN([SQ_FUSE_PLATFORM],[
+  AC_MSG_CHECKING([if ]$3)
+  AS_CASE([$target_os],$2,[
+    AC_DEFINE($1,1,[Define if ]$3)
+    AC_MSG_RESULT([yes])
+  ],[AC_MSG_RESULT([no])])
+])
+
 # SQ_FUSE_BREAKAGE
 #
 # Set defines for things that are known to be broken at runtime.
 # We can't practically test for this at configure time, we just hardcode
 # per target.
 AC_DEFUN([SQ_FUSE_BREAKAGE],[
-  AC_MSG_CHECKING([if fuse_get_context() is usable])
-  AS_CASE([$target_os],[minix*|haiku*],[
-    AC_DEFINE([SQFS_CONTEXT_BROKEN],1,
-      [Define if fuse_get_context() returns garbage])
-    AC_MSG_RESULT([no])
-  ],[AC_MSG_RESULT([yes])])
-  
-  AC_MSG_CHECKING([if FUSE readdir() can use offsets])
-  AS_CASE([$target_os],[openbsd*|gnu*],[
-    AC_DEFINE([SQFS_READDIR_NO_OFFSET],1,
-      [Define if the readdir callback can't use offsets])
-    AC_MSG_RESULT([no])
-  ],[AC_MSG_RESULT([yes])])
+  SQ_FUSE_PLATFORM([SQFS_CONTEXT_BROKEN],[minix*|haiku*],
+    [fuse_get_context() returns garbage])
+  SQ_FUSE_PLATFORM([SQFS_NO_POSITIONAL_ARGS],[minix*],
+    [FUSE can't access positional arguments])
+  SQ_FUSE_PLATFORM([SQFS_READDIR_NO_OFFSET],[openbsd*|gnu*|*qnx*],
+    [FUSE readdir() callback can't use offsets])
+  SQ_FUSE_PLATFORM([SQFS_OPEN_BAD_FLAGS],[*qnx*],
+    [FUSE open() callback flags are garbage])
+  SQ_FUSE_PLATFORM([SQFS_MUST_ALLOW_OTHER],[*qnx*],
+    [FUSE requires the allow_other option])
 ])
