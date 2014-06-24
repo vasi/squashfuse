@@ -369,7 +369,7 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
       if (!(opts->image = malloc(strlen(arg) + 1)))
         return -1;
       strcpy(opts->image, arg);
-      setenv(SQFS_ENV_IMAGE, opts->image, 1); /* Hack for old FUSE */
+      sqfs_setenv(SQFS_ENV_IMAGE, opts->image, 1); /* Hack for old FUSE */
       return 0;
     }
   } else if (key == FUSE_OPT_KEY_OPT) {
@@ -395,7 +395,7 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
     if (env_image) {
       opts->image = malloc(strlen(env_image) + 1);
       strcpy(opts->image, env_image);
-      unsetenv(SQFS_ENV_IMAGE);
+      sqfs_unsetenv(SQFS_ENV_IMAGE);
     }
   }
 

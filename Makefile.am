@@ -46,7 +46,7 @@ libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 
 # Helper for FUSE clients: libfuseprivate
 libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
-	fuseprivate.h
+	nonstd-setenv.c fuseprivate.h
 libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 
 # High-level squashfuse

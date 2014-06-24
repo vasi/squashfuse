@@ -68,11 +68,16 @@ AC_DEFUN([SQ_PTHREADS],[
 AC_DEFUN([SQ_TRY_PTHREADS],[
   SQ_SAVE_FLAGS
   AS_IF([test "x$1" = xnone],,[CPPFLAGS="$CPPFLAGS $1"])
+  
+  # Some libc's may include pthread stubs, so try a few functions
   AC_LINK_IFELSE([
     AC_LANG_PROGRAM([[#include <pthread.h>]],[[
+      pthread_t pth;
       pthread_mutex_t mutex;
+      pthread_join(pth, 0);
       pthread_mutex_lock(&mutex);
     ]])
   ],[$2],[$3])
+  
   SQ_RESTORE_FLAGS
 ])

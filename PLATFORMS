@@ -32,20 +32,20 @@ Systems are marked with the last tested version of squashfuse in square
 brackets, eg: [0.1]
 
 * Linux
-  + Versions: Kernel 2.4.18 or later, most distros since ~2004
+  + Versions: Kernel 2.4.7 or later, for FUSE
     - See below for Android
   + Tested on:
-    - Ubuntu    / Trusty  14.04    / i386, amd64           [0.2]
-    - Ubuntu    / Precise 12.04    / amd64                 [0.1]
-    - Ubuntu    / Lucid   10.04    / amd64                 [0.1]
-    - Debian    / squeeze  6.0     / i386, ppc, armel      [0.2]
-    - CentOS    / 6.5              / amd64                 [0.2]
-    - CentOS    / 3.9              / i386      / FUSE 2.5  [0.2]
-    - Slackware / 8.1              / i386      / FUSE 2.1  [0.2]
+    - Ubuntu    / Trusty  14.04    / i386, amd64            [0.2]
+    - Ubuntu    / Precise 12.04    / amd64                  [0.1]
+    - Ubuntu    / Lucid   10.04    / amd64                  [0.1]
+    - Debian    / squeeze  6.0     / i386, ppc, armel       [0.2]
+    - CentOS    / 6.5              / amd64                  [0.2]
+    - CentOS    / 3.9              / i386      / FUSE  2.5  [0.2]
+    - Fedora    / 7.2              / i386      / FUSE 0.95  [0.2]
   + Requirements:
     - libfuse 2.1 or higher, 2.5 or higher for the low-level front-end
     - FUSE kernel module. Usually this comes from the CONFIG_FUSE_FS kernel
-      option
+      option, the default on most distros since 2004.
   + Packages:
     - apt-get
       - Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev \

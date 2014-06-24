@@ -93,6 +93,7 @@ AS_IF([test "x$sq_cv_decl_makedev_qnx" = xyes],
 # SQ_CHECK_DECL_S_IFSOCK  - S_IFSOCK in struct stat mode
 # SQ_CHECK_DECL_ENOATTR([IF_NOT_FOUND]) - ENOATTR error code
 # SQ_CHECK_DECL_DAEMON    - daemon() in unistd.h
+# SQ_CHECK_DECL_SETENV    - setenv in stdlib.h
 
 AC_DEFUN([SQ_CHECK_DECL_MAKEDEV],[
 SQ_CHECK_DECL_MAKEDEV_QNX([
@@ -133,4 +134,10 @@ SQ_CHECK_NONSTD(ENOATTR,[
 ])
 
 AC_DEFUN([SQ_CHECK_DECL_DAEMON],
-  [SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[(void)daemon;])])
+  [SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[daemon(1,1);])])
+
+AC_DEFUN([SQ_CHECK_DECL_SETENV],
+  [SQ_CHECK_NONSTD(setenv,[#include <stdlib.h>],[
+    setenv(0,0,1);
+    unsetenv(0);
+])])

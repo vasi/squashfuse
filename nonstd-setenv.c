@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,24 +22,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_STD_H
-#define SQFS_STD_H
+#define SQFEATURE NONSTD_SETENV_DEF
+#include "nonstd-internal.h"
 
-#include "common.h"
+#include <stdlib.h>
 
-/* Non-standard functions that we need */
+int sqfs_setenv(const char *key, const char *value, int overwrite) {
+  return setenv(key, value, overwrite);
+}
 
-dev_t sqfs_makedev(int maj, int min);
+int sqfs_unsetenv(const char *key) {
+  return unsetenv(key);
+}
 
-ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off);
-
-int sqfs_enoattr(void);
-
-sqfs_mode_t sqfs_mode(int inode_type);
-
-int sqfs_ll_daemonize(int fg);
-
-int sqfs_setenv(const char *key, const char *value, int overwrite);
-int sqfs_unsetenv(const char *key);
-
-#endif
