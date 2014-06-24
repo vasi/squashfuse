@@ -124,6 +124,9 @@ static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs) {
         iidx->ngroups /= 2;
         iidx->stride_bits++;
         stride = 1 << iidx->stride_bits;
+        
+        if ((1 << (BITS_BLOCK - iidx->stride_bits)) < MAX_BLOCK_GROUPS)
+          return SQFS_BLOCK_OVERFLOW; /* Too many blocks! */
       } else {
         iidx->groups[iidx->ngroups++].pos = pos - fs->sb.inode_table_start;
       }

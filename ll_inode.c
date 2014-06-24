@@ -322,10 +322,12 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll) {
     err = sqfs_ll_ino64_init(ll);
   } else if (sqfs_export_ok(&ll->fs)) {
     err = sqfs_ll_ino32exp_init(ll);
-  } else if (ll->fs.sb.inodes < MAX_CACHED_INODES) {
-    err = sqfs_ll_ino32_init(ll);
   } else {
-    err = sqfs_iidx_init(ll);
+    bool indexed = (ll->fs.sb.inodes > MAX_CACHED_INODES);
+    if (indexed)
+      err = sqfs_iidx_init(ll);
+    if (!indexed || err == SQFS_BLOCK_OVERFLOW)
+      err = sqfs_ll_ino32_init(ll);
   }
   if (!ll->ino_register)
     ll->ino_register = ll->ino_fuse_num;
