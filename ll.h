@@ -33,7 +33,7 @@
 #define SQFS_INODE_NONE 1
 
 /* Threshold for switching from inode caching to indexed inodes */
-#define MAX_CACHED_INODES (1<<15)
+#define MAX_CACHED_INODES (1<<16)
 
 typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
