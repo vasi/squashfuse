@@ -253,7 +253,11 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 
 static bool sqfs_hl_getdir_filler(sqfs_dir_entry *entry, void *filler,
     void *buf, void *data) {
-  return ((fuse_dirfil_t)filler)(buf, sqfs_dentry_name(entry), 0);
+  return ((fuse_dirfil_t)filler)(buf, sqfs_dentry_name(entry), 0
+#if HAVE_FUSE_DIRFIL_T_INODE
+      , 0
+#endif
+    );
 }
 
 static int sqfs_hl_op_getdir(const char *path, fuse_dirh_t dh,

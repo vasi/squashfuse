@@ -292,6 +292,19 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
   AC_CHECK_MEMBERS(
     [struct fuse_operations.readdir, struct fuse_operations.init],,,
     [#include <fuse.h>])
+
+  AC_CACHE_CHECK([for inode argument to fuse_dirfil_t],
+      [sq_cv_decl_fuse_dirfil_t_inode],[
+    AC_LINK_IFELSE(
+      [AC_LANG_PROGRAM([#include <fuse.h>],
+        [((fuse_dirfil_t)0)(0,0,0,0)])],
+      [sq_cv_decl_fuse_dirfil_t_inode=yes],
+      [sq_cv_decl_fuse_dirfil_t_inode=no])
+  ])
+  AS_IF([test "x$sq_cv_decl_fuse_dirfil_t_inode" = xyes],[
+    AC_DEFINE([HAVE_FUSE_DIRFIL_T_INODE],1,
+        [Define if fuse_dirfil_t takes an inode argument])
+  ])
   
   AS_IF([test "x$enable_low_level" = xyes],[
     AC_CHECK_DECLS([fuse_add_direntry,fuse_add_dirent],[found_dirent=yes],,
