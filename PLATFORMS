@@ -35,12 +35,13 @@ brackets, eg: [0.1]
   + Versions: Kernel 2.4.20 or later, most distros since ~2004
      - See below for Android
   + Tested on:
-    - Ubuntu / Trusty  14.04             / i386, amd64           [0.2]
-    - Ubuntu / Precise 12.04             / amd64                 [0.1]
-    - Ubuntu / Lucid   10.04             / amd64                 [0.1]
-    - Debian / squeeze  6.0              / i386, ppc, armel      [0.2]
-    - CentOS / 6.5                       / amd64                 [0.2]
-    - CentOS / 3.9                       / i386      / FUSE 2.5  [0.2]
+    - Ubuntu    / Trusty  14.04    / i386, amd64           [0.2]
+    - Ubuntu    / Precise 12.04    / amd64                 [0.1]
+    - Ubuntu    / Lucid   10.04    / amd64                 [0.1]
+    - Debian    / squeeze  6.0     / i386, ppc, armel      [0.2]
+    - CentOS    / 6.5              / amd64                 [0.2]
+    - CentOS    / 3.9              / i386      / FUSE 2.5  [0.2]
+    - Slackware / 8.1              / i386      / FUSE 2.1  [0.2]
   + Requirements: CONFIG_FUSE_FS kernel option
   + Packages:
     - apt-get

@@ -45,7 +45,7 @@ To build and use squashfuse, you must be able to use the terminal of your
 operating system.
 
 Runtime requirements:
-  - FUSE 2.5 or later
+  - FUSE 2.1 or later
   - At least one of the following compression libraries
       - zlib
       - lzo2
