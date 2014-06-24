@@ -32,7 +32,7 @@ Systems are marked with the last tested version of squashfuse in square
 brackets, eg: [0.1]
 
 * Linux
-  + Versions: Kernel 2.4.7 or later, for FUSE
+  + Versions: Kernel 2.4.6 or later, for FUSE
     - See below for Android
   + Tested on:
     - Ubuntu    / Trusty  14.04    / i386, amd64            [0.2]

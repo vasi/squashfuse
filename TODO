@@ -42,9 +42,6 @@ Performance
 
 Platform support
 	Known bad
-		QNX 6.5 (qfuse)
-			fuse_session_add_chan() crashes
-			High-level crashes too
 		Windows
 			Dokan/DokanX/fuse4win: all crash for me
 			CBFS: Totally different API, expensive
@@ -52,13 +49,8 @@ Platform support
       IFS driver: hard to write (kernel)
 			Pismo File Mount?
 			FUSE-NT?
-	Linux kernel < 2.4.20
-		Requires lower versions of fuse, eg: 2.1
-    Write a separate driver?
 	No low-level fuse
 		Solaris 11 (uvfs/fuse): High-level sort-of works
-		Haiku (userlandfs): High-level won't work, userlandfs hard to build
-		Hurd (libfuse): High-level works fine, version 2.5
   Work on platforms with 32-bit off_t better (pread64, off64_t)
 
 Programs
