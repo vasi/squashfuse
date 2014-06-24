@@ -26,7 +26,6 @@
 
 #include "block.h"
 #include "squashfs_fs.h"
-#include "thread.h"
 
 #include <limits.h>
 #include <stddef.h>
@@ -57,12 +56,12 @@ TODO: Reserve some inodes, in case we run out of room for more block IDs.
 #define BLOCK_IDX_INVALID UINT16_MAX
 
 typedef uint32_t offset_sig;  /* Significant bits of offset */
-typedef uint32_t block_grp;   /* Index of a block group */
+typedef size_t block_grp;   /* Index of a block group */
 typedef uint16_t block_idx;   /* Index within a block group */
 typedef uint32_t block_pos;   /* Block part of an inode_id */
 
 typedef struct {
-  block_pos loc;
+  block_pos pos;
   
   /* The smallest known inode location in this group */
   block_idx first_idx;
@@ -78,14 +77,8 @@ typedef struct {
   size_t stride_bits;
   
   /* Bias of block IDs when forming fuse_ino_t */
-  size_t block_bias;
-  
-  sqfs_mutex mutex;
+  size_t bias;
 } sqfs_iidx;
-
-/* Lock/unlock our data structures */
-static sqfs_err sqfs_iidx_lock(sqfs_ll *ll);
-static void sqfs_iidx_unlock(sqfs_ll *ll);
 
 /* Decompose/compose a fuse_ino_t into its parts */
 static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
@@ -96,32 +89,29 @@ static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx,
 /* Build an index of inode block groups */
 static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs);
 
+/* Search for the block group containing a block_pos */
+static sqfs_err sqfs_iidx_find_block(sqfs_iidx *iidx, sqfs *fs,
+  block_pos pos, block_grp *grp);
 
-static sqfs_err sqfs_iidx_lock(sqfs_ll *ll) {
-  return sqfs_mutex_lock(&((sqfs_iidx*)ll->ino_data)->mutex);
-}
-
-static void sqfs_iidx_unlock(sqfs_ll *ll) {
-  sqfs_mutex_unlock(&((sqfs_iidx*)ll->ino_data)->mutex);
-}
 
 static void sqfs_iidx_decompose(sqfs_iidx *iidx, fuse_ino_t fi,
     block_grp *grp, block_idx *idx, offset_sig *sig) {
   *sig = fi & MASK_OFFSET_KEEP;
-  fi >>= BITS_OFFSET_KEEP;
+  fi = (fi >> BITS_OFFSET_KEEP) - iidx->bias;
   *idx = fi & ((1 << iidx->stride_bits) - 1);
   *grp = fi >> iidx->stride_bits;
 }
 
 static fuse_ino_t sqfs_iidx_compose(sqfs_iidx *iidx,
     block_grp grp, block_idx idx, offset_sig sig) {
-  return (((grp << iidx->stride_bits) | idx) << BITS_OFFSET_KEEP) | sig;
+  fuse_ino_t b = ((grp << iidx->stride_bits) | idx) + iidx->bias;
+  return (b << BITS_OFFSET_KEEP) | sig;
 }
 
 static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs) {
   sqfs_err err;
   size_t stride, count, i;
-  off_t pos = fs->sb.inode_table_start;
+  sqfs_off_t pos = fs->sb.inode_table_start;
   
   iidx->ngroups = 0;
   iidx->stride_bits = 0;
@@ -132,14 +122,12 @@ static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs) {
     if (count % stride == 0) {
       if (iidx->ngroups == MAX_BLOCK_GROUPS) { /* Increase the stride */
         for (i = 0; i < MAX_BLOCK_GROUPS / 2; ++i)
-          iidx->groups[i].loc = iidx->groups[2*i].loc;
+          iidx->groups[i].pos = iidx->groups[2*i].pos;
         iidx->ngroups /= 2;
         iidx->stride_bits++;
         stride = 1 << iidx->stride_bits;
-        printf("STRIDE: %zu\n", stride);
       } else {
-        printf("%4zu: %llu\n", iidx->ngroups, pos - fs->sb.inode_table_start);
-        iidx->groups[iidx->ngroups++].loc = pos - fs->sb.inode_table_start;
+        iidx->groups[iidx->ngroups++].pos = pos - fs->sb.inode_table_start;
       }
     }
     
@@ -154,226 +142,126 @@ static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs) {
   return SQFS_OK;
 }
 
-#if 0
-
-/* Find the block info for a fuse_ino_t */
-static sqfs_err sqfs_iidx_info(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
-  sqfs_iidx_block_info **info, sqfs_iidx_block_loc **loc);
-
-/* Find an inode_id given a fuse_ino_t */
-static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
-  sqfs_inode_id *iid);
-
-/* Get a reference to the fuse_ino_t for an inode id */
-static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
-  sqfs_inode_id iid, fuse_ino_t *fi);
-
-/* Allocate a new block ID */
-static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
-  sqfs_iidx_block_info **info);
-
-/* Find the block info for a fuse_ino_t */
-static sqfs_err sqfs_iidx_info(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
-    sqfs_iidx_block_info **info, sqfs_iidx_block_loc **loc) {
-  sqfs_err err;
-  sqfs_iidx_block_id bid;
-  sqfs_iidx_offset_sig sig;
-  
-  sqfs_iidx_decompose(iidx, fi, &bid, &sig);
-  
-  /* Find the block location */
-  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, loc)))
-    return err;
-  if (**loc == BLOCK_LOC_INVALID)
+static sqfs_err sqfs_iidx_find_block(sqfs_iidx *iidx, sqfs *fs,
+  block_pos pos, block_grp *grp) {
+  /* Binary search */
+  block_grp min = 0, max = iidx->ngroups;
+  if (pos > fs->sb.directory_table_start - fs->sb.inode_table_start)
     return SQFS_ERR;
   
-  /* Find the block info */
-  if (!(*info = sqfs_hash_get(&iidx->loc_info, **loc)))
-    return SQFS_ERR;
-  
-  return SQFS_OK;
-}
-
-static sqfs_err sqfs_iidx_inode_id(sqfs_iidx *iidx, sqfs *fs, fuse_ino_t fi,
-    sqfs_inode_id *iid) {
-  sqfs_err err;
-  sqfs_iidx_block_id bid;
-  sqfs_iidx_offset_sig sig;
-  sqfs_iidx_block_loc *loc;
-  sqfs_iidx_block_info *info;
-  off_t block;
-  sqfs_md_cursor cur;
-  
-  /* The root always goes to the root */
-  if (fi == FUSE_ROOT_ID) {
-    *iid = sqfs_inode_root(fs);
-    return SQFS_OK;
-  }
-  
-  sqfs_iidx_decompose(iidx, fi, &bid, &sig);
-  if ((err = sqfs_iidx_info(iidx, fs, fi, &info, &loc)))
-    return err;
-  
-  /* Keep skipping til we've found the inode */
-  block = *loc + fs->sb.inode_table_start;
-  cur.block = block;
-  cur.offset = info->min_offset;
-  while (cur.block == block) {
-    if ((cur.offset >> BITS_OFFSET_IGN) == sig) { /* Found it! */
-      *iid = (((sqfs_inode_id)*loc) << 16) | cur.offset;
+  while (max - min > 1) {
+    block_grp mid = (max + min) / 2;
+    block_pos mpos = iidx->groups[mid].pos;
+    if (pos == mpos) {
+      *grp = mid;
       return SQFS_OK;
+    } else if (pos > mpos) {
+      min = mid;
+    } else {
+      max = mid;
     }
-    
-    if ((err = sqfs_inode_skip(fs, &cur)))
-      return err;
-  }
-  return SQFS_ERR; /* Not found */
-}
-
-static sqfs_err sqfs_iidx_allocate(sqfs_iidx *iidx, sqfs_iidx_block_loc loc,
-    sqfs_iidx_block_info **info) {
-  sqfs_err err;
-  sqfs_iidx_block_loc *locp;
-  sqfs_iidx_block_id bid, *bidp;
-  
-  if (sqfs_stack_top(&iidx->id_freelist, &bidp) == SQFS_OK) {
-    /* Reuse an ID in the freelist */
-    bid = *bidp;
-    sqfs_stack_pop(&iidx->id_freelist);
-  } else {
-    /* Nothing in the freelist, append to the array */
-    bid = sqfs_array_size(&iidx->id_to_loc);
-    if ((err = sqfs_array_append(&iidx->id_to_loc, NULL)))
-      return err;
   }
   
-  /* Map the ID to the location */
-  if ((err = sqfs_array_at(&iidx->id_to_loc, bid, &locp)))
-    return err;
-  *locp = loc;
-  
-  /* Create the block info */
-  if ((err = sqfs_hash_add(&iidx->loc_info, loc, info)))
-    return err;
-  (*info)->refcount = 0;
-  (*info)->block_id = bid;
-  (*info)->min_offset = SQUASHFS_METADATA_SIZE;
-  
-  fprintf(stderr, "alloc: %6zu, free = %6zu\n",
-    sqfs_hash_size(&iidx->loc_info),
-    sqfs_stack_size(&iidx->id_freelist));
-
+  *grp = min;
   return SQFS_OK;
 }
 
-static sqfs_err sqfs_iidx_ref(sqfs_iidx *iidx, sqfs *fs,
-    sqfs_inode_id iid, fuse_ino_t *fi) {
-  sqfs_err err;
-  sqfs_iidx_block_loc loc;
-  sqfs_iidx_block_info *info;
-  uint16_t offset;
-  
-  /* The root always goes to the root */
-  if (iid == sqfs_inode_root(fs)) {
-    *fi = FUSE_ROOT_ID;
-    return SQFS_OK;
-  }
-  
-  /* Check if we already have this block */
-  loc = (iid >> 16);
-  offset = (iid & 0xffff);
-  info = sqfs_hash_get(&iidx->loc_info, loc);
-  
-  /* If we don't have it, allocate an ID for it */
-  if (!info) {
-    if ((err = sqfs_iidx_allocate(iidx, loc, &info)))
-      return err;
-  }
-  
-  /* Update the location info */
-  info->refcount++;
-  if (info->min_offset > offset)
-    info->min_offset = offset;
-  
-  *fi = sqfs_iidx_compose(iidx, info->block_id, offset >> BITS_OFFSET_IGN);
-  return SQFS_OK;
-}
-#endif
 
 static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
-#if 0
-  sqfs_inode_id iid;
-  sqfs_err err;
-  
-  if (sqfs_iidx_lock(ll))
-    return SQFS_INODE_NONE;
-  err = sqfs_iidx_inode_id(ll->ino_data, &ll->fs, fi, &iid);
-  sqfs_iidx_unlock(ll);
-  return err ? SQFS_INODE_NONE : iid;
-#endif
-}
-
-static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
-#if 0
-  /* We don't want to allocate a new block info, so just return more-or-less
-     the inode number. It should be ok. */
-  if (sqfs_dentry_inode(e) == sqfs_inode_root(&ll->fs))
-    return FUSE_ROOT_ID;
-  
-  return sqfs_dentry_inode_num(e) + 2; /* FIXME */
-#endif
-}
-
-static fuse_ino_t sqfs_iidx_register(sqfs_ll *ll, sqfs_dir_entry *e) {
-#if 0
-  fuse_ino_t fi;
-  sqfs_err err;
-  
-  if (sqfs_iidx_lock(ll))
-    return FUSE_INODE_NONE;
-  err = sqfs_iidx_ref(ll->ino_data, &ll->fs, sqfs_dentry_inode(e), &fi);
-  sqfs_iidx_unlock(ll);
-  return err ? FUSE_INODE_NONE : fi;
-#endif
-}
-
-static void sqfs_iidx_forget(sqfs_ll *ll, fuse_ino_t fi, size_t refs) {
-#if 0
-  sqfs_iidx_block_id *bid;
-  sqfs_iidx_block_loc *loc;
-  sqfs_iidx_block_info *info;
+  block_group *group;
+  block_grp grp;
+  block_idx idx, fidx;
+  offset_sig sig;
+  sqfs_off_t pos;
+  sqfs_md_cursor cur;
   sqfs_iidx *iidx = ll->ino_data;
   
   if (fi == FUSE_ROOT_ID)
-    return;
-  if (sqfs_iidx_lock(ll))
-    return;
+    return sqfs_inode_root(&ll->fs);
   
-  if (sqfs_iidx_info(iidx, &ll->fs, fi, &info, &loc))
-    goto done;
+  /* Find the group */
+  sqfs_iidx_decompose(iidx, fi, &grp, &idx, &sig);
+  if ((idx >> iidx->stride_bits) > 0 || grp >= iidx->ngroups)
+    return SQFS_INODE_NONE; /* Failed sanity check */
+  group = &iidx->groups[grp];
   
-  /* Decrement the refcount, and possibly deallocate the block ID */
-  info->refcount -= refs;
-  if (info->refcount == 0) {
-    /* Remove the block info */
-    if (sqfs_hash_remove(&iidx->loc_info, *loc))
-      goto done;
-
-    /* Add to the freelist */
-    if (sqfs_stack_push(&iidx->id_freelist, &bid))
-      goto done;
-    *bid = info->block_id;
-
-    *loc = BLOCK_LOC_INVALID; /* Mark unused in id_to_loc */
-
-    fprintf(stderr, "forget: %6zu, free = %6zu\n",
-      sqfs_hash_size(&iidx->loc_info),
-      sqfs_stack_size(&iidx->id_freelist));
+  /* Get a cursor */
+  pos = group->pos + ll->fs.sb.inode_table_start;
+  fidx = group->first_idx;
+  while (fidx--) {
+    if (sqfs_md_skip(&ll->fs, &pos))
+      return SQFS_INODE_NONE;
+  }
+  cur.block = pos;
+  cur.offset = group->first_offset;
+  
+  /* Iterate our cursor until we've found our inode */
+  while (true) {
+    offset_sig csig = cur.offset >> BITS_OFFSET_IGN;
+    if (idx == 0 && csig == sig)
+      break; /* Found it! */
+    
+    /* Make sure we're not too far */
+    if (cur.block >= ll->fs.sb.directory_table_start)
+      return SQFS_INODE_NONE;
+    if (idx == 0 && csig > sig)
+      return SQFS_INODE_NONE;
+    
+    if (sqfs_inode_skip(&ll->fs, &cur))
+      return SQFS_INODE_NONE;
+    
+    /* Check if we're on a new block */
+    if (cur.block != pos) {
+      if (idx == 0)
+        return SQFS_INODE_NONE;
+      --idx;
+      pos = cur.block;
+    }
   }
   
-done:
-  sqfs_iidx_unlock(ll);
-#endif
+  return ((cur.block - ll->fs.sb.inode_table_start) << 16) | cur.offset;
+}
+
+static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
+  block_group *group;
+  block_grp grp;
+  block_idx idx;
+  block_pos pos;
+  uint16_t offset;
+  sqfs_off_t dpos, ipos;
+  sqfs_iidx *iidx = ll->ino_data;
+  sqfs_inode_id iid = sqfs_dentry_inode(e);
+  
+  if (iid == sqfs_inode_root(&ll->fs))
+    return FUSE_ROOT_ID;
+  
+  /* Find our group */
+  pos = iid >> 16;
+  offset = (iid & 0xffff);
+  if (sqfs_iidx_find_block(iidx, &ll->fs, pos, &grp))
+    return FUSE_INODE_NONE;
+  group = &iidx->groups[grp];
+  
+  /* Found our index */
+  idx = 0;
+  dpos = pos + ll->fs.sb.inode_table_start;
+  ipos = group->pos + ll->fs.sb.inode_table_start;
+  while (ipos < dpos) {
+    if (sqfs_md_skip(&ll->fs, &ipos))
+      return FUSE_INODE_NONE;
+    ++idx;
+  }
+  
+  /* Setup a cursor for this group */
+  bool set_curs = group->first_idx == BLOCK_IDX_INVALID ||
+    idx < group->first_idx ||
+    (idx == group->first_idx && offset < group->first_offset);
+  if (set_curs) {
+    group->first_idx = idx;
+    group->first_offset = offset;
+  }
+  
+  return sqfs_iidx_compose(iidx, grp, idx, offset >> BITS_OFFSET_IGN);
 }
 
 static void sqfs_iidx_destroy(sqfs_ll *ll) {
@@ -390,11 +278,9 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   
   if (!(iidx = malloc(sizeof(*iidx))))
     return SQFS_ERR;
-  ll->ino_data = iidx;
-  
-  sqfs_mutex_init(&iidx->mutex);
   iidx->groups = NULL;
-  iidx->block_bias = 1 << 9; /* FIXME: reserve space */
+  iidx->bias = 1 << 9; /* FIXME: reserve space */
+  ll->ino_data = iidx;
   
   if (!(iidx->groups = malloc(MAX_BLOCK_GROUPS * sizeof(block_group))))
     goto error;
@@ -404,8 +290,6 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   
   ll->ino_sqfs = sqfs_iidx_sqfs;
   ll->ino_fuse_num = sqfs_iidx_fuse_num;
-  ll->ino_register = sqfs_iidx_register;
-  ll->ino_forget = sqfs_iidx_forget;
   ll->ino_destroy = sqfs_iidx_destroy;
   
   return SQFS_OK;
