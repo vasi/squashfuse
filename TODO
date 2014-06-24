@@ -25,6 +25,7 @@ Features
 	LZMA1 compression?
 
 Performance
+  Use use_ino flag in high-level? Other flags?
 	Multi-threading
     We currently support multiple threads calling into libsquashfuse
       Some OSes (like OS X) don't actually take advantage of it

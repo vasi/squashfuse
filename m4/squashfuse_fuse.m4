@@ -242,6 +242,9 @@ AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
     AC_CHECK_DECL([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no],
       [#include <fuse_lowlevel.h>])
     AC_CHECK_FUNC([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no])
+    
+    AC_CHECK_DECL([fuse_set_signal_handlers],,[sq_fuse_lowlevel_found=no],
+      [#include <fuse_lowlevel.h>])
   
     SQ_RESTORE_FLAGS
     
