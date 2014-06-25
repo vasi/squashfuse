@@ -39,7 +39,10 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
     struct fuse_args *outargs);
 
 
-#if SQFS_NO_POSITIONAL_ARGS || !HAVE_FUSE_OPT_PARSE
+#if !HAVE_FUSE_OPT_PARSE && !SQFS_PARSE_OPT_BROKEN
+  #define SQFS_PARSE_OPT_BROKEN 1
+#endif
+#if SQFS_NO_POSITIONAL_ARGS || SQFS_PARSE_OPT_BROKEN
   #define NEED_OPT_SCAN 1
 #endif
 #if NEED_OPT_SCAN
@@ -63,7 +66,7 @@ static sqfs_err sqfs_opt_scan(void *ctx, sqfs_opt_scan_proc proc, int argc,
 static char *sqfs_opt_scan_image(int argc, char **argv);
 #endif
 
-#if !HAVE_FUSE_OPT_PARSE
+#if SQFS_PARSE_OPT_BROKEN
 /* Ersatz replacement for fuse_opt_parse() */
 static sqfs_err sqfs_opt_parse_ersatz(struct fuse_args *outargs, int argc,
   char **argv, sqfs_opts *opts);
@@ -243,7 +246,7 @@ static char *sqfs_opt_scan_image(int argc, char **argv) {
 #endif
 
 
-#if !HAVE_FUSE_OPT_PARSE
+#if SQFS_PARSE_OPT_BROKEN
 typedef struct {
   struct fuse_args *outargs;
   sqfs_opts *opts;
@@ -286,7 +289,7 @@ static sqfs_err sqfs_opt_parse_ersatz(struct fuse_args *outargs, int argc,
 
 
 static int sqfs_opt_add_arg(struct fuse_args *args, const char *arg) {
-#if HAVE_FUSE_OPT_PARSE
+#if !SQFS_PARSE_OPT_BROKEN
   return fuse_opt_add_arg(args, arg) == -1 ? SQFS_ERR : SQFS_OK;
 #else
   char *new_arg, **new_argv;
@@ -325,7 +328,7 @@ void sqfs_opt_free(struct fuse_args *args) {
   if (!args)
     return;
   
-#if HAVE_FUSE_OPT_PARSE
+#if !SQFS_PARSE_OPT_BROKEN
   if (args->allocated) /* Some systems don't check this */
     fuse_opt_free_args(args);
 #else
@@ -399,7 +402,7 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
     }
   }
 
-#if HAVE_FUSE_OPT_PARSE
+#if !SQFS_PARSE_OPT_BROKEN
   {
     struct fuse_opt specs[] = { FUSE_OPT_END };
   

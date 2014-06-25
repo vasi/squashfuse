@@ -280,7 +280,7 @@ static int sqfs_hl_op_open(const char *path, sqfs_file_info fi) {
   sqfs *fs;
   sqfs_inode *inode;
   
-#ifndef SQFS_OPEN_BAD_FLAGS
+#if !SQFS_OPEN_BAD_FLAGS
   if ((sqfs_hl_flags(fi) & O_ACCMODE) != O_RDONLY)
     return -EROFS;
 #endif

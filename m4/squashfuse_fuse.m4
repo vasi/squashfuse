@@ -428,8 +428,10 @@ AC_DEFUN([SQ_FUSE_BREAKAGE],[
     [FUSE can't access positional arguments])
   SQ_FUSE_PLATFORM([SQFS_READDIR_NO_OFFSET],[openbsd*|gnu*|*qnx*],
     [FUSE readdir() callback can't use offsets])
-  SQ_FUSE_PLATFORM([SQFS_OPEN_BAD_FLAGS],[*qnx*],
+  SQ_FUSE_PLATFORM([SQFS_OPEN_BAD_FLAGS],[*qnx*|solaris*],
     [FUSE open() callback flags are garbage])
   SQ_FUSE_PLATFORM([SQFS_MUST_ALLOW_OTHER],[*qnx*],
     [FUSE requires the allow_other option])
+  SQ_FUSE_PLATFORM([SQFS_PARSE_OPT_BROKEN],[solaris*],
+    [FUSE option parsing is broken])
 ])

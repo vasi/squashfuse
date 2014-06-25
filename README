@@ -74,6 +74,7 @@ Known platforms with at least some support:
   - Minix
   - Haiku
   - Hurd
+  - Solaris
   - illumos
   - Android
   - QNX

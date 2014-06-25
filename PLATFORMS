@@ -11,6 +11,7 @@ The following operating systems are supported:
 These are not supported by squashfuse_ll, just squashfuse:
 * OpenBSD
 * DragonflyBSD
+* Solaris
 * Minix
 * Haiku
 * Hurd (mostly)
@@ -180,6 +181,17 @@ brackets, eg: [0.1]
   + Configure: ./configure --with-decompressors=/usr/local
   + Notes:
     - Need to load kernel module: `kldload puffs`
+    - Mounting requires root
+    - No extended attributes support
+
+* Solaris
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: Solaris 11 and later
+  + Tested on: Solaris 11.1 / i386 [0.2]
+  + Packages:
+    - libfuse
+    - Either Solaris Studio or gcc
+  + Notes:
     - Mounting requires root
     - No extended attributes support
 
