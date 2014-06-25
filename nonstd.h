@@ -31,7 +31,7 @@
 
 dev_t sqfs_makedev(int maj, int min);
 
-ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off);
+ssize_t sqfs_pread(int fd, void *buf, size_t count, sqfs_off_t off);
 
 int sqfs_enoattr(void);
 

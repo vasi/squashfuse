@@ -25,23 +25,10 @@
 #define SQFEATURE NONSTD_PREAD_DEF
 #include "nonstd-internal.h"
 
-#ifdef _WIN32
-  #include "win32.h"
-
-  ssize_t sqfs_pread(HANDLE file, void *buf, size_t count, DWORD64 off) {
-    DWORD bread;
-    OVERLAPPED ov = { 0 };
-    ov.Offset = (DWORD)off;
-    ov.OffsetHigh = (DWORD)(off >> 32);
-
-    if (ReadFile(file, buf, count, &bread, &ov) == FALSE)
-      return -1;
-    return bread;
-  }
-#elif HAVE_PREAD
+#if HAVE_PREAD
   #include <unistd.h>
 
-  ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, off_t off) {
+  ssize_t sqfs_pread(int fd, void *buf, size_t count, off_t off) {
     return pread(fd, buf, count, off);
   }
 #endif

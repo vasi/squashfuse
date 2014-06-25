@@ -33,13 +33,82 @@
 #include <string.h>
 #include <unistd.h>
 
-/* FIXME:
-  - Add windows
-  - Handle no pread
-*/
+#define SQ_BUFSIZE 256
+
 void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
 }
+
+
+#ifdef _WIN32
+/* Implementation for Windows */
+typedef struct {
+  HANDLE file;
+  DWORD error;
+} sqfs_input_windows;
+
+static void sqfs_input_windows_close(sqfs_input *in) {
+  sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
+  CloseHandle(iw->file);
+  free(iw);
+  in->data = NULL;
+}
+
+static ssize_t sqfs_input_windows_pread(sqfs_input *in, void *buf,
+    size_t count, sqfs_off_t off) {
+  DWORD bread;
+  ssize_t ret;
+  sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
+  OVERLAPPED ov = { 0 };
+  ov.Offset = (DWORD)off;
+  ov.OffsetHigh = (DWORD)(off >> 32);
+
+  ret = -1;
+  if (ReadFile(iw->file, buf, count, &bread, &ov))
+    ret = bread;
+  iw->error = GetLastError();
+  return ret;
+}
+
+static char *sqfs_input_windows_error(sqfs_input *in) {
+  /* FIXME: Use FormatMessage() to return a real error */
+  char buf[SQ_BUFSIZE];
+  char *ret;
+  sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
+  snprintf(buf, sizeof(buf), "file error #%d", iw->error);
+  if (!(ret = malloc(strlen(buf)+1)))
+    return NULL;
+  strcpy(ret, buf);
+  return ret;
+}
+
+static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
+  sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
+  iw->file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (iw->file != INVALID_HANDLE_VALUE)
+    return SQFS_OK;
+  
+  iw->error = GetLastError();
+  return SQFS_ERR;
+}
+
+sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
+  sqfs_input_windows *iw = malloc(sizeof(sqfs_input_windows));
+  if (!ip)
+    return SQFS_ERR;
+  
+  iw->file = file;
+  iw->error = 0;
+  
+  in->data = iw;
+  in->close = &sqfs_input_windows_close;
+  in->pread = &sqfs_input_windows_pread;
+  in->error = &sqfs_input_windows_error;
+  return SQFS_OK;
+}
+#endif /* _WIN32 */
+
 
 /* Implementation for POSIX file descriptor */
 typedef struct {
@@ -79,7 +148,7 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
 
 static char *sqfs_input_posix_error(sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
-  size_t bsize = 256;
+  size_t bsize = SQ_BUFSIZE;
   char *buf = NULL;
   
   if (ip->errnum == 0)

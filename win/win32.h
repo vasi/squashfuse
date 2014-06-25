@@ -41,6 +41,5 @@ typedef uint32_t sqfs_id_t; /* Internal uids/gids are 32-bits */
 
 typedef SSIZE_T ssize_t;
 typedef DWORD64 sqfs_off_t;
-typedef HANDLE sqfs_fd_t;
 
 #endif
