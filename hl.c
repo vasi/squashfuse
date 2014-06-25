@@ -252,8 +252,8 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
     offset = 0;
   #endif
   
-  return sqfs_hl_dir_common(path, fi, offset, sqfs_hl_readdir_filler, filler,
-    buf, stp);
+  return sqfs_hl_dir_common(path, fi, offset, sqfs_hl_readdir_filler,
+    (void*)filler, buf, stp);
 }
 
 #else /* !READDIR */
@@ -269,7 +269,7 @@ static bool sqfs_hl_getdir_filler(sqfs_dir_entry *entry, void *filler,
 
 static int sqfs_hl_op_getdir(const char *path, fuse_dirh_t dh,
     fuse_dirfil_t filler) {
-  return sqfs_hl_dir_common(path, 0, 0, sqfs_hl_getdir_filler, filler,
+  return sqfs_hl_dir_common(path, 0, 0, sqfs_hl_getdir_filler, (void*)filler,
     dh, NULL);
 }
 
