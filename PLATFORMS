@@ -170,8 +170,6 @@ brackets, eg: [0.1]
   + Notes:
     - Mounting requires root
     - No extended attributes support
-    - Has special snowflake breakage in readdir(), that squashfuse must work
-      around
 
 * DragonflyBSD
   + Only squashfuse and squashfuse_ls, there's no low-level API
@@ -213,7 +211,7 @@ brackets, eg: [0.1]
     - No extended attributes support
     - No files more than 2 GB in size
     - No thread support
-    - Has special snowflake breakage all over, lots of workarounds needed. See
+    - Lots of workarounds needed, see
       https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
 
 * Haiku
@@ -240,7 +238,6 @@ brackets, eg: [0.1]
   + Packages: libfuse-hurd-dev libz-dev liblzo2-dev liblz4-dev liblzma-dev
   + Notes
     - No extended attributes support
-    - Has special snowflake breakage in readdir and option parsing
     - Random things aren't working, eg: 'cat my-sym-link' acts like
       'readlink my-sym-link'.
     - Is a bit crashy, for unknown reasons. Clues are welcomed!
