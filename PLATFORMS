@@ -19,9 +19,6 @@ These are not supported by squashfuse_ll, just squashfuse:
 These are only supported by the squashfuse_ls demo:
 * Windows
 
-These don't seem to work yet:
-* Solaris
-
 These don't have FUSE:
 * iOS
 * Commercial UNIX: AIX, HP-UX, etc

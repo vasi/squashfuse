@@ -49,8 +49,6 @@ Platform support
       IFS driver: hard to write (kernel)
 			Pismo File Mount?
 			FUSE-NT?
-	No low-level fuse
-		Solaris 11 (uvfs/fuse): High-level sort-of works
   Work on platforms with 32-bit off_t better (pread64, off64_t)
 
 Programs
