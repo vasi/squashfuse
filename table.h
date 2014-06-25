@@ -27,12 +27,14 @@
 
 #include "common.h"
 
+#include "input.h"
+
 typedef struct {
   size_t each;
   uint64_t *blocks;
 } sqfs_table;
 
-sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start,
+sqfs_err sqfs_table_init(sqfs_table *table, sqfs_input *in, sqfs_off_t start,
   size_t each, size_t count);
 void sqfs_table_destroy(sqfs_table *table);
 

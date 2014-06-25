@@ -376,7 +376,7 @@ static sqfs_ll *sqfs_ll_open(const char *path) {
         fprintf(stderr, "Can't initialize this filesystem!\n");
       else
         return ll;
-      sqfs_destroy(&ll->fs);
+      sqfs_destroy(&ll->fs, true);
     }
     
     free(ll);

@@ -342,7 +342,7 @@ sqfs_err sqfs_ll_init(sqfs_ll *ll) {
 }
 
 void sqfs_ll_destroy(sqfs_ll *ll) {
-  sqfs_destroy(&ll->fs);
+  sqfs_destroy(&ll->fs, true);
   if (ll->ino_destroy)
     ll->ino_destroy(ll);
 }

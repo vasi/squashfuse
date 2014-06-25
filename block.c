@@ -49,7 +49,7 @@ sqfs_err sqfs_md_skip(sqfs *fs, off_t *pos) {
   bool compressed;
   uint16_t hdr, size;
   
-  if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
+  if (fs->input->pread(fs->input, &hdr, sizeof(hdr), *pos) != sizeof(hdr))
     return SQFS_ERR;
   
   sqfs_md_header(hdr, &compressed, &size);
@@ -82,7 +82,7 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
     block->raw_size = size;
   }
   
-  if (sqfs_pread(fs->fd, read_bytes, size, pos) != size)
+  if (fs->input->pread(fs->input, read_bytes, size, pos) != size)
     goto error;
 
   if (compressed)
@@ -105,7 +105,7 @@ static sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t pos,
   bool compressed;
   uint16_t size;
   
-  if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
+  if (fs->input->pread(fs->input, &hdr, sizeof(hdr), pos) != sizeof(hdr))
     return SQFS_ERR;
   sqfs_swapin16(&hdr);
   sqfs_md_header(hdr, &compressed, &size);

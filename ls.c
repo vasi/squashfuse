@@ -70,6 +70,6 @@ int main(int argc, char *argv[]) {
     die("sqfs_traverse_next error");
   sqfs_traverse_close(&trv);
   
-  sqfs_fd_close(fs.fd);
+  sqfs_destroy(&fs, true);
   return 0;
 }

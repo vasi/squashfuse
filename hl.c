@@ -136,7 +136,7 @@ static int sqfs_hl_flags(sqfs_file_info fi) {
 
 static void sqfs_hl_op_destroy(void *user_data) {
   sqfs_hl *hl = sqfs_user_data(user_data);
-  sqfs_destroy(&hl->fs);
+  sqfs_destroy(&hl->fs, true);
   free(hl);
 }
 
@@ -415,7 +415,7 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
         fprintf(stderr, "Can't find the root of this filesystem!\n");
       else
         return hl;
-      sqfs_destroy(&hl->fs);
+      sqfs_destroy(&hl->fs, true);
     }
     
     free(hl);

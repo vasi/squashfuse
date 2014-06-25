@@ -25,8 +25,10 @@
 #include "util.h"
 
 #include "fs.h"
+#include "input.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
   #include <win32.h>
@@ -67,12 +69,14 @@
 /* TODO: i18n of error messages */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   sqfs_err err;
-  sqfs_fd_t fd;
-
-  if ((err = sqfs_fd_open(image, &fd, true)))
-    return err;
-
-  err = sqfs_init(fs, fd);
+  sqfs_input *in;
+  
+  if (!(in = malloc(sizeof(sqfs_input))))
+    return SQFS_ERR;
+  if ((err = sqfs_input_open(in, image)))
+    return SQFS_ERR; /* FIXME: error message? */
+  
+  err = sqfs_init(fs, in);
   switch (err) {
     case SQFS_OK:
       break;
@@ -117,7 +121,7 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   }
 
   if (err)
-    sqfs_fd_close(fd);
+    in->close(in);
   return err;
 }
 

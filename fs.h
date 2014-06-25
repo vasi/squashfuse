@@ -31,10 +31,11 @@
 
 #include "cache.h"
 #include "decompress.h"
+#include "input.h"
 #include "table.h"
 
 struct sqfs {
-  sqfs_fd_t fd;
+  sqfs_input *input;
   struct squashfs_super_block sb;
   sqfs_table id_table;
   sqfs_table frag_table;
@@ -85,8 +86,8 @@ void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 size_t sqfs_divceil(uint64_t total, size_t group);
 
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd);
-void sqfs_destroy(sqfs *fs);
+sqfs_err sqfs_init(sqfs *fs, sqfs_input *in);
+void sqfs_destroy(sqfs *fs, bool close);
 
 /* Ok to call these even on incompletely constructed filesystems */
 void sqfs_version(sqfs *fs, int *major, int *minor);

@@ -56,12 +56,14 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
   return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
+sqfs_err sqfs_init(sqfs *fs, sqfs_input *in) {
   sqfs_err err = SQFS_OK;
+  ssize_t bread;
   memset(fs, 0, sizeof(*fs));
   
-  fs->fd = fd;
-  if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
+  fs->input = in;
+  bread = fs->input->pread(fs->input, &fs->sb, sizeof(fs->sb), 0);
+  if (bread != sizeof(fs->sb))
     return SQFS_BADFORMAT;
   sqfs_swapin_super_block(&fs->sb);
   
@@ -77,13 +79,13 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
   if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
     return SQFS_BADCOMP;
   
-  err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
+  err = sqfs_table_init(&fs->id_table, fs->input, fs->sb.id_table_start,
     sizeof(uint32_t), fs->sb.no_ids);
-  err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
+  err |= sqfs_table_init(&fs->frag_table, fs->input, fs->sb.fragment_table_start,
     sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
   if (sqfs_export_ok(fs)) {
-    err |= sqfs_table_init(&fs->export_table, fd, fs->sb.lookup_table_start,
-      sizeof(uint64_t), fs->sb.inodes);
+    err |= sqfs_table_init(&fs->export_table, fs->input,
+      fs->sb.lookup_table_start, sizeof(uint64_t), fs->sb.inodes);
   }
   err |= sqfs_xattr_init(fs);
   err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_METADATA_SIZE,
@@ -94,14 +96,20 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
     FRAG_CACHED_BLKS, CACHED_BLKS_MAX);
   err |= sqfs_blockidx_init(&fs->blockidx);
   if (err) {
-    sqfs_destroy(fs);
+    sqfs_destroy(fs, false);
     return SQFS_ERR;
   }
   
   return SQFS_OK;
 }
 
-void sqfs_destroy(sqfs *fs) {
+void sqfs_destroy(sqfs *fs, bool close) {
+  if (close) {
+    fs->input->close(fs->input);
+    free(fs->input);
+  }
+  fs->input = NULL; /* Caller frees it */
+  
   sqfs_table_destroy(&fs->id_table);
   sqfs_table_destroy(&fs->frag_table);
   if (sqfs_export_ok(fs))

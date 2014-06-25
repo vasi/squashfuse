@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start,
+sqfs_err sqfs_table_init(sqfs_table *table, sqfs_input *in, sqfs_off_t start,
     size_t each, size_t count) {
   size_t i;
   size_t nblocks;
@@ -47,7 +47,7 @@ sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start,
   table->each = each;
   if (!(table->blocks = malloc(bread)))
     goto err;
-  if (sqfs_pread(fd, table->blocks, bread, start) != bread)
+  if (in->pread(in, table->blocks, bread, start) != bread)
     goto err;
   
   for (i = 0; i < nblocks; ++i)
