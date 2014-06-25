@@ -12,13 +12,16 @@ LT_INIT
 AC_PROG_AWK
 AC_PROG_SED
 AC_PROG_CPP
-AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
 SQ_PROG_CPP_POSIX_2001
 SQ_PROG_CC_WALL
 
 # Run tests in POSIX mode
 CPPFLAGS="$CPPFLAGS -D_POSIX_C_SOURCE=200112L"
+
+# Miscellaneous functions
+AC_SYS_LARGEFILE
+AC_FUNC_STRERROR_R
 
 # Decompression
 SQ_DECOMPRESSORS
@@ -41,7 +44,6 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 SQ_FUSE_RESULT
 
 # Non-POSIX declarations
-
 AS_IF([test "x$sq_fuse_found" = xyes],[
   SQ_CHECK_DECL_MAKEDEV
   SQ_CHECK_DECL_ENOATTR([:])

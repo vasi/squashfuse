@@ -35,7 +35,6 @@
 /* FIXME:
   - Add windows
   - Handle no pread
-  - Handle no strerror_r
 */
 void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
@@ -64,15 +63,15 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
 
 static char *sqfs_input_posix_error(sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
-  
   size_t bsize = 256;
   char *buf = NULL;
-  int r;
   
   if (ip->errnum == 0)
     return NULL; /* No error */
-  
+
+#if HAVE_STRERROR_R
   while (true) {
+    int r;
     if (!(buf = malloc(bsize)))
       return NULL; /* What else can we do? */
     
@@ -83,6 +82,15 @@ static char *sqfs_input_posix_error(sqfs_input *in) {
     bsize *= 2;
     free(buf);
   }
+#else
+  {
+    char *sterr = strerror(ip->errnum);
+    if (!(buf = malloc(strlen(sterr + 1))))
+      return NULL;
+    strcpy(buf, sterr);
+    return buf;
+  }
+#endif
 }
 
 static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
