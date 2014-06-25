@@ -116,10 +116,14 @@ SQ_CHECK_DECL_MAKEDEV_QNX([
 ])
 ])
 
-AC_DEFUN([SQ_CHECK_DECL_PREAD],
-  [SQ_CHECK_NONSTD(pread,[#include <unistd.h>],[(void)pread;],
-  [AC_DEFINE(SQ_NO_PREAD,1,[Define if pread() is not available])])])
-  
+AC_DEFUN([SQ_CHECK_DECL_PREAD],[
+  sq_have_pread=yes
+  SQ_CHECK_NONSTD(pread,[#include <unistd.h>],[(void)pread;],
+    [sq_have_pread=no])
+  AS_IF([test "x$sq_have_pread" = xyes],
+    [AC_DEFINE(HAVE_PREAD,1,[Define if pread() is available])])
+])
+
 AC_DEFUN([SQ_CHECK_DECL_S_IFSOCK],
   [SQ_CHECK_NONSTD(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])])
 

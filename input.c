@@ -25,6 +25,7 @@
 #include "input.h"
 
 #include "nonstd.h"
+#include "thread.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -44,10 +45,14 @@ void sqfs_input_init(sqfs_input *in) {
 typedef struct {
   int fd;
   int errnum;
+  sqfs_mutex mutex;
 } sqfs_input_posix;
 
 static void sqfs_input_posix_close(sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
+#if !HAVE_PREAD
+  sqfs_mutex_destroy(&ip->mutex);
+#endif
   close(ip->fd);
   free(ip);
   in->data = NULL;
@@ -55,9 +60,20 @@ static void sqfs_input_posix_close(sqfs_input *in) {
 
 static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
     sqfs_off_t off) {
+  ssize_t ret;
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
-  ssize_t ret = sqfs_pread(ip->fd, buf, count, off);
+#if HAVE_PREAD
+  ret = sqfs_pread(ip->fd, buf, count, off);
   ip->errnum = errno;
+#else
+  sqfs_mutex_lock(&ip->mutex);
+  if (lseek(ip->fd, off, SEEK_SET) == -1)
+    ret = -1;
+  else
+    ret = read(ip->fd, buf, count);
+  ip->errnum = errno;
+  sqfs_mutex_unlock(&ip->mutex);
+#endif
   return ret;
 }
 
@@ -102,6 +118,9 @@ static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
   ip = (sqfs_input_posix*)in->data;
   ip->fd = open(path, O_RDONLY);
   ip->errnum = errno;
+#if !HAVE_PREAD
+  sqfs_mutex_init(&ip->mutex);
+#endif
   
   return (ip->fd == -1) ? SQFS_ERR : SQFS_OK;
 }
