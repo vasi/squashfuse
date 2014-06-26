@@ -78,6 +78,7 @@ Known platforms with at least some support:
   - illumos
   - Android
   - QNX
+  - AROS
   - Windows
   - other platforms may work too!
 

@@ -17,6 +17,7 @@ These are not supported by squashfuse_ll, just squashfuse:
 * Hurd (mostly)
 
 These are only supported by the squashfuse_ls demo:
+* AROS
 * Windows
 
 These don't have FUSE:
@@ -250,6 +251,12 @@ brackets, eg: [0.1]
     - No extended attributes support
     - The low-level driver doesn't seem to work
     - Is rather crashy
+
+* AROS
+  + Only squashfuse_ls, there's no FUSE
+  + Versions: unknown
+  + Tested on: icaros desktop 1.5.2 [0.2]
+  + Configure: Pass --disable-fuse
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
