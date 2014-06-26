@@ -18,6 +18,7 @@ These are not supported by squashfuse_ll, just squashfuse:
 
 These are only supported by the squashfuse_ls demo:
 * AROS
+* Syllable
 * Windows
 
 These don't have FUSE:
@@ -254,8 +255,13 @@ brackets, eg: [0.1]
 
 * AROS
   + Only squashfuse_ls, there's no FUSE
-  + Versions: unknown
   + Tested on: icaros desktop 1.5.2 [0.2]
+  + Configure: Pass --disable-fuse
+
+* Syllable
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: Syllable Desktop 0.6.7 [0.2]
+  + Packages: development files, Developer's Delight, Shell Essentials
   + Configure: Pass --disable-fuse
 
 * Windows
