@@ -294,10 +294,12 @@ static int sqfs_opt_add_arg(struct fuse_args *args, const char *arg) {
 #else
   char *new_arg, **new_argv;
   size_t new_argc, new_size;
+  size_t asz;
   
-  if (!(new_arg = malloc(strlen(arg) + 1)))
+  asz = strlen(arg) + 1;
+  if (!(new_arg = malloc(asz)))
     return -1;
-  strcpy(new_arg, arg);
+  strncpy(new_arg, arg, asz);
     
   new_argc = args->argc + 1;
   new_size = new_argc + 1; /* NULL at end */
@@ -369,9 +371,10 @@ static int sqfs_opt_proc(void *data, const char *arg, int key,
       opts->mountpoint = 1;
       return 1;
     } else {
-      if (!(opts->image = malloc(strlen(arg) + 1)))
+      size_t asz = strlen(arg) + 1;
+      if (!(opts->image = malloc(asz)))
         return -1;
-      strcpy(opts->image, arg);
+      strncpy(opts->image, arg, asz);
       sqfs_setenv(SQFS_ENV_IMAGE, opts->image, 1); /* Hack for old FUSE */
       return 0;
     }
@@ -396,8 +399,9 @@ sqfs_err sqfs_opt_parse(struct fuse_args *outargs, int argc, char **argv,
   {
     const char *env_image = getenv(SQFS_ENV_IMAGE);
     if (env_image) {
-      opts->image = malloc(strlen(env_image) + 1);
-      strcpy(opts->image, env_image);
+      size_t asz = strlen(env_image) + 1;
+      opts->image = malloc(asz);
+      strncpy(opts->image, env_image, asz);
       sqfs_unsetenv(SQFS_ENV_IMAGE);
     }
   }

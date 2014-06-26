@@ -33,8 +33,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SQ_BUFSIZE 256
-
 void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
 }
@@ -74,11 +72,13 @@ static char *sqfs_input_windows_error(sqfs_input *in) {
   /* FIXME: Use FormatMessage() to return a real error */
   char buf[SQ_BUFSIZE];
   char *ret;
+  size_t asz;
   sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
   snprintf(buf, sizeof(buf), "file error #%d", iw->error);
-  if (!(ret = malloc(strlen(buf)+1)))
+  asz = strlen(buf) + 1;
+  if (!(ret = malloc(asz)))
     return NULL;
-  strcpy(ret, buf);
+  strncpy(ret, buf, asz);
   return ret;
 }
 
@@ -170,9 +170,10 @@ static char *sqfs_input_posix_error(sqfs_input *in) {
 #else
   {
     char *sterr = strerror(ip->errnum);
-    if (!(buf = malloc(strlen(sterr + 1))))
+    size_t asz = strlen(sterr) + 1;
+    if (!(buf = malloc(asz)))
       return NULL;
-    strcpy(buf, sterr);
+    strncpy(buf, sterr, asz);
     return buf;
   }
 #endif

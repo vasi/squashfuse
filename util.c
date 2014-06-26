@@ -24,6 +24,7 @@
  */
 #include "util.h"
 
+#include "dynstring.h"
 #include "fs.h"
 #include "input.h"
 
@@ -31,33 +32,36 @@
 #include <stdlib.h>
 
 /* TODO: i18n of error messages */
-sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
-  sqfs_err err;
-  sqfs_input *in;
+char *sqfs_open_error(sqfs *fs, sqfs_err err) {
+  #define SQFMT(...) do { \
+    if (sqfs_dynstring_format(&str, __VA_ARGS__)) \
+      goto error; \
+    } while (0)
   
-  if (!(in = malloc(sizeof(sqfs_input))))
-    return SQFS_ERR;
-  if ((err = sqfs_input_open(in, image)))
-    return SQFS_ERR; /* FIXME: error message? */
+  sqfs_dynstring str;
+  char *ret = NULL;
   
-  err = sqfs_init(fs, in);
+  if (err == SQFS_OK)
+    return NULL;
+  
+  sqfs_dynstring_init(&str);
+  sqfs_dynstring_create(&str, 0);
+  
   switch (err) {
-    case SQFS_OK:
-      break;
     case SQFS_BADFORMAT:
-      fprintf(stderr, "This doesn't look like a squashfs image.\n");
+      SQFMT("Not a squashfs image");
       break;
     case SQFS_BADVERSION: {
       int major, minor, mj1, mn1, mj2, mn2;
       sqfs_version(fs, &major, &minor);
       sqfs_version_supported(&mj1, &mn1, &mj2, &mn2);
-      fprintf(stderr, "Squashfs version %d.%d detected, only version",
+      SQFMT("Image version %d.%d detected, only version",
         major, minor);
       if (mj1 == mj2 && mn1 == mn2)
-        fprintf(stderr, " %d.%d", mj1, mn1);
+        SQFMT(" %d.%d", mj1, mn1);
       else
-        fprintf(stderr, "s %d.%d to %d.%d", mj1, mn1, mj2, mn2);
-      fprintf(stderr, " supported.\n");
+        SQFMT("s %d.%d through %d.%d", mj1, mn1, mj2, mn2);
+      SQFMT(" supported");
       break;
     }
     case SQFS_BADCOMP: {
@@ -66,26 +70,53 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
       sqfs_compression_type sup[SQFS_COMP_MAX],
         comp = sqfs_compression(fs);
       sqfs_compression_supported(sup);
-      fprintf(stderr, "Squashfs image uses %s compression, this version "
-        "supports only ", sqfs_compression_name(comp));
+      SQFMT("Image uses %s compression, we only support ",
+        sqfs_compression_name(comp));
       for (i = 0; i < SQFS_COMP_MAX; ++i) {
         if (sup[i] == SQFS_COMP_UNKNOWN)
           continue;
         if (!first)
-          fprintf(stderr, ", ");
-        fprintf(stderr, "%s", sqfs_compression_name(sup[i]));
+          SQFMT(", ");
+        SQFMT("%s", sqfs_compression_name(sup[i]));
         first = false;
       }
-      fprintf(stderr, ".\n");
       break;
     }
     default:
-      fprintf(stderr, "Something went wrong trying to read the squashfs "
-        "image.\n");
+      SQFMT("Unknown error");
   }
+  
+  if (sqfs_dynstring_dupstr(&str, &ret))
+    goto error;
 
-  if (err)
-    in->close(in);
-  return err;
+error:
+  sqfs_dynstring_destroy(&str);
+  return ret; /* Nothing we can do */
+#undef SQFMT
 }
 
+sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
+  sqfs_err err;
+  sqfs_input *in;
+  char *msg;
+  
+  if (!(in = malloc(sizeof(sqfs_input))))
+    return SQFS_ERR;
+  
+  if ((err = sqfs_input_open(in, image))) {
+    msg = in->error(in);
+    fprintf(stderr, "Can't open file: %s\n", msg);
+    free(msg);
+    return err;
+  }
+  
+  if ((err = sqfs_init(fs, in))) {
+    msg = sqfs_open_error(fs, err);
+    fprintf(stderr, "Error opening image: %s\n", msg);
+    free(msg);
+    in->close(in);
+    return err;
+  }
+  
+  return SQFS_OK;
+}

@@ -46,4 +46,10 @@ sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat);
 sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
   size_t size);
 
+/* Print into the dynstring */
+sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...);
+
+/* Duplicate this dynstring into an allocated char* */
+sqfs_err sqfs_dynstring_dupstr(sqfs_dynstring *s, char **c);
+
 #endif

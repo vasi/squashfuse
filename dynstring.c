@@ -24,6 +24,9 @@
  */
 #include "dynstring.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void sqfs_dynstring_init(sqfs_dynstring *s) {
@@ -73,4 +76,48 @@ sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
 
 sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat) {
   return sqfs_dynstring_concat_size(s, cat, strlen(cat));
+}
+
+sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...) {
+  va_list ap, ap2;
+  int printed;
+  size_t size;
+  char *start;
+  sqfs_err err = SQFS_OK;
+  
+  va_start(ap, fmt);
+  va_copy(ap2, ap);
+  
+  /* Find out the size */
+  size = sqfs_dynstring_size(s);
+  sqfs_array_at(s, size, &start);
+  printed = vsnprintf(start, 1, fmt, ap);
+  if (printed == -1) {
+    err = SQFS_ERR;
+    goto done;
+  }
+  
+  /* Actually print it */
+  if ((err = sqfs_array_grow(s, printed, NULL)))
+    goto done;
+  sqfs_array_at(s, size, &start);
+  printed = vsnprintf(start, printed + 1, fmt, ap2);
+  if (printed == -1) {
+    err = SQFS_ERR;
+    goto done;
+  }
+
+done:
+  va_end(ap);
+  va_end(ap2);
+  return err;
+}
+
+sqfs_err sqfs_dynstring_dupstr(sqfs_dynstring *s, char **c) {
+  size_t asz = sqfs_dynstring_size(s) + 1;
+  *c = malloc(asz);
+  if (!*c)
+    return SQFS_ERR;
+  strncpy(*c, sqfs_dynstring_string(s), asz);
+  return SQFS_OK;
 }
