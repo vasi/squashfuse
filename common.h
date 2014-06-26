@@ -45,9 +45,6 @@
   #define SQFS_UNUSED(x) UNUSED_ ## x
 #endif
 
-/* For sprintf and such */
-#define SQ_BUFSIZE 256
-
 typedef enum {
   SQFS_OK,
   SQFS_ERR,

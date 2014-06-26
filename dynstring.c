@@ -24,10 +24,36 @@
  */
 #include "dynstring.h"
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+char *sqfs_strdup(const char *s) {
+  size_t asz = strlen(s) + 1;
+  char *ret = malloc(asz);
+  if (ret)
+    strncpy(ret, s, asz);
+  return ret;
+}
+
+char *sqfs_asprintf(const char *fmt, ...) {
+  va_list ap;
+  sqfs_err err;
+  sqfs_dynstring str;
+  
+  sqfs_dynstring_init(&str);
+  sqfs_dynstring_create(&str, 0);
+  va_start(ap, fmt);
+  err = sqfs_dynstring_vformat(&str, fmt, ap);
+  va_end(ap);
+  
+  if (err) {
+    sqfs_dynstring_destroy(&str);
+    return NULL;
+  }
+  return sqfs_dynstring_detach(&str);
+}
+
 
 void sqfs_dynstring_init(sqfs_dynstring *s) {
   sqfs_array_init(s);
@@ -79,16 +105,25 @@ sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat) {
 }
 
 sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...) {
-  va_list ap, ap2;
+  va_list ap;
+  sqfs_err err;
+  
+  va_start(ap, fmt);
+  err = sqfs_dynstring_vformat(s, fmt, ap);
+  va_end(ap);
+  return err;
+}
+
+sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
+    va_list ap) {
+  va_list ap2;
   int printed;
   size_t size;
   char *start;
   sqfs_err err = SQFS_OK;
-  
-  va_start(ap, fmt);
-  va_copy(ap2, ap);
-  
+    
   /* Find out the size */
+  va_copy(ap2, ap);
   size = sqfs_dynstring_size(s);
   sqfs_array_at(s, size, &start);
   printed = vsnprintf(start, 1, fmt, ap);
@@ -108,16 +143,13 @@ sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...) {
   }
 
 done:
-  va_end(ap);
   va_end(ap2);
   return err;
 }
 
-sqfs_err sqfs_dynstring_dupstr(sqfs_dynstring *s, char **c) {
-  size_t asz = sqfs_dynstring_size(s) + 1;
-  *c = malloc(asz);
-  if (!*c)
-    return SQFS_ERR;
-  strncpy(*c, sqfs_dynstring_string(s), asz);
-  return SQFS_OK;
+char *sqfs_dynstring_detach(sqfs_dynstring *s) {
+  char *ret = sqfs_dynstring_string(s);
+  s->items = NULL;
+  sqfs_array_init(s);
+  return ret;
 }

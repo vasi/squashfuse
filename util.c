@@ -39,7 +39,6 @@ char *sqfs_open_error(sqfs *fs, sqfs_err err) {
     } while (0)
   
   sqfs_dynstring str;
-  char *ret = NULL;
   
   if (err == SQFS_OK)
     return NULL;
@@ -86,12 +85,11 @@ char *sqfs_open_error(sqfs *fs, sqfs_err err) {
       SQFMT("Unknown error");
   }
   
-  if (sqfs_dynstring_dupstr(&str, &ret))
-    goto error;
+  return sqfs_dynstring_detach(&str);
 
 error:
   sqfs_dynstring_destroy(&str);
-  return ret; /* Nothing we can do */
+  return NULL; /* Nothing we can do */
 #undef SQFMT
 }
 

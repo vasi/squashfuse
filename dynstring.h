@@ -27,8 +27,13 @@
 
 #include "array.h"
 
-/* A dynamically expanding string wrapper */
+#include <stdarg.h>
 
+/* Utility function */
+char *sqfs_strdup(const char *s);
+char *sqfs_asprintf(const char *fmt, ...);
+
+/* A dynamically expanding string wrapper */
 typedef sqfs_array sqfs_dynstring;
 
 void sqfs_dynstring_init(sqfs_dynstring *s);
@@ -48,8 +53,11 @@ sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
 
 /* Print into the dynstring */
 sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...);
+sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
+  va_list ap);
 
-/* Duplicate this dynstring into an allocated char* */
-sqfs_err sqfs_dynstring_dupstr(sqfs_dynstring *s, char **c);
+/* Return the contents as a char* and destroy the dynstring. The return
+   value must be deallocated by the caller */
+char *sqfs_dynstring_detach(sqfs_dynstring *s);
 
 #endif

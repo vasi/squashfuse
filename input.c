@@ -24,6 +24,7 @@
  */
 #include "input.h"
 
+#include "dynstring.h"
 #include "nonstd.h"
 #include "thread.h"
 
@@ -70,16 +71,8 @@ static ssize_t sqfs_input_windows_pread(sqfs_input *in, void *buf,
 
 static char *sqfs_input_windows_error(sqfs_input *in) {
   /* FIXME: Use FormatMessage() to return a real error */
-  char buf[SQ_BUFSIZE];
-  char *ret;
-  size_t asz;
   sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
-  snprintf(buf, sizeof(buf), "file error #%d", iw->error);
-  asz = strlen(buf) + 1;
-  if (!(ret = malloc(asz)))
-    return NULL;
-  strncpy(ret, buf, asz);
-  return ret;
+  return sqfs_asprintf("File error #%d", iw->error);
 }
 
 static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
@@ -148,34 +141,19 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
 
 static char *sqfs_input_posix_error(sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
-  size_t bsize = SQ_BUFSIZE;
-  char *buf = NULL;
   
   if (ip->errnum == 0)
     return NULL; /* No error */
 
 #if HAVE_STRERROR_R
-  while (true) {
-    int r;
-    if (!(buf = malloc(bsize)))
-      return NULL; /* What else can we do? */
-    
-    r = strerror_r(ip->errnum, buf, bsize);
-    if (r != ERANGE)
-      return buf;
-    
-    bsize *= 2;
-    free(buf);
+  {
+    char buf[1024]; /* FIXME: 1K is enough for anyone */
+    strerror_r(ip->errnum, buf, sizeof(buf));
+    buf[sizeof(buf)-1] = '\0'; /* unclear POSIX spec */
+    return sqfs_strdup(buf);
   }
 #else
-  {
-    char *sterr = strerror(ip->errnum);
-    size_t asz = strlen(sterr) + 1;
-    if (!(buf = malloc(asz)))
-      return NULL;
-    strncpy(buf, sterr, asz);
-    return buf;
-  }
+  return sqfs_strdup(strerror(ip->errnum));
 #endif
 }
 
