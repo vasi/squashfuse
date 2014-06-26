@@ -24,7 +24,8 @@
  */
 #include "dynstring.h"
 
-#include <stdio.h>
+#include "nonstd.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -126,7 +127,7 @@ sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
   va_copy(ap2, ap);
   size = sqfs_dynstring_size(s);
   sqfs_array_at(s, size, &start);
-  printed = vsnprintf(start, 1, fmt, ap);
+  printed = sqfs_vsnprintf(start, 1, fmt, ap);
   if (printed == -1) {
     err = SQFS_ERR;
     goto done;
@@ -136,7 +137,7 @@ sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
   if ((err = sqfs_array_grow(s, printed, NULL)))
     goto done;
   sqfs_array_at(s, size, &start);
-  printed = vsnprintf(start, printed + 1, fmt, ap2);
+  printed = sqfs_vsnprintf(start, printed + 1, fmt, ap2);
   if (printed == -1) {
     err = SQFS_ERR;
     goto done;

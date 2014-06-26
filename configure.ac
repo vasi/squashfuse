@@ -52,6 +52,7 @@ AS_IF([test "x$sq_fuse_found" = xyes],[
 SQ_CHECK_DECL_PREAD
 SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_SETENV
+SQ_CHECK_DECL_VSNPRINTF
 
 # Multithreading
 SQ_THREADS

@@ -38,9 +38,10 @@ libsquashfuse_la_SOURCES =    \
   traverse.c    traverse.h    \
   util.c        util.h        \
   xattr.c       xattr.h       \
-  nonstd-pread.c    \
-  nonstd-stat.c     \
-  nonstd-internal.h \
+  nonstd-pread.c     \
+  nonstd-stat.c      \
+  nonstd-vsnprintf.c \
+  nonstd-internal.h  \
   nonstd.h  
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS) $(PTHREAD_CFLAGS)

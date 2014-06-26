@@ -141,6 +141,10 @@ SQ_CHECK_NONSTD(ENOATTR,[
 AC_DEFUN([SQ_CHECK_DECL_DAEMON],
   [SQ_CHECK_NONSTD(daemon,[#include <unistd.h>],[daemon(1,1);])])
 
+AC_DEFUN([SQ_CHECK_DECL_VSNPRINTF],
+  [SQ_CHECK_NONSTD(vsnprintf,[#include <stdio.h>],[
+    va_list ap; vsnprintf(0,1,0, ap);])])
+
 AC_DEFUN([SQ_CHECK_DECL_SETENV],
   [SQ_CHECK_NONSTD(setenv,[#include <stdlib.h>],[
     setenv(0,0,1);

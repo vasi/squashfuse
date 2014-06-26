@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2014 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,28 +22,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_STD_H
-#define SQFS_STD_H
+#define SQFEATURE NONSTD_VSNPRINTF_DEF
+#include "nonstd-internal.h"
 
-#include "common.h"
+#include <stdio.h>
 
-#include <stdarg.h>
-
-/* Non-standard functions that we need */
-
-dev_t sqfs_makedev(int maj, int min);
-
-ssize_t sqfs_pread(int fd, void *buf, size_t count, sqfs_off_t off);
-
-int sqfs_enoattr(void);
-
-sqfs_mode_t sqfs_mode(int inode_type);
-
-int sqfs_ll_daemonize(int fg);
-
-int sqfs_setenv(const char *key, const char *value, int overwrite);
-int sqfs_unsetenv(const char *key);
-
-int sqfs_vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
-
-#endif
+int sqfs_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
+  return vsnprintf(str, size, fmt, ap);
+}
