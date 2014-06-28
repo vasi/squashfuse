@@ -44,7 +44,9 @@ brackets, eg: [0.1]
     - SLES      / 11 SP3           / ppc64     / xlc_r       [0.2]
     - Red Hat   / 7.2              / i386      / FUSE  0.95  [0.2]
   + Requirements:
-    - A compiler: gcc, clang, icc (Intel), xlc_r (IBM)
+    - A compiler: gcc, clang, icc (Intel), xlc_r (IBM), tcc
+      - tcc requires --disable-fuse-context , because it lacks versioned
+        symbol support
     - libfuse 2.1 or higher, 2.5 or higher for the low-level front-end
     - FUSE kernel module. Usually this comes from the CONFIG_FUSE_FS kernel
       option, the default on most distros since 2004.
