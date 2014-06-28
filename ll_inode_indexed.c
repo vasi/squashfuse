@@ -35,7 +35,7 @@
 We have to fit a 48-bit inode ID into a 32-bit fuse_ino_t. The inode ID is
 made up of a 32-bit block location and a 16-bit offset.
 
-The maximum metadata-block size is 8012, so only 13 bits of the offset are used.
+The maximum metadata-block size is 8192, so only 13 bits of the offset are used.
 Also, each inode is at least 20 bytes, so an inode can be uniquely identified
 without the bottom 4 bits of the offset. This leaves 9 significant offset bits
 
@@ -301,7 +301,7 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   if (!(iidx = (sqfs_iidx*)malloc(sizeof(*iidx))))
     return SQFS_ERR;
   iidx->groups = NULL;
-  iidx->bias = 1 << 9; /* FIXME: reserve space */
+  iidx->bias = 1;
   ll->ino_data = iidx;
   
   iidx->groups = (block_group*)malloc(MAX_BLOCK_GROUPS * sizeof(block_group));
