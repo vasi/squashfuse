@@ -82,7 +82,7 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
     block->raw_size = size;
   }
   
-  if (fs->input->pread(fs->input, read_bytes, size, pos) != size)
+  if (fs->input->pread(fs->input, read_bytes, size, pos) != (ssize_t)size)
     goto error;
 
   if (compressed)

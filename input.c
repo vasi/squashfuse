@@ -149,9 +149,17 @@ static char *sqfs_input_posix_error(sqfs_input *in) {
 #if HAVE_STRERROR_R
   {
     char buf[1024]; /* FIXME: 1K is enough for anyone */
-    strerror_r(ip->errnum, buf, sizeof(buf));
-    buf[sizeof(buf)-1] = '\0'; /* unclear POSIX spec */
-    return sqfs_strdup(buf);
+    char *ret = buf;
+    #ifdef STRERROR_R_CHAR_P
+      if (!(ret = strerror_r(ip->errnum, buf, sizeof(buf))))
+        return NULL;
+    #else
+      int err = strerror_r(ip->errnum, buf, sizeof(buf));
+      if (err != 0 && err != ERANGE && errno != ERANGE)
+        return NULL; /* Unclear spec! */
+      buf[sizeof(buf)-1] = '\0'; /* Unclear POSIX spec */
+    #endif
+    return sqfs_strdup(ret);
   }
 #else
   return sqfs_strdup(strerror(ip->errnum));

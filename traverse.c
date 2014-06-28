@@ -35,7 +35,7 @@
 /* Default initial capacity of trv.path */
 #define TRAVERSE_DEFAULT_PATH_CAP 32
 
-enum {
+typedef enum {
   /* These states may be set on entry to sqfs_traverse_next(), with real
      work to do. */
   TRAVERSE_DESCEND,     /* Descend into the current entry (a dir) */

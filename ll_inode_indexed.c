@@ -116,7 +116,7 @@ static sqfs_err sqfs_iidx_scan_blocks(sqfs_iidx *iidx, sqfs *fs) {
   stride = 1;
   
   count = 0;
-  while (pos < fs->sb.directory_table_start) {
+  while ((__le64)pos < fs->sb.directory_table_start) {
     if (count % stride == 0) {
       if (iidx->ngroups == MAX_BLOCK_GROUPS) { /* Increase the stride */
         for (i = 0; i < MAX_BLOCK_GROUPS / 2; ++i)
@@ -214,7 +214,7 @@ static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
       break; /* Found it! */
     
     /* Make sure we're not too far */
-    if (cur.block >= ll->fs.sb.directory_table_start)
+    if ((__le64)cur.block >= ll->fs.sb.directory_table_start)
       return SQFS_INODE_NONE;
     if (idx == 0 && csig > sig)
       return SQFS_INODE_NONE;
