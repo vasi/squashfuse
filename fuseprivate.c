@@ -224,7 +224,7 @@ static sqfs_err sqfs_opt_scan_image_proc(void *ctx, int type,
       size_t len;
       ++sep;
       len = comma - sep;
-      if (!(*image = malloc(len + 1)))
+      if (!(*image = (char*)malloc(len + 1)))
         return SQFS_ERR;
       strncpy(*image, sep, len + 1);
       (*image)[len] = '\0';
@@ -300,7 +300,7 @@ static int sqfs_opt_add_arg(struct fuse_args *args, const char *arg) {
     
   new_argc = args->argc + 1;
   new_size = new_argc + 1; /* NULL at end */
-  new_argv = realloc(args->argv, new_size * sizeof(char*));
+  new_argv = (char**)realloc(args->argv, new_size * sizeof(char*));
   if (!new_argv) {
     free(new_arg);
     return -1;

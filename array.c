@@ -78,7 +78,7 @@ static sqfs_err sqfs_array_ensure_capacity(sqfs_array *a, size_t cap) {
     next_cap = cap;
   
   /* Grow the items allocation */
-  items = realloc(a->items, next_cap * a->value_size);
+  items = (char*)realloc(a->items, next_cap * a->value_size);
   if (!items)
     return SQFS_ERR;
   

@@ -57,7 +57,8 @@ sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t value_size, size_t initial,
   if ((err = sqfs_cond_init(&cache->cv)))
     goto error_lock;
   
-  cache->entries = malloc(capacity * sizeof(sqfs_cache_entry));
+  cache->entries = (sqfs_cache_entry*)malloc(
+    capacity * sizeof(sqfs_cache_entry));
   if (!cache->entries) {
     err = SQFS_ERR;
     goto error_cond;

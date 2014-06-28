@@ -94,8 +94,10 @@ static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
   md_size = blocks * sizeof(sqfs_blocklist_entry);
   count = (inode->next.offset + md_size - 1)
     / SQUASHFS_METADATA_SIZE;
-  if (!(idx->entries = malloc(count * sizeof(sqfs_blockidx_entry))))
-    return SQFS_ERR;
+  idx->entries = (sqfs_blockidx_entry*)malloc(
+    count * sizeof(sqfs_blockidx_entry));
+  if (!idx->entries)
+  return SQFS_ERR;
   
   blockidx = idx->entries;
   sqfs_blocklist_init(fs, inode, &bl);

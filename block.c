@@ -140,7 +140,7 @@ static sqfs_err sqfs_cached_block(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 
   if ((err = sqfs_cache_get(cache, pos, &entry)))
     return err;
-  *block = sqfs_cache_entry_value(entry);
+  *block = (sqfs_block*)sqfs_cache_entry_value(entry);
   (*block)->cache_entry = entry;
 
   if (!sqfs_cache_entry_is_initialized(entry)) {

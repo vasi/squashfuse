@@ -206,7 +206,7 @@ static int sqfs_hl_op_opendir(const char *path, sqfs_file_info fi) {
   sqfs *fs;
   sqfs_inode *inode;
   
-  inode = malloc(sizeof(*inode));
+  inode = (sqfs_inode*)malloc(sizeof(*inode));
   if (!inode)
     return -ENOMEM;
   
@@ -285,7 +285,7 @@ static int sqfs_hl_op_open(const char *path, sqfs_file_info fi) {
     return -EROFS;
 #endif
   
-  inode = malloc(sizeof(*inode));
+  inode = (sqfs_inode*)malloc(sizeof(*inode));
   if (!inode)
     return -ENOMEM;
   
@@ -404,7 +404,7 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
 static sqfs_hl *sqfs_hl_open(const char *path) {
   sqfs_hl *hl;
   
-  hl = malloc(sizeof(*hl));
+  hl = (sqfs_hl*)malloc(sizeof(*hl));
   if (!hl) {
     perror("Can't allocate memory");
   } else {

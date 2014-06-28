@@ -298,13 +298,14 @@ sqfs_err sqfs_iidx_init(sqfs_ll *ll) {
   sqfs_iidx *iidx;
   sqfs_err err = SQFS_OK;
   
-  if (!(iidx = malloc(sizeof(*iidx))))
+  if (!(iidx = (sqfs_iidx*)malloc(sizeof(*iidx))))
     return SQFS_ERR;
   iidx->groups = NULL;
   iidx->bias = 1 << 9; /* FIXME: reserve space */
   ll->ino_data = iidx;
   
-  if (!(iidx->groups = malloc(MAX_BLOCK_GROUPS * sizeof(block_group))))
+  iidx->groups = (block_group*)malloc(MAX_BLOCK_GROUPS * sizeof(block_group));
+  if (!iidx->groups)
     goto error;
   
   if ((err = sqfs_iidx_scan_blocks(iidx, &ll->fs)))

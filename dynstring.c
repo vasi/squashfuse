@@ -31,7 +31,7 @@
 
 char *sqfs_strdup(const char *s) {
   size_t asz = strlen(s) + 1;
-  char *ret = malloc(asz);
+  char *ret = (char*)malloc(asz);
   if (ret)
     strncpy(ret, s, asz);
   return ret;

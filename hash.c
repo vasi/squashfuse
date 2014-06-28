@@ -37,7 +37,9 @@ static sqfs_err sqfs_hash_add_bucket(sqfs_hash *h, sqfs_hash_bucket *b,
     sqfs_hash_key k, sqfs_hash_value_p vp) {
   size_t hash = sqfs_hash_hash(h, b ? b->key : k);
   if (!b) {
-    if (!(b = malloc(offsetof(sqfs_hash_bucket, value) + h->value_size)))
+    b = (sqfs_hash_bucket*)malloc(
+      offsetof(sqfs_hash_bucket, value) + h->value_size);
+    if (!b)
       return SQFS_ERR;
     b->key = k;
   }

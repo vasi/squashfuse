@@ -87,7 +87,8 @@ static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
 }
 
 sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
-  sqfs_input_windows *iw = malloc(sizeof(sqfs_input_windows));
+  sqfs_input_windows *iw =
+    (sqfs_input_windows*)malloc(sizeof(sqfs_input_windows));
   if (!ip)
     return SQFS_ERR;
   
@@ -174,7 +175,7 @@ static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
 }
 
 sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd) {
-  sqfs_input_posix *ip = malloc(sizeof(sqfs_input_posix));
+  sqfs_input_posix *ip = (sqfs_input_posix*)malloc(sizeof(sqfs_input_posix));
   if (!ip)
     return SQFS_ERR;
   

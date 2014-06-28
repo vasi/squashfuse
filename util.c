@@ -98,7 +98,7 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   sqfs_input *in;
   char *msg;
   
-  if (!(in = malloc(sizeof(sqfs_input))))
+  if (!(in = (sqfs_input*)malloc(sizeof(sqfs_input))))
     return SQFS_ERR;
   
   if ((err = sqfs_input_open(in, image))) {

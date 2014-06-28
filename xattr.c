@@ -219,7 +219,7 @@ sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
   
   name += sqfs_xattr_prefixes[type].len;
   len = strlen(name);
-  if (!(cmp = malloc(len)))
+  if (!(cmp = (char*)malloc(len)))
     return SQFS_ERR;
   
   while (x->remain) {

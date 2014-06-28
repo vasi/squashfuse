@@ -256,7 +256,7 @@ static sqfs_err sqfs_ll_ino32_init(sqfs_ll *ll) {
   if (err)
     return err;
     
-  map = malloc(sizeof(sqfs_ll_inode_map));
+  map = (sqfs_ll_inode_map*)malloc(sizeof(sqfs_ll_inode_map));
   map->root = inode.base.inode_number;
   sqfs_hash_create(&map->icache, offsetof(sqfs_ll_inode_entry, end_of_struct),
     SQFS_ICACHE_INITIAL);
@@ -302,7 +302,7 @@ static sqfs_err sqfs_ll_ino32exp_init(sqfs_ll *ll) {
   if (err)
     return err;
     
-  map = malloc(sizeof(sqfs_ll_inode_map));
+  map = (sqfs_ll_inode_map*)malloc(sizeof(sqfs_ll_inode_map));
   map->root = inode.base.inode_number;
   
   ll->ino_sqfs = sqfs_ll_ino32exp_sqfs;

@@ -58,7 +58,7 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
   
   fi->fh = (intptr_t)NULL;
   
-  lli = malloc(sizeof(*lli));
+  lli = (sqfs_ll_i*)malloc(sizeof(*lli));
   if (!lli) {
     fuse_reply_err(req, ENOMEM);
     return;
@@ -108,7 +108,7 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
   
   if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
     err = EINVAL;
-  if (!err && !(bufpos = buf = malloc(size)))
+  if (!err && !(bufpos = buf = (char*)malloc(size)))
     err = ENOMEM;
   
   if (!err) {
@@ -191,7 +191,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
     return;
   }
   
-  inode = malloc(sizeof(sqfs_inode));
+  inode = (sqfs_inode*)malloc(sizeof(sqfs_inode));
   if (!inode) {
     fuse_reply_err(req, ENOMEM);
     return;
@@ -224,7 +224,7 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
   sqfs_err err = SQFS_OK;
   
   off_t osize;
-  char *buf = malloc(size);
+  char *buf = (char*)malloc(size);
   if (!buf) {
     fuse_reply_err(req, ENOMEM);
     return;
@@ -253,7 +253,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
     fuse_reply_err(req, EINVAL);
   } else if (sqfs_readlink(&lli.ll->fs, &lli.inode, NULL, &size)) {
     fuse_reply_err(req, EIO);
-  } else if (!(dst = malloc(size + 1))) {
+  } else if (!(dst = (char*)malloc(size + 1))) {
     fuse_reply_err(req, ENOMEM);
   } else if (sqfs_readlink(&lli.ll->fs, &lli.inode, dst, &size)) {
     fuse_reply_err(req, EIO);
@@ -273,7 +273,7 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
     return;
 
   buf = NULL;
-  if (size && !(buf = malloc(size))) {
+  if (size && !(buf = (char*)malloc(size))) {
     fuse_reply_err(req, ENOMEM);
     return;
   }
@@ -309,7 +309,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
   if (sqfs_ll_iget(req, &lli, ino))
     return;
   
-  if (!(buf = malloc(size)))
+  if (!(buf = (char*)malloc(size)))
     fuse_reply_err(req, ENOMEM);
   else if (sqfs_xattr_lookup(&lli.ll->fs, &lli.inode, name, buf, &real))
     fuse_reply_err(req, EIO);
@@ -365,7 +365,7 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 static sqfs_ll *sqfs_ll_open(const char *path) {
   sqfs_ll *ll;
   
-  ll = malloc(sizeof(*ll));
+  ll = (sqfs_ll*)malloc(sizeof(*ll));
   if (!ll) {
     perror("Can't allocate memory");
   } else {
