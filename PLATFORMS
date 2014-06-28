@@ -43,6 +43,7 @@ brackets, eg: [0.1]
     - CentOS    / 3.9              / i386      / FUSE  2.5   [0.2]
     - Red Hat   / 7.2              / i386      / FUSE  0.95  [0.2]
   + Requirements:
+    - A compiler: gcc, clang, Intel C Compiler
     - libfuse 2.1 or higher, 2.5 or higher for the low-level front-end
     - FUSE kernel module. Usually this comes from the CONFIG_FUSE_FS kernel
       option, the default on most distros since 2004.
