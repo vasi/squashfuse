@@ -408,13 +408,30 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
   SQ_RESTORE_FLAGS
 ])
 
-# SQ_FUSE_PLATFORM([MACRO],[PLATFORMS],[MSG])
+# SQ_FUSE_PLATFORM([MACRO],[ENABLE],[PLATFORMS],[MSG])
 #
 # Check if the target matches PLATFORMS, defining MACRO if so
 AC_DEFUN([SQ_FUSE_PLATFORM],[
-  AC_MSG_CHECKING([if ]$3)
-  AS_CASE([$target_os],$2,[
-    AC_DEFINE($1,1,[Define if ]$3)
+  AC_MSG_CHECKING([if ]$4)
+  
+  # Allow a + at the start of the ENABLE flag, to mean we want --enable-x
+  # instead of --disable-x
+  m4_define([sq_feature],$2)
+  m4_define([sq_flag],[--disable-]$2)
+  m4_define([sq_enable],no)
+  ifelse(m4_substr($2,0,1),[+],[
+    m4_define([sq_feature],[m4_substr($2,1)])
+    m4_define([sq_flag],[--enable-][m4_substr($2,1)])
+    m4_define([sq_enable],yes)
+  ])
+  
+  sq_need=no
+  AS_CASE([$target_os],$3,[sq_need=yes])
+  AC_ARG_ENABLE(sq_feature,AS_HELP_STRING(sq_flag,$4),[
+    AS_CASE([$enableval],sq_enable,[sq_need=yes],[sq_need=no])
+  ])
+  AS_IF([test "x$sq_need" = xyes],[
+    AC_DEFINE($1,1,[Define if ]$4)
     AC_MSG_RESULT([yes])
   ],[AC_MSG_RESULT([no])])
 ])
@@ -425,16 +442,16 @@ AC_DEFUN([SQ_FUSE_PLATFORM],[
 # We can't practically test for this at configure time, we just hardcode
 # per target.
 AC_DEFUN([SQ_FUSE_BREAKAGE],[
-  SQ_FUSE_PLATFORM([SQFS_CONTEXT_BROKEN],[minix*|haiku*],
+  SQ_FUSE_PLATFORM([SQFS_CONTEXT_BROKEN],[fuse-context],[minix*|haiku*],
     [fuse_get_context() returns garbage])
-  SQ_FUSE_PLATFORM([SQFS_NO_POSITIONAL_ARGS],[minix*],
+  SQ_FUSE_PLATFORM([SQFS_NO_POSITIONAL_ARGS],[fuse-positional-args],[minix*],
     [FUSE can't access positional arguments])
-  SQ_FUSE_PLATFORM([SQFS_READDIR_NO_OFFSET],[openbsd*|gnu*|*qnx*],
-    [FUSE readdir() callback can't use offsets])
-  SQ_FUSE_PLATFORM([SQFS_OPEN_BAD_FLAGS],[*qnx*|solaris*],
+  SQ_FUSE_PLATFORM([SQFS_READDIR_NO_OFFSET],[fuse-readdir-offset],
+    [openbsd*|gnu*|*qnx*], [FUSE readdir() callback can't use offsets])
+  SQ_FUSE_PLATFORM([SQFS_OPEN_BAD_FLAGS],[fuse-open-flags],[*qnx*|solaris*],
     [FUSE open() callback flags are garbage])
-  SQ_FUSE_PLATFORM([SQFS_MUST_ALLOW_OTHER],[*qnx*],
-    [FUSE requires the allow_other option])
-  SQ_FUSE_PLATFORM([SQFS_PARSE_OPT_BROKEN],[solaris*],
+  SQ_FUSE_PLATFORM([SQFS_MUST_ALLOW_OTHER],[+fuse-force-allow-other],
+    [*qnx*],[FUSE requires the allow_other option])
+  SQ_FUSE_PLATFORM([SQFS_PARSE_OPT_BROKEN],[fuse-parse-opt],[solaris*],
     [FUSE option parsing is broken])
 ])
