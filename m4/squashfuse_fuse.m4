@@ -187,10 +187,13 @@ AC_DEFUN([SQ_FIND_FUSE],[
   # pkgconfig
   AS_IF([test "x$sq_fuse_found" = xyes],,[
     SQ_SAVE_FLAGS
-    SQ_PKG([fuse],[fuse >= 2.5],
-      [SQ_TRY_FUSE_LIBS(,,[sq_fuse_found=yes],
-        [AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
-      [:])
+    SQ_PKG([fuse],[fuse >= 2.5],[
+      # Remove extraneous pthread flag
+      AS_IF([test "x$sq_cv_pthread" = xnone],
+        [LIBS=SQ_AROUND([$LIBS],[-pthread])])
+      SQ_TRY_FUSE_LIBS(,,[sq_fuse_found=yes],
+        [AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])
+    ],[:])
     SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
   ])
   

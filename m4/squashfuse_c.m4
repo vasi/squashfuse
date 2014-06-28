@@ -61,9 +61,12 @@ AC_CACHE_CHECK([how to enable all compiler warnings],
 [
   sq_cv_prog_cc_wall=unknown
   sq_save_CFLAGS=$CFLAGS
+  sq_save_werror="$ac_c_werror_flag"
+  ac_c_werror_flag=yes
   CFLAGS="$CFLAGS -Wall"
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM(,)],[sq_cv_prog_cc_wall="-Wall"])
   CFLAGS=$sq_save_CFLAGS
+  ac_c_werror_flag="$sq_save_werror"
 ])
 AS_IF([test "x$sq_cv_prog_cc_wall" = xunknown],,
   [AC_SUBST([AM_CFLAGS],["$AM_CFLAGS $sq_cv_prog_cc_wall"])])

@@ -45,7 +45,7 @@ AM_CONDITIONAL([MAKE_EXPORT],[test "x$sq_cv_prog_make_export" == xyes])
 # If STRING contains INSIDE, return the part of string surrounding INSIDE.
 # Otherwise, return the original STRING.
 AC_DEFUN([SQ_AROUND],[dnl
-`echo | $AWK '{ i=[[index]](v,o); if(i>0){print substr(v,1,i-1) substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
+`echo | $AWK '{ i=[index](v,o); if(i>0){print substr(v,1,i-1) substr(v,i+length(o))}else{print v} }' v="$1" o="$2"`
 ])
 
 # SQ_SAVE_FLAGS
@@ -76,7 +76,7 @@ AC_DEFUN([SQ_KEEP_FLAGS],[
     AS_VAR_PUSHDEF([sq_saved],[sq_save_]sq_flag)
     AS_VAR_PUSHDEF([sq_tgt],$1[_]sq_flag)
     AS_IF([test "x$2" = x],,[
-      AS_VAR_SET([sq_tgt],SQ_AROUND([$sq_flag],$sq_saved))
+      AS_VAR_SET([sq_tgt],[SQ_AROUND([$sq_flag],$sq_saved)])
     ])
     AC_SUBST(sq_tgt)
     AS_VAR_POPDEF([sq_tgt])

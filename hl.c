@@ -473,11 +473,11 @@ int main(int argc, char *argv[]) {
 #if HAVE_FUSE_INIT_USER_DATA || HAVE_FUSE_MAIN_RETURN
   ret =
 #endif
-  fuse_main(args.argc, args.argv, &sqfs_hl_ops
 #if HAVE_FUSE_INIT_USER_DATA
-    , hl
+  fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+#else
+  fuse_main(args.argc, args.argv, &sqfs_hl_ops);
 #endif
-  );
   
   sqfs_opt_free(&args);
   return ret;

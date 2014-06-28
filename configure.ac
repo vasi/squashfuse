@@ -32,6 +32,9 @@ SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h])
 AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
+# Multithreading
+SQ_THREADS
+
 # FUSE
 SQ_FUSE_API
 AS_IF([test "x$sq_fuse_found" = xyes],[
@@ -53,9 +56,6 @@ SQ_CHECK_DECL_PREAD
 SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_SETENV
 SQ_CHECK_DECL_VSNPRINTF
-
-# Multithreading
-SQ_THREADS
 
 # Make
 SQ_CHECK_PROG_MAKE_EXPORT
