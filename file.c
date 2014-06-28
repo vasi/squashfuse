@@ -152,7 +152,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
     return err;
   
   read_off = start % block_size;
-  buf_orig = buf;
+  buf_orig = (char*)buf;
   while (*size > 0) {
     sqfs_block *block = NULL;
     size_t data_off, data_size;

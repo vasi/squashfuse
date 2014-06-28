@@ -57,6 +57,7 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 }
 
 sqfs_err sqfs_init(sqfs *fs, sqfs_input *in) {
+  #define SQTRY(_expr) do { err = _expr; if (err) goto error; } while (0)
   sqfs_err err = SQFS_OK;
   ssize_t bread;
   memset(fs, 0, sizeof(*fs));
@@ -79,28 +80,28 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_input *in) {
   if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
     return SQFS_BADCOMP;
   
-  err = sqfs_table_init(&fs->id_table, fs->input, fs->sb.id_table_start,
-    sizeof(uint32_t), fs->sb.no_ids);
-  err |= sqfs_table_init(&fs->frag_table, fs->input, fs->sb.fragment_table_start,
-    sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
+  SQTRY(sqfs_table_init(&fs->id_table, fs->input, fs->sb.id_table_start,
+    sizeof(uint32_t), fs->sb.no_ids));
+  SQTRY(sqfs_table_init(&fs->frag_table, fs->input, fs->sb.fragment_table_start,
+    sizeof(struct squashfs_fragment_entry), fs->sb.fragments));
   if (sqfs_export_ok(fs)) {
-    err |= sqfs_table_init(&fs->export_table, fs->input,
-      fs->sb.lookup_table_start, sizeof(uint64_t), fs->sb.inodes);
+    SQTRY(sqfs_table_init(&fs->export_table, fs->input,
+      fs->sb.lookup_table_start, sizeof(uint64_t), fs->sb.inodes));
   }
-  err |= sqfs_xattr_init(fs);
-  err |= sqfs_block_cache_init(&fs->md_cache, SQUASHFS_METADATA_SIZE,
-    SQUASHFS_CACHED_BLKS, SQUASHFS_CACHED_BLKS);
-  err |= sqfs_block_cache_init(&fs->data_cache, fs->sb.block_size,
-    DATA_CACHED_BLKS, CACHED_BLKS_MAX);
-  err |= sqfs_block_cache_init(&fs->frag_cache, fs->sb.block_size,
-    FRAG_CACHED_BLKS, CACHED_BLKS_MAX);
-  err |= sqfs_blockidx_init(&fs->blockidx);
-  if (err) {
-    sqfs_destroy(fs, false);
-    return SQFS_ERR;
-  }
-  
+  SQTRY(sqfs_xattr_init(fs));
+  SQTRY(sqfs_block_cache_init(&fs->md_cache, SQUASHFS_METADATA_SIZE,
+    SQUASHFS_CACHED_BLKS, SQUASHFS_CACHED_BLKS));
+  SQTRY(sqfs_block_cache_init(&fs->data_cache, fs->sb.block_size,
+    DATA_CACHED_BLKS, CACHED_BLKS_MAX));
+  SQTRY(sqfs_block_cache_init(&fs->frag_cache, fs->sb.block_size,
+    FRAG_CACHED_BLKS, CACHED_BLKS_MAX));
+  SQTRY(sqfs_blockidx_init(&fs->blockidx));
   return SQFS_OK;
+
+error:
+  sqfs_destroy(fs, false);
+  return err;
+#undef SQTRY
 }
 
 void sqfs_destroy(sqfs *fs, bool close) {

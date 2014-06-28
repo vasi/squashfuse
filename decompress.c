@@ -39,7 +39,7 @@
 static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
     void *out, size_t *outsz) {
   uLongf zout = *outsz;
-  int zerr = uncompress((Bytef*)out, &zout, in, insz);
+  int zerr = uncompress((Bytef*)out, &zout, (const Bytef*)in, insz);
   if (zerr != Z_OK)
     return SQFS_ERR;
   *outsz = zout;
@@ -57,8 +57,9 @@ static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
   /* FIXME: Save stream state, to minimize setup time? */
   uint64_t memlimit = UINT64_MAX;
   size_t inpos = 0, outpos = 0;
-  lzma_ret err = lzma_stream_buffer_decode(&memlimit, 0, NULL, in, &inpos, insz,
-    out, &outpos, *outsz);
+  lzma_ret err = lzma_stream_buffer_decode(&memlimit, 0, NULL,
+    (const uint8_t*)in, &inpos, insz,
+    (uint8_t*)out, &outpos, *outsz);
   if (err != LZMA_OK)
     return SQFS_ERR;
   *outsz = outpos;
@@ -74,7 +75,8 @@ static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
 static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
     void *out, size_t *outsz) {
   lzo_uint lzout = *outsz;
-  int err = lzo1x_decompress_safe(in, insz, out, &lzout, NULL);
+  int err = lzo1x_decompress_safe((const lzo_bytep)in, insz,
+    (lzo_bytep)out, &lzout, NULL);
   if (err != LZO_E_OK)
     return SQFS_ERR;
   *outsz = lzout;
@@ -88,7 +90,7 @@ static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
 #include <lz4.h>
 static sqfs_err sqfs_decompressor_lz4(void *in, size_t insz,
     void *out, size_t *outsz) {
-  int lz4out = LZ4_decompress_safe (in, out, insz, *outsz);
+  int lz4out = LZ4_decompress_safe((const char*)in, (char*)out, insz, *outsz);
   if (lz4out < 0)
     return SQFS_ERR;
   *outsz = lz4out;
@@ -116,11 +118,11 @@ sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
   }
 }
 
-static char *const sqfs_compression_names[SQFS_COMP_MAX] = {
+static const char *const sqfs_compression_names[SQFS_COMP_MAX] = {
   NULL, "zlib", "lzma", "lzo", "xz", "lz4",
 };
 
-char *sqfs_compression_name(sqfs_compression_type type) {
+const char *sqfs_compression_name(sqfs_compression_type type) {
   if (type < 0 || type >= SQFS_COMP_MAX)
     return NULL;
   return sqfs_compression_names[type];

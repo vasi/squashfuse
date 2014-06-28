@@ -150,7 +150,7 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
   /* Get the block-index, creating it if necessary */
   if ((err = sqfs_cache_get(&fs->blockidx, inode->base.inode_number, &entry)))
     return err;
-  idx = sqfs_cache_entry_value(entry);
+  idx = (sqfs_blockidx*)sqfs_cache_entry_value(entry);
   ret = SQFS_OK;
   if (!sqfs_cache_entry_is_initialized(entry)) {
     idx->error = sqfs_blockidx_add(fs, inode, idx);

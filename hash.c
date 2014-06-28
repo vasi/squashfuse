@@ -91,7 +91,7 @@ sqfs_err sqfs_hash_create(sqfs_hash *h, size_t vsize, size_t initial) {
   if (initial == 0)
     initial = HASH_DEFAULT_INITIAL;
   
-  h->buckets = calloc(initial, sizeof(sqfs_hash_bucket*));
+  h->buckets = (sqfs_hash_bucket**)calloc(initial, sizeof(sqfs_hash_bucket*));
   if (!h->buckets)
     return SQFS_ERR;
   h->capacity = initial;
