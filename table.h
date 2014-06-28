@@ -29,6 +29,10 @@
 
 #include "input.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   size_t each;
   uint64_t *blocks;
@@ -39,5 +43,9 @@ sqfs_err sqfs_table_init(sqfs_table *table, sqfs_input *in, sqfs_off_t start,
 void sqfs_table_destroy(sqfs_table *table);
 
 sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -29,6 +29,10 @@
 
 #include <fuse_lowlevel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FUSE_INODE_NONE 0
 #define SQFS_INODE_NONE 1
 
@@ -71,5 +75,8 @@ typedef struct {
 } sqfs_ll_i;
 sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

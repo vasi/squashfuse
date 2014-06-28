@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Simple hashtable
  *  - Keys are integers
  *  - Values are opaque data
@@ -63,5 +67,9 @@ sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k);
 
 sqfs_err sqfs_hash_add(sqfs_hash *h, sqfs_hash_key k, sqfs_hash_value_p vp);
 sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

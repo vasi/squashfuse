@@ -197,7 +197,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
     return;
   }
   
-  ll = fuse_req_userdata(req);
+  ll = (sqfs_ll*)fuse_req_userdata(req);
   if (sqfs_ll_inode(ll, inode, ino)) {
     fuse_reply_err(req, ENOENT);
   } else if (!S_ISREG(inode->base.mode)) {
@@ -219,7 +219,7 @@ static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
 
 static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t SQFS_UNUSED(ino),
     size_t size, off_t off, struct fuse_file_info *fi) {
-  sqfs_ll *ll = fuse_req_userdata(req);
+  sqfs_ll *ll = (sqfs_ll*)fuse_req_userdata(req);
   sqfs_inode *inode = (sqfs_inode*)(intptr_t)fi->fh;
   sqfs_err err = SQFS_OK;
   

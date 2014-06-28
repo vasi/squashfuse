@@ -34,6 +34,10 @@
 #include "input.h"
 #include "table.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sqfs {
   sqfs_input *input;
   struct squashfs_super_block sb;
@@ -115,5 +119,9 @@ sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i);
 
 /* Find the root inode */
 sqfs_inode_id sqfs_inode_root(sqfs *fs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

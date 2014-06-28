@@ -29,11 +29,19 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Get an appropriate error message from opening an image. Caller must free
    the error. */
 char *sqfs_open_error(sqfs *fs, sqfs_err err);
 
 /* Open a filesystem and print errors to stderr. */
 sqfs_err sqfs_open_image(sqfs *fs, const char *image);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

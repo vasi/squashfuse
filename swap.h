@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SQFS_MAGIC_SWAP 0x68737173
 
 void sqfs_swap16(uint16_t *n);
@@ -37,5 +41,9 @@ void sqfs_swapin64(uint64_t *v);
 
 #include "squashfs_fs.h"
 #include "swap.h.inc"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

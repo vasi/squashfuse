@@ -29,6 +29,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Utility function */
 char *sqfs_strdup(const char *s);
 char *sqfs_asprintf(const char *fmt, ...);
@@ -59,5 +63,9 @@ sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
 /* Return the contents as a char* and destroy the dynstring. The return
    value must be deallocated by the caller */
 char *sqfs_dynstring_detach(sqfs_dynstring *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

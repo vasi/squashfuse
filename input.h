@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Abstract out the input for squashfuse */
 typedef struct sqfs_input sqfs_input;
 struct sqfs_input {
@@ -50,5 +54,9 @@ sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd);
 
 /* Open a file by name */
 sqfs_err sqfs_input_open(sqfs_input *in, const char *path);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

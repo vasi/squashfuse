@@ -29,6 +29,10 @@
 
 #include "squashfs_fs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   sqfs_md_cursor cur;
   sqfs_off_t offset, total;
@@ -86,5 +90,9 @@ bool            sqfs_dentry_is_dir      (sqfs_dir_entry *entry);
 /* Yields the name of this directory entry, or NULL if the dir_entry structure
    was initialized without a name buffer. Name will be nul-terminated. */
 const char *    sqfs_dentry_name        (sqfs_dir_entry *entry);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

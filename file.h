@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Iterator through blocks of a file */
 typedef uint32_t sqfs_blocklist_entry;
 typedef struct {
@@ -56,5 +60,9 @@ sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl);
 /* Read a range of a file into a buffer */
 sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
   sqfs_off_t *size, void *buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

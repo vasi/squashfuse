@@ -30,6 +30,10 @@
 #include "cache.h"
 #include "fs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   sqfs_cache_entry *cache_entry;
   sqfs_err error;
@@ -55,5 +59,9 @@ sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 
 /* Indicate that we're done with a block */
 sqfs_err sqfs_block_release(sqfs_block *block);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

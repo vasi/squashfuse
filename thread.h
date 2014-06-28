@@ -42,6 +42,10 @@
   typedef char sqfs_cond_var;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool sqfs_threads_available(void);
 
 sqfs_err sqfs_mutex_init(sqfs_mutex *m);
@@ -54,5 +58,9 @@ sqfs_err sqfs_cond_destroy(sqfs_cond_var *cv);
 sqfs_err sqfs_cond_wait(sqfs_cond_var *cv, sqfs_mutex *m);
 sqfs_err sqfs_cond_signal(sqfs_cond_var *cv);
 sqfs_err sqfs_cond_broadcast(sqfs_cond_var *cv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

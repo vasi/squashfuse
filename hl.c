@@ -67,8 +67,8 @@ static sqfs_hl *sqfs_user_data(void *data) {
   return gHL;
 #else
   if (data)
-    return data;
-  return fuse_get_context()->private_data;
+    return (sqfs_hl*)data;
+  return (sqfs_hl*)fuse_get_context()->private_data;
 #endif
 }
 

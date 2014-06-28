@@ -29,6 +29,9 @@
 
 #include "squashfs_fs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Initialize xattr handling for this fs */
 sqfs_err sqfs_xattr_init(sqfs *fs);
@@ -70,5 +73,9 @@ sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found);
    Does not touch 'buf' if it's not big enough. */
 sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
   void *buf, size_t *size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

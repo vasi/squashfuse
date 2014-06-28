@@ -27,6 +27,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* A dynamic array, that can expand as needed. Values are guaranteed to be
    stored consecutively */
 
@@ -80,5 +84,9 @@ sqfs_err sqfs_array_append(sqfs_array *a, void *vout);
 
 /* Append several items, copying them into the array */
 sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

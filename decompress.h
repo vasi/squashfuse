@@ -30,6 +30,10 @@
 #define SQFS_COMP_UNKNOWN 0
 #define SQFS_COMP_MAX   16
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int sqfs_compression_type;
 
 const char *sqfs_compression_name(sqfs_compression_type type);
@@ -42,5 +46,9 @@ typedef sqfs_err (*sqfs_decompressor)(void *in, size_t insz,
   void *out, size_t *outsz);
 
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

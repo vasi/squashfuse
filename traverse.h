@@ -31,6 +31,10 @@
 #include "dynstring.h"
 #include "stack.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   bool dir_end;
   sqfs_dir_entry entry;
@@ -67,5 +71,9 @@ char *sqfs_traverse_path(sqfs_traverse *trv);
 
 /* Don't recurse into the directory just returned. */
 sqfs_err sqfs_traverse_prune(sqfs_traverse *trv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

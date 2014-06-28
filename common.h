@@ -45,6 +45,10 @@
   #define SQFS_UNUSED(x) UNUSED_ ## x
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   SQFS_OK,
   SQFS_ERR,
@@ -66,5 +70,9 @@ typedef struct {
   sqfs_off_t block;
   size_t offset;
 } sqfs_md_cursor;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

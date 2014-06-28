@@ -27,6 +27,8 @@
 
 #include "squashfuse.h"
 
+#include <sys/stat.h>
+
 #include <fuse.h>
 #ifdef HAVE_FUSE_OPT_H
   #include <fuse_opt.h>
@@ -40,7 +42,10 @@
   #define FUSE_OPT_KEY_NONOPT -2
 #endif
 
-#include <sys/stat.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Common functions for FUSE high- and low-level clients */
 
@@ -69,5 +74,9 @@ void sqfs_opt_free(struct fuse_args *args);
 
 /* If we have no thread support, force single-threaded mode in FUSE */ 
 sqfs_err sqfs_opt_single_threaded(struct fuse_args *args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

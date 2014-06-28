@@ -27,6 +27,10 @@
 
 #include "array.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef sqfs_array_free_t sqfs_stack_free_t;
 typedef sqfs_array sqfs_stack;
 
@@ -43,5 +47,9 @@ bool sqfs_stack_pop(sqfs_stack *s);
 size_t sqfs_stack_size(sqfs_stack *s);
 sqfs_err sqfs_stack_at(sqfs_stack *s, size_t i, void *vout);
 sqfs_err sqfs_stack_top(sqfs_stack *s, void *vout);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

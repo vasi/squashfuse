@@ -159,7 +159,7 @@ typedef struct {
 #define INODE_LO(i) ((i) & 0xFFFF)
 
 static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
-  sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_ll_inode_map *map = (sqfs_ll_inode_map*)ll->ino_data;
   if (n == map->root) {
     return FUSE_ROOT_ID;
   } else if (n == 0) {
@@ -170,7 +170,7 @@ static fuse_ino_t sqfs_ll_ino32_num2fuse(sqfs_ll *ll, sqfs_inode_num n) {
 }
 
 static fuse_ino_t sqfs_ll_ino32_fuse2num(sqfs_ll *ll, fuse_ino_t i) {
-  sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_ll_inode_map *map = (sqfs_ll_inode_map*)ll->ino_data;
   if (i == FUSE_ROOT_ID) {
     return map->root;
   } else if (i == map->root + 1) {
@@ -188,11 +188,11 @@ static sqfs_inode_id sqfs_ll_ino32_sqfs(sqfs_ll *ll, fuse_ino_t i) {
   if (i == FUSE_ROOT_ID)
     return sqfs_inode_root(&ll->fs);
   
-  map = ll->ino_data;
+  map = (sqfs_ll_inode_map*)ll->ino_data;
   n = sqfs_ll_ino32_fuse2num(ll, i);
   
   sqfs_mutex_lock(&map->mutex);
-  ie = sqfs_hash_get(&map->icache, n);
+  ie = (sqfs_ll_inode_entry*)sqfs_hash_get(&map->icache, n);
   sqfs_mutex_unlock(&map->mutex);
   return ie ? IE_INODE(ie) : SQFS_INODE_NONE;
 }
@@ -202,11 +202,11 @@ static fuse_ino_t sqfs_ll_ino32_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
 }
 
 static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
-  sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_ll_inode_map *map = (sqfs_ll_inode_map*)ll->ino_data;
   
   sqfs_mutex_lock(&map->mutex);
-  sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache,
-    sqfs_dentry_inode_num(e));
+  sqfs_ll_inode_entry *ie = (sqfs_ll_inode_entry*)sqfs_hash_get(
+    &map->icache, sqfs_dentry_inode_num(e));
   if (ie) {
     ++ie->refcount;
   } else {
@@ -227,11 +227,12 @@ static fuse_ino_t sqfs_ll_ino32_register(sqfs_ll *ll, sqfs_dir_entry *e) {
 }
 
 static void sqfs_ll_ino32_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
-  sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_ll_inode_map *map = (sqfs_ll_inode_map*)ll->ino_data;
   sqfs_inode_num n = sqfs_ll_ino32_fuse2num(ll, i);
   
   sqfs_mutex_lock(&map->mutex);
-  sqfs_ll_inode_entry *ie = sqfs_hash_get(&map->icache, n);
+  sqfs_ll_inode_entry *ie =
+    (sqfs_ll_inode_entry*)sqfs_hash_get(&map->icache, n);
   if (ie) {
     if (ie->refcount > refs) {
       ie->refcount -= refs;
@@ -243,7 +244,7 @@ static void sqfs_ll_ino32_forget(sqfs_ll *ll, fuse_ino_t i, size_t refs) {
 }
 
 static void sqfs_ll_ino32_destroy(sqfs_ll *ll) {
-  sqfs_ll_inode_map *map = ll->ino_data;
+  sqfs_ll_inode_map *map = (sqfs_ll_inode_map*)ll->ino_data;
   sqfs_mutex_destroy(&map->mutex);
   sqfs_hash_destroy(&map->icache);
   free(map);
@@ -354,7 +355,7 @@ sqfs_err sqfs_ll_inode(sqfs_ll *ll, sqfs_inode *inode, fuse_ino_t i) {
 
 sqfs_err sqfs_ll_iget(fuse_req_t req, sqfs_ll_i *lli, fuse_ino_t i) {
   sqfs_err err = SQFS_OK;
-  lli->ll = fuse_req_userdata(req);
+  lli->ll = (sqfs_ll*)fuse_req_userdata(req);
   if (i != SQFS_FUSE_INODE_NONE) {
     err = sqfs_ll_inode(lli->ll, &lli->inode, i);
     if (err)

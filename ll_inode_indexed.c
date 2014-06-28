@@ -183,7 +183,7 @@ static sqfs_inode_id sqfs_iidx_sqfs(sqfs_ll *ll, fuse_ino_t fi) {
   sqfs_md_cursor cur;
   
   block_group *group;
-  sqfs_iidx *iidx = ll->ino_data;
+  sqfs_iidx *iidx = (sqfs_iidx*)ll->ino_data;
   
   if (fi == FUSE_ROOT_ID)
     return sqfs_inode_root(&ll->fs);
@@ -249,7 +249,7 @@ static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
   
   sqfs_off_t dpos, ipos; /* Block positions, for skipping */
   block_group *group;
-  sqfs_iidx *iidx = ll->ino_data;
+  sqfs_iidx *iidx = (sqfs_iidx*)ll->ino_data;
   sqfs_inode_id iid = sqfs_dentry_inode(e);
   
   if (iid == sqfs_inode_root(&ll->fs))
@@ -287,7 +287,7 @@ static fuse_ino_t sqfs_iidx_fuse_num(sqfs_ll *ll, sqfs_dir_entry *e) {
 }
 
 static void sqfs_iidx_destroy(sqfs_ll *ll) {
-  sqfs_iidx *iidx = ll->ino_data;
+  sqfs_iidx *iidx = (sqfs_iidx*)ll->ino_data;
   if (iidx) {
     free(iidx->groups);
     free(iidx);

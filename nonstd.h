@@ -29,6 +29,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Non-standard functions that we need */
 
 dev_t sqfs_makedev(int maj, int min);
@@ -45,5 +49,9 @@ int sqfs_setenv(const char *key, const char *value, int overwrite);
 int sqfs_unsetenv(const char *key);
 
 int sqfs_vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
