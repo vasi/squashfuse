@@ -26,14 +26,15 @@
 #define SQFS_COMMON_H
 
 #include "config.h"
+#ifdef _WIN32
+  #include <win32.h>
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
 
-#ifdef _WIN32
-  #include <win32.h>
-#else
+#ifndef _WIN32
   typedef mode_t sqfs_mode_t;
   typedef uid_t sqfs_id_t;
   typedef off_t sqfs_off_t;

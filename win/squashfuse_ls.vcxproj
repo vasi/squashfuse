@@ -78,17 +78,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\array.c" />
     <ClCompile Include="..\block.c" />
     <ClCompile Include="..\cache.c" />
     <ClCompile Include="..\decompress.c" />
     <ClCompile Include="..\dir.c" />
+    <ClCompile Include="..\dynstring.c" />
     <ClCompile Include="..\file.c" />
     <ClCompile Include="..\file_index.c" />
     <ClCompile Include="..\fs.c" />
     <ClCompile Include="..\hash.c" />
+    <ClCompile Include="..\input.c" />
     <ClCompile Include="..\ls.c" />
     <ClCompile Include="..\nonstd-pread.c" />
     <ClCompile Include="..\nonstd-stat.c" />
+    <ClCompile Include="..\nonstd-vsnprintf.c" />
     <ClCompile Include="..\stack.c" />
     <ClCompile Include="..\swap.c" />
     <ClCompile Include="..\table.c" />
@@ -99,15 +103,18 @@
     <ClCompile Include="tinfl.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\array.h" />
     <ClInclude Include="..\block.h" />
     <ClInclude Include="..\cache.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\decompress.h" />
     <ClInclude Include="..\dir.h" />
+    <ClInclude Include="..\dynstring.h" />
     <ClInclude Include="..\file.h" />
     <ClInclude Include="..\file_index.h" />
     <ClInclude Include="..\fs.h" />
     <ClInclude Include="..\hash.h" />
+    <ClInclude Include="..\input.h" />
     <ClInclude Include="..\nonstd-internal.h" />
     <ClInclude Include="..\nonstd.h" />
     <ClInclude Include="..\squashfs_fs.h" />

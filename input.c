@@ -32,7 +32,14 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+  #include <unistd.h>
+#endif
+
+#ifdef _WIN32
+  #include <io.h>
+  #define lseek _lseeki64
+#endif
 
 void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
@@ -89,7 +96,7 @@ static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
 sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
   sqfs_input_windows *iw =
     (sqfs_input_windows*)malloc(sizeof(sqfs_input_windows));
-  if (!ip)
+  if (!iw)
     return SQFS_ERR;
   
   iw->file = file;

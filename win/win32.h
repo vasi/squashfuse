@@ -25,6 +25,12 @@
 #ifndef SQFS_WIN32_H
 #define SQFS_WIN32_H
 
+/* Just use the POSIX versions of open/close/etc */
+#define _CRT_NONSTDC_NO_DEPRECATE 1
+
+/* We already take care to use functions in secure ways */
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include <Windows.h>
 #include <sys/stat.h>
 #include <stdint.h>

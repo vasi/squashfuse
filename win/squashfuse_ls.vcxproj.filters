@@ -45,9 +45,6 @@
     <ClCompile Include="..\hash.c">
       <Filter>Common sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\nonstd-pread.c">
-      <Filter>Common sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\nonstd-stat.c">
       <Filter>Common sources</Filter>
     </ClCompile>
@@ -76,6 +73,21 @@
       <Filter>Common sources</Filter>
     </ClCompile>
     <ClCompile Include="..\block.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nonstd-vsnprintf.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\array.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dynstring.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\input.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\nonstd-pread.c">
       <Filter>Common sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,6 +156,15 @@
       <Filter>Common headers</Filter>
     </ClInclude>
     <ClInclude Include="..\thread.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\array.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dynstring.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\input.h">
       <Filter>Common headers</Filter>
     </ClInclude>
   </ItemGroup>
