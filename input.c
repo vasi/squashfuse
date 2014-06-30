@@ -39,6 +39,9 @@
 #ifdef _WIN32
   #include <io.h>
   #define lseek _lseeki64
+  #define OFLAGS O_BINARY
+#else
+  #define OFLAGS 0
 #endif
 
 void sqfs_input_init(sqfs_input *in) {
@@ -180,7 +183,7 @@ static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
     return err;
   
   ip = (sqfs_input_posix*)in->data;
-  ip->fd = open(path, O_RDONLY);
+  ip->fd = open(path, O_RDONLY | OFLAGS);
   ip->errnum = errno;
 #if !HAVE_PREAD
   sqfs_mutex_init(&ip->mutex);
