@@ -19,6 +19,7 @@ These are not supported by squashfuse_ll, just squashfuse:
 These are only supported by the squashfuse_ls demo:
 * AROS
 * Syllable
+* RISC OS
 * Windows
 
 These don't have FUSE:
@@ -267,6 +268,23 @@ brackets, eg: [0.1]
   + Tested on: Syllable Desktop 0.6.7 [0.2]
   + Packages: development files, Developer's Delight, Shell Essentials
   + Configure: Pass --disable-fuse
+
+* RISC OS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: RISC OS 5.20 [0.2]
+	+ Packages: GCC4, ZLib1-Dev from PackMan:
+		http://www.riscos.info/index.php/GCC_for_RISC_OS
+	+ Build
+		- On a Unix-like platform, run the script 'riscos/prepare.sh' to modify
+			your source directory into something amenable for compilation on RISC OS.
+			Copy the source directory to your RISC OS environment.
+		- In RISC OS, open Task Manager and set the 'Next' slot to at least 6MB.
+			Then run !GCC .
+		- In the RISC OS Filer, navigate to your squashfuse source directory, and
+			choose 'Set Directory' from the middle-click menu.
+		- In RISC OS, press ctrl-F12 to open a Task Window. Type 'obey build' to
+		  build squashfuse_ls.
+	+ Usage: Run squashfuse_ls in the Task Window.
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows

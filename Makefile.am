@@ -8,7 +8,8 @@ export COPYFILE_DISABLE = 1
 endif
 
 dist_man_MANS =
-EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win
+EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win \
+  riscos
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -88,3 +89,11 @@ EXTRA_DIST += swap.h.inc swap.c.inc
 $(libsquashfuse_la_OBJECTS): swap.h.inc
 swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
+
+# Miscellaneous scripts
+dist_noinst_SCRIPTS = riscos/build
+riscos/build:
+	mkdir -p riscos
+	$(srcdir)/riscos/gen_build.sh \
+		$(libsquashfuse_la_SOURCES) \
+		$(squashfuse_ls_SOURCES) > $@
