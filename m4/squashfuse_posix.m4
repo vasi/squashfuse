@@ -49,8 +49,8 @@ AS_VAR_SET_IF([sq_cache],[
       AC_MSG_CHECKING([if $1 requires changing $sq_def])
     ])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([
-        $sq_prolog
-        $2
+$sq_prolog
+$2
       ],[$3])
     ],[
       AC_MSG_RESULT([yes])
