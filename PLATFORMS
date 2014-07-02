@@ -286,6 +286,11 @@ brackets, eg: [0.1]
 		  build squashfuse_ls.
 	+ Usage: Run squashfuse_ls in the Task Window.
 
+* AIX
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: AIX 7.1 powerpc / gcc 4.6 [0.2]
+  + Configure: Pass --disable-fuse
+
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows
   + Versions: unknown

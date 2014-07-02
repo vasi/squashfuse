@@ -80,6 +80,8 @@ Known platforms with at least some support:
   - QNX
   - AROS
   - Syllable
+	- RISC OS
+	- AIX
   - Windows
   - other platforms may work too!
 
