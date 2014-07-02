@@ -25,6 +25,7 @@
 #define SQFEATURE NONSTD_SETENV_DEF
 #include "nonstd-internal.h"
 
+#ifdef NONSTD_SETENV_DEF
 #include <stdlib.h>
 
 int sqfs_setenv(const char *key, const char *value, int overwrite) {
@@ -34,4 +35,13 @@ int sqfs_setenv(const char *key, const char *value, int overwrite) {
 int sqfs_unsetenv(const char *key) {
   return unsetenv(key);
 }
+#else
+/* Dummy implementation */
+int sqfs_setenv(const char *key, const char *value, int overwrite) {
+  return 0;
+}
 
+int sqfs_unsetenv(const char *key) {
+  return 0;
+}
+#endif

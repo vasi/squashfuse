@@ -61,9 +61,11 @@ $2
 ])
 AS_VAR_IF([sq_cache],[unknown],
   m4_default($4,[AC_MSG_FAILURE([can't figure out how to use $1])]),
-  [AS_VAR_IF([sq_cache],[none],[],[
+  [
+		sq_def="CHANGE$sq_cache"
+		AS_VAR_IF([sq_cache],[none],[sq_def=CHANGE_NONE])
     AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$sq_cache],[])
-  ])]
+  ]
 )
 AS_VAR_POPDEF([sq_cache])
 ])
@@ -152,4 +154,5 @@ AC_DEFUN([SQ_CHECK_DECL_SETENV],
   [SQ_CHECK_NONSTD(setenv,[#include <stdlib.h>],[
     setenv(0,0,1);
     unsetenv(0);
-])])
+	],[:])
+])
