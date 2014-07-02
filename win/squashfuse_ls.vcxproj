@@ -130,8 +130,8 @@
     <ClInclude Include="win32.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\swap.c.inc" />
-    <None Include="..\swap.h.inc" />
+    <None Include="..\swap.cinc" />
+    <None Include="..\swap.hinc" />
     <None Include="win_decompress.c.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

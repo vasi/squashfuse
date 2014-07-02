@@ -85,10 +85,10 @@ squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) $(PTHREAD_CFLAGS)
 endif
 
 # Handle generation of swap include files
-CLEANFILES += swap.h.inc swap.c.inc
-EXTRA_DIST += swap.h.inc swap.c.inc
-$(libsquashfuse_la_OBJECTS): swap.h.inc
-swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
+CLEANFILES += swap.hinc swap.cinc
+EXTRA_DIST += swap.hinc swap.cinc
+$(libsquashfuse_la_OBJECTS): swap.hinc
+swap.hinc swap.cinc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
 
 # Miscellaneous scripts

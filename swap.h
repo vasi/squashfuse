@@ -40,7 +40,7 @@ void sqfs_swapin32(uint32_t *v);
 void sqfs_swapin64(uint64_t *v);
 
 #include "squashfs_fs.h"
-#include "swap.h.inc"
+#include "swap.hinc"
 
 #ifdef __cplusplus
 }

@@ -50,4 +50,4 @@ void sqfs_swap16(uint16_t *n) {
 }
 
 #include "squashfs_fs.h"
-#include "swap.c.inc"
+#include "swap.cinc"
