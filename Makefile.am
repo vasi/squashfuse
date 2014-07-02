@@ -13,6 +13,7 @@ EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win \
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
+CLEANFILES =
 
 noinst_LTLIBRARIES = libsquashfuse.la
 
@@ -84,14 +85,15 @@ squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) $(PTHREAD_CFLAGS)
 endif
 
 # Handle generation of swap include files
-CLEANFILES = swap.h.inc swap.c.inc
+CLEANFILES += swap.h.inc swap.c.inc
 EXTRA_DIST += swap.h.inc swap.c.inc
 $(libsquashfuse_la_OBJECTS): swap.h.inc
 swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
 
 # Miscellaneous scripts
-dist_noinst_SCRIPTS = riscos/build
+CLEANFILES += riscos/build
+EXTRA_DIST += riscos/build
 riscos/build:
 	mkdir -p riscos
 	$(srcdir)/riscos/gen_build.sh \
