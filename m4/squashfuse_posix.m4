@@ -147,7 +147,10 @@ AC_DEFUN([SQ_CHECK_DECL_DAEMON],
   ],[daemon(1,1);])])
 
 AC_DEFUN([SQ_CHECK_DECL_VSNPRINTF],
-  [SQ_CHECK_NONSTD(vsnprintf,[#include <stdio.h>],[
+  [SQ_CHECK_NONSTD(vsnprintf,[
+#include <stdarg.h>
+#include <stdio.h>
+],[
     va_list ap; vsnprintf(0,1,0, ap);])])
 
 AC_DEFUN([SQ_CHECK_DECL_SETENV],

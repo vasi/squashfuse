@@ -25,6 +25,7 @@
 #define SQFEATURE NONSTD_VSNPRINTF_DEF
 #include "nonstd-internal.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 int sqfs_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
