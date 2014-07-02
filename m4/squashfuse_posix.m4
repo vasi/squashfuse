@@ -49,8 +49,8 @@ AS_VAR_SET_IF([sq_cache],[
       AC_MSG_CHECKING([if $1 requires changing $sq_def])
     ])
     AC_LINK_IFELSE([AC_LANG_PROGRAM([
-$sq_prolog
-$2
+			$sq_prolog
+			$2
       ],[$3])
     ],[
       AC_MSG_RESULT([yes])
@@ -168,10 +168,9 @@ AC_DEFUN([SQ_CHECK_DECL_DAEMON],
 
 AC_DEFUN([SQ_CHECK_DECL_VSNPRINTF],
   [SQ_CHECK_NONSTD(vsnprintf,[
-#include <stdarg.h>
-#include <stdio.h>
-],[
-    va_list ap; vsnprintf(0,1,0, ap);])])
+		#include <stdarg.h>
+		#include <stdio.h>
+		],[va_list ap; vsnprintf(0,1,0, ap);])])
 
 AC_DEFUN([SQ_CHECK_DECL_SETENV],
   [SQ_CHECK_NONSTD(setenv,[#include <stdlib.h>],[
