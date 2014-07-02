@@ -122,6 +122,26 @@ AC_DEFUN([SQ_CHECK_DECL_PREAD],[
   sq_have_pread=yes
   SQ_CHECK_NONSTD(pread,[#include <unistd.h>],[(void)pread;],
     [sq_have_pread=no])
+	
+	AS_IF([test "x$sq_have_pread" = xyes],[
+		AC_CACHE_CHECK([if pread works at runtime],[sq_cv_func_pread_runtime],[
+			sq_cv_func_pread_runtime=yes
+			AC_RUN_IFELSE([
+				AC_LANG_PROGRAM([
+						#include <unistd.h>
+						#include <fcntl.h>
+				],[[
+					char buf[5];
+					int fd = open("conftest.c", O_RDONLY);
+					exit(pread(fd, buf, 5, 3) != 5);
+				]])],,[sq_cv_func_pread_runtime=no],
+				# Default to no only on HP-UX
+				[AS_CASE([$target_os],[hpux*],[sq_cv_func_pread_runtime=no])]
+			)
+		])
+		AS_IF([test "x$sq_cv_func_pread_runtime" = xno],[sq_have_pread=no])
+	])
+	
   AS_IF([test "x$sq_have_pread" = xyes],
     [AC_DEFINE(HAVE_PREAD,1,[Define if pread() is available])])
 ])
