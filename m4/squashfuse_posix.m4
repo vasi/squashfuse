@@ -64,7 +64,7 @@ AS_VAR_IF([sq_cache],[unknown],
   [
 		sq_def="CHANGE$sq_cache"
 		AS_VAR_IF([sq_cache],[none],[sq_def=CHANGE_NONE])
-    AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[CHANGE$sq_cache],[])
+    AC_DEFINE_UNQUOTED(AS_TR_CPP([NONSTD_$1_DEF]),[$sq_def],[])
   ]
 )
 AS_VAR_POPDEF([sq_cache])
