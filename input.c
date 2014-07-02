@@ -53,7 +53,7 @@ void sqfs_input_init(sqfs_input *in) {
 /* Implementation for Windows */
 typedef struct {
   HANDLE file;
-  DWORD error;
+  DWORD errcode;
 } sqfs_input_windows;
 
 static void sqfs_input_windows_close(sqfs_input *in) {
@@ -75,14 +75,14 @@ static ssize_t sqfs_input_windows_pread(sqfs_input *in, void *buf,
   ret = -1;
   if (ReadFile(iw->file, buf, count, &bread, &ov))
     ret = bread;
-  iw->error = GetLastError();
+  iw->errcode = GetLastError();
   return ret;
 }
 
 static char *sqfs_input_windows_error(sqfs_input *in) {
   /* FIXME: Use FormatMessage() to return a real error */
   sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
-  return sqfs_asprintf("File error #%d", iw->error);
+  return sqfs_asprintf("File error #%d", iw->errcode);
 }
 
 static sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
@@ -92,12 +92,12 @@ static sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
     return SQFS_ERR;
   
   iw->file = file;
-  iw->error = 0;
+  iw->errcode = 0;
   
   in->data = iw;
-  in->close = &sqfs_input_windows_close;
-  in->pread = &sqfs_input_windows_pread;
-  in->error = &sqfs_input_windows_error;
+  in->i_close = &sqfs_input_windows_close;
+  in->i_pread = &sqfs_input_windows_pread;
+  in->i_error = &sqfs_input_windows_error;
   return SQFS_OK;
 }
 
@@ -113,7 +113,7 @@ static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
   if (iw->file != INVALID_HANDLE_VALUE)
     return SQFS_OK;
 
-  iw->error = GetLastError();
+  iw->errcode = GetLastError();
   return SQFS_ERR;
 }
 
@@ -207,9 +207,9 @@ sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd) {
   ip->errnum = 0;
   
   in->data = ip;
-  in->close = &sqfs_input_posix_close;
-  in->pread = &sqfs_input_posix_pread;
-  in->error = &sqfs_input_posix_error;
+  in->i_close = &sqfs_input_posix_close;
+  in->i_pread = &sqfs_input_posix_pread;
+  in->i_error = &sqfs_input_posix_error;
   return SQFS_OK;
 }
 

@@ -58,8 +58,8 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
   if (start == SQUASHFS_INVALID_BLK)
     return SQFS_OK;
   
-  bread = fs->input->pread(fs->input, &fs->xattr_info, sizeof(fs->xattr_info),
-    start);
+  bread = fs->input->i_pread(fs->input, &fs->xattr_info,
+    sizeof(fs->xattr_info), start);
   if (bread != sizeof(fs->xattr_info))
     return SQFS_ERR;
   sqfs_swapin_xattr_id_table(&fs->xattr_info);

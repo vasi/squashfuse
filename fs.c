@@ -63,7 +63,7 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_input *in) {
   memset(fs, 0, sizeof(*fs));
   
   fs->input = in;
-  bread = fs->input->pread(fs->input, &fs->sb, sizeof(fs->sb), 0);
+  bread = fs->input->i_pread(fs->input, &fs->sb, sizeof(fs->sb), 0);
   if (bread != sizeof(fs->sb))
     return SQFS_BADFORMAT;
   sqfs_swapin_super_block(&fs->sb);
@@ -106,7 +106,7 @@ error:
 
 void sqfs_destroy(sqfs *fs, bool close) {
   if (close) {
-    fs->input->close(fs->input);
+    fs->input->i_close(fs->input);
     free(fs->input);
   }
   fs->input = NULL; /* Caller frees it */

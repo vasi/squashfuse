@@ -102,7 +102,7 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
     return SQFS_ERR;
   
   if ((err = sqfs_input_open(in, image))) {
-    msg = in->error(in);
+    msg = in->i_error(in);
     fprintf(stderr, "Can't open file: %s\n", msg);
     free(msg);
     return err;
@@ -112,7 +112,7 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
     msg = sqfs_open_error(fs, err);
     fprintf(stderr, "Error opening image: %s\n", msg);
     free(msg);
-    in->close(in);
+    in->i_close(in);
     return err;
   }
   

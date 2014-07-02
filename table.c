@@ -47,7 +47,7 @@ sqfs_err sqfs_table_init(sqfs_table *table, sqfs_input *in, sqfs_off_t start,
   table->each = each;
   if (!(table->blocks = (uint64_t*)malloc(bread)))
     goto err;
-  if (in->pread(in, table->blocks, bread, start) != bread)
+  if (in->i_pread(in, table->blocks, bread, start) != bread)
     goto err;
   
   for (i = 0; i < nblocks; ++i)

@@ -37,13 +37,13 @@ struct sqfs_input {
   void *data;
   
   /* Close this input source */
-  void (*close)(sqfs_input *in);
+  void (*i_close)(sqfs_input *in);
   
   /* Read data at an offset */
-  ssize_t (*pread)(sqfs_input *in, void *buf, size_t count, sqfs_off_t off);
+  ssize_t (*i_pread)(sqfs_input *in, void *buf, size_t count, sqfs_off_t off);
   
   /* Return an error message, caller must free it */
-  char *(*error)(sqfs_input *in);
+  char *(*i_error)(sqfs_input *in);
 };
 
 /* Initialize the structure */
