@@ -31,7 +31,11 @@
 #endif
 
 #include <stdbool.h>
-#include <stdint.h>
+#if HAVE_STDINT_H
+  #include <stdint.h>
+#else
+  #include <inttypes.h>
+#endif
 #include <sys/types.h>
 
 #ifndef _WIN32
