@@ -157,5 +157,8 @@ AC_DEFUN([SQ_CHECK_DECL_SETENV],
   [SQ_CHECK_NONSTD(setenv,[#include <stdlib.h>],[
     setenv(0,0,1);
     unsetenv(0);
-	],[:])
+	],[
+		AS_IF([test "x$sq_breakage_fuse_positional_args" = xyes],
+			[AC_MSG_FAILURE([Need setenv() if positional arguments are broken])])
+	])
 ])

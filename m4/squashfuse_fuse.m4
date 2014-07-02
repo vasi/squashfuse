@@ -431,6 +431,8 @@ AC_DEFUN([SQ_FUSE_PLATFORM],[
     AS_CASE([$enableval],sq_enable,[sq_need=yes],[sq_need=no])
   ])
   AS_IF([test "x$sq_need" = xyes],[
+		AS_VAR_PUSHDEF([sq_breakage],[sq_breakage_]sq_feature)
+		AS_VAR_SET([sq_breakage],yes)
     AC_DEFINE($1,1,[Define if ]$4)
     AC_MSG_RESULT([yes])
   ],[AC_MSG_RESULT([no])])
