@@ -9,7 +9,7 @@ endif
 
 dist_man_MANS =
 EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win \
-  riscos
+  riscos snprintf.cinc
 
 bin_PROGRAMS =
 noinst_PROGRAMS =

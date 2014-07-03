@@ -29,6 +29,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Hack to replace va_copy */
+#if __VMS
+  #define va_copy(_dst, _src) ((_dst) = (_src))
+#endif
+
 char *sqfs_strdup(const char *s) {
   size_t asz = strlen(s) + 1;
   char *ret = (char*)malloc(asz);

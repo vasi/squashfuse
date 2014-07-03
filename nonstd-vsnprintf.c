@@ -28,6 +28,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifndef NONSTD_VSNPRINTF_DEF
+  #include "snprintf.cinc"
+#endif
 int sqfs_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) {
   return vsnprintf(str, size, fmt, ap);
 }

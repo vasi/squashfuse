@@ -32,15 +32,13 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-  #include <unistd.h>
-#endif
 
 #ifdef _WIN32
   #include <io.h>
   #define lseek _lseeki64
   #define OFLAGS O_BINARY
 #else
+  #include <unistd.h>
   #define OFLAGS 0
 #endif
 
