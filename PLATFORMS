@@ -14,17 +14,20 @@ These are not supported by squashfuse_ll, just squashfuse:
 * Solaris
 * Minix
 * Haiku
+* QNX
 * Hurd (mostly)
 
 These are only supported by the squashfuse_ls demo:
 * AROS
 * Syllable
 * RISC OS
+* AIX
+* HP-UX
+* OpenVMS
 * Windows
 
 These don't have FUSE:
 * iOS
-* Commercial UNIX: AIX, HP-UX, etc
 
 
 Details
@@ -295,6 +298,18 @@ brackets, eg: [0.1]
   + Only squashfuse_ls, there's no FUSE
   + Tested on: HP-UX 11.11 hppa / gcc 4.2 [0.2]
   + Configure: Pass --disable-fuse
+
+* OpenVMS
+  + Only squashfuse_ls, there's no FUSE
+	+ Tested on: OpenVMS 7.3 alpha / HP C 6.5 [0.2]
+	+ Requirements: zlib
+  + Build: Run the build command procedure: '@[.vms]build'
+	+ Usage
+		- Run 'mcr []squashfuse_ls [path.to]archive.squashfs
+		- For easier usage, set up a foreign command:
+				$ squashfuse_ls == "$" + F$ENVIRONMENT("DEFAULT") + "squashfuse_ls.exe"
+			Then run:
+				$ squashfuse_ls [path.to]archive.squashfuse
 
 * Windows
   + Only squashfuse_ls, there's no good FUSE on Windows

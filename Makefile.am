@@ -9,7 +9,7 @@ endif
 
 dist_man_MANS =
 EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win \
-  riscos snprintf.cinc
+  riscos vms snprintf.cinc
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -92,10 +92,15 @@ swap.hinc swap.cinc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
 
 # Miscellaneous scripts
-CLEANFILES += riscos/build
-EXTRA_DIST += riscos/build
-riscos/build:
+CLEANFILES += riscos/build vms/build.com
+EXTRA_DIST += riscos/build vms/build.com
+riscos/build: riscos/gen_build.sh
 	mkdir -p riscos
 	$(srcdir)/riscos/gen_build.sh \
+		$(libsquashfuse_la_SOURCES) \
+		$(squashfuse_ls_SOURCES) > $@
+vms/build.com: vms/gen_build.sh
+	mkdir -p vms
+	$(srcdir)/vms/gen_build.sh \
 		$(libsquashfuse_la_SOURCES) \
 		$(squashfuse_ls_SOURCES) > $@
