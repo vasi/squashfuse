@@ -25,6 +25,7 @@ These are only supported by the squashfuse_ls demo:
 * HP-UX
 * OpenVMS
 * Windows
+* RTEMS
 
 These don't have FUSE:
 * iOS
@@ -321,3 +322,17 @@ brackets, eg: [0.1]
     file.
   + Notes: For Unicode output, you may need to setup a different console font,
     and run `chcp 65001' to get the UTF-8 codepage.
+
+* RTEMS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: RTEMS 4.11/sparc-sis [0.2]
+  + Build
+    - Use an appropriate CC for your RTEMS platform, eg:
+      CC='sparc-rtems4.11-gcc -B/path/to/rtems/prefix -specs bsp_specs -qrtems'
+    - Build zlib for RTEMS
+    - Configure and build squashfuse, passing --disable-fuse and --host
+  + Notes
+    - I can't figure out how to access a filesystem inside RTEMS, any ideas?
+      For now, you can pass --enable-embedded-data=myarchive.squashfs to
+      configure to use an embedded squashfs filesytem. You'll need 'xxd' to
+      be installed.
