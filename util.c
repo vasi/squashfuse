@@ -81,6 +81,9 @@ char *sqfs_open_error(sqfs *fs, sqfs_err err) {
       }
       break;
     }
+    case SQFS_UNSEEKABLE:
+      SQFMT("Image is not seekable");
+      break;
     default:
       SQFMT("Unknown error");
   }
@@ -101,7 +104,12 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   if (!(in = (sqfs_input*)malloc(sizeof(sqfs_input))))
     return SQFS_ERR;
   
-  if ((err = sqfs_input_open(in, image))) {
+  if (image)
+    err = sqfs_input_open(in, image);
+  else
+    err = sqfs_input_open_stdin(in);
+  
+  if (err) {
     msg = in->i_error(in);
     fprintf(stderr, "Can't open file: %s\n", msg);
     free(msg);

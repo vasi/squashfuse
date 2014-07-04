@@ -64,8 +64,11 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_input *in) {
   
   fs->input = in;
   bread = fs->input->i_pread(fs->input, &fs->sb, sizeof(fs->sb), 0);
-  if (bread != sizeof(fs->sb))
+  if (bread != sizeof(fs->sb)) {
+    if (fs->input->i_seek_error(fs->input))
+      return SQFS_UNSEEKABLE;
     return SQFS_BADFORMAT;
+  }
   sqfs_swapin_super_block(&fs->sb);
   
   if (fs->sb.s_magic != SQUASHFS_MAGIC) {

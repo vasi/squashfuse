@@ -46,6 +46,10 @@ void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
 }
 
+static bool sqfs_no_seek_error(sqfs_input *SQFS_UNUSED(in)) {
+  return false;
+}
+
 
 #ifdef _WIN32
 /* Implementation for Windows */
@@ -96,6 +100,7 @@ static sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
   in->i_close = &sqfs_input_windows_close;
   in->i_pread = &sqfs_input_windows_pread;
   in->i_error = &sqfs_input_windows_error;
+  in->i_seek_error = &sqfs_no_seek_error; /* TODO: Any way to find out? */
   return SQFS_OK;
 }
 
@@ -108,6 +113,21 @@ static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
   iw = (sqfs_input_windows*)in->data;
   iw->file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (iw->file != INVALID_HANDLE_VALUE)
+    return SQFS_OK;
+
+  iw->errcode = GetLastError();
+  return SQFS_ERR;
+}
+
+static sqfs_err sqfs_input_windows_open_stdin(sqfs_input *in) {
+  sqfs_err err;
+  sqfs_input_windows *iw;
+  if ((err = sqfs_input_windows_create(in, 0)))
+    return err;
+
+  iw = (sqfs_input_windows*)in->data;
+  iw->file = GetStdHandle(STD_INPUT_HANDLE);
   if (iw->file != INVALID_HANDLE_VALUE)
     return SQFS_OK;
 
@@ -180,6 +200,11 @@ static char *sqfs_input_posix_error(sqfs_input *in) {
 #endif
 }
 
+static bool sqfs_input_posix_seek_error(sqfs_input *in) {
+  sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
+  return ip->errnum == ESPIPE;
+}
+
 static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
   sqfs_err err;
   sqfs_input_posix *ip;
@@ -189,6 +214,7 @@ static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
   ip = (sqfs_input_posix*)in->data;
   ip->fd = open(path, O_RDONLY | OFLAGS);
   ip->errnum = errno;
+  
 #if !HAVE_PREAD
   sqfs_mutex_init(&ip->mutex);
 #endif
@@ -208,14 +234,28 @@ sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd) {
   in->i_close = &sqfs_input_posix_close;
   in->i_pread = &sqfs_input_posix_pread;
   in->i_error = &sqfs_input_posix_error;
+  in->i_seek_error = &sqfs_input_posix_seek_error;
   return SQFS_OK;
 }
 
-sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
-  #ifdef _WIN32
-    return sqfs_input_windows_open(in, path);
-  #else
-    return sqfs_input_posix_open(in, path);
-  #endif
+sqfs_err sqfs_input_posix_open_stdin(sqfs_input *in) {
+  if (isatty(STDIN_FILENO))
+    return SQFS_ERR;
+  return sqfs_input_posix_create(in, STDIN_FILENO);
 }
 
+#ifdef _WIN32
+  sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
+    return sqfs_input_windows_open(in, path);
+  }
+  sqfs_err sqfs_input_open_stdin(sqfs_input *in) {
+    return sqfs_input_windows_open_stdin(in);
+  }
+#else /* !_WIN32 */
+  sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
+    return sqfs_input_posix_open(in, path);
+  }
+  sqfs_err sqfs_input_open_stdin(sqfs_input *in) {
+    return sqfs_input_posix_open_stdin(in);
+  }
+#endif /* _WIN32 */

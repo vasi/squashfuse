@@ -44,6 +44,9 @@ struct sqfs_input {
   
   /* Return an error message, caller must free it */
   char *(*i_error)(sqfs_input *in);
+  
+  /* Is the input non-seekable? */
+  bool (*i_seek_error)(sqfs_input *in);
 };
 
 /* Initialize the structure */
@@ -52,8 +55,9 @@ void sqfs_input_init(sqfs_input *in);
 /* Entry point to posix implementation */
 sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd);
 
-/* Open a file by name */
+/* Open a file by name, or from stdin */
 sqfs_err sqfs_input_open(sqfs_input *in, const char *path);
+sqfs_err sqfs_input_open_stdin(sqfs_input *in);
 
 #ifdef __cplusplus
 }

@@ -52,9 +52,9 @@ int main(int argc, char *argv[]) {
   sqfs fs;
   char *image;
 
-  if (argc != 2)
+  if (argc > 2)
     usage();
-  image = argv[1];
+  image = argc == 2 ? argv[1] : NULL;
 
   if ((err = sqfs_open_image(&fs, image)))
     exit(ERR_OPEN);
