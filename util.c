@@ -104,10 +104,14 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
   if (!(in = (sqfs_input*)malloc(sizeof(sqfs_input))))
     return SQFS_ERR;
   
+#if SQ_EMBED_DATA
+  err = sqfs_input_memory_create(in, sqfs_embed, sqfs_embed_len);
+#else
   if (image)
     err = sqfs_input_open(in, image);
   else
     err = sqfs_input_open_stdin(in);
+#endif
   
   if (err) {
     msg = in->i_error(in);

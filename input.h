@@ -55,6 +55,9 @@ void sqfs_input_init(sqfs_input *in);
 /* Entry point to posix implementation */
 sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd);
 
+/* Entry point to memory implementation */
+sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len);
+
 /* Open a file by name, or from stdin */
 sqfs_err sqfs_input_open(sqfs_input *in, const char *path);
 sqfs_err sqfs_input_open_stdin(sqfs_input *in);

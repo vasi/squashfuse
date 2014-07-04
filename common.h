@@ -77,6 +77,9 @@ typedef struct {
   size_t offset;
 } sqfs_md_cursor;
 
+extern unsigned char sqfs_embed[];
+extern size_t sqfs_embed_len;
+
 #ifdef __cplusplus
 }
 #endif

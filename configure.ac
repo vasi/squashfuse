@@ -64,6 +64,9 @@ SQ_CHECK_PROG_MAKE_EXPORT
 SQ_CHECK_TYPE_LE16
 SQ_CHECK_TYPE_OFF_T
 
+# Embedding
+SQ_CHECK_EMBED_DATA
+
 # Demo
 AC_ARG_ENABLE([demo],
 	AS_HELP_STRING([--disable-demo], [disable library demo]),,

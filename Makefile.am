@@ -104,3 +104,16 @@ vms/build.com: vms/gen_build.sh
 	$(srcdir)/vms/gen_build.sh \
 		$(libsquashfuse_la_SOURCES) \
 		$(squashfuse_ls_SOURCES) > $@
+
+# Embedding a file
+if SQ_EMBED_DATA
+CLEANFILES += embed.c
+libsquashfuse_la_SOURCES += embed.c
+embed.c: $(SQ_EMBED_FILE)
+	(echo '#include "common.h"'; \
+	 echo 'unsigned char sqfs_embed[] = {'; \
+	 xxd -i < $<; \
+	 echo '}; size_t sqfs_embed_len = '; \
+	 wc -c < $<; \
+	 echo ';') > $@
+endif

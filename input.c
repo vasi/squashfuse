@@ -244,6 +244,70 @@ sqfs_err sqfs_input_posix_open_stdin(sqfs_input *in) {
   return sqfs_input_posix_create(in, STDIN_FILENO);
 }
 
+
+/* Implementation for memory buffer */
+typedef enum {
+  SQFS_MEMORY_OK = 0,
+  SQFS_MEMORY_EOF /* Read past end of buffer */
+} sqfs_input_memory_err;
+
+typedef struct {
+  char *buf;
+  size_t length;
+  sqfs_input_memory_err err;
+} sqfs_input_memory;
+
+static void sqfs_input_memory_close(sqfs_input *SQFS_UNUSED(in)) {
+  /* pass */
+}
+
+static ssize_t sqfs_input_memory_pread(sqfs_input *in, void *buf, size_t count,
+    sqfs_off_t off) {
+  sqfs_input_memory *im = (sqfs_input_memory*)in->data;
+  if (off > im->length) {
+    im->err = SQFS_MEMORY_EOF;
+    return -1;
+  }
+  
+  if (count > im->length - off)
+    count = im->length - off;
+  
+  memcpy(buf, im->buf + off, count);
+  im->err = SQFS_MEMORY_OK;
+  return count;
+}
+
+static char *sqfs_input_memory_error(sqfs_input *in) {
+  sqfs_input_memory *im = (sqfs_input_memory*)in->data;
+  switch (im->err) {
+    case SQFS_MEMORY_OK:
+      return NULL;
+    case SQFS_MEMORY_EOF:
+      return sqfs_strdup("Read past end of buffer");
+    default:
+      return sqfs_strdup("Unknown error");
+  }
+}
+
+sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len) {
+  sqfs_input_memory *im =
+    (sqfs_input_memory*)malloc(sizeof(sqfs_input_memory));
+  if (!im)
+    return SQFS_ERR;
+  
+  im->buf = (char*)buf;
+  im->length = len;
+  im->err = SQFS_MEMORY_OK;
+  
+  in->data = im;
+  in->i_close = &sqfs_input_memory_close;
+  in->i_pread = &sqfs_input_memory_pread;
+  in->i_error = &sqfs_input_memory_error;
+  in->i_seek_error = &sqfs_no_seek_error;
+  return SQFS_OK;
+}
+
+
 #ifdef _WIN32
   sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
     return sqfs_input_windows_open(in, path);

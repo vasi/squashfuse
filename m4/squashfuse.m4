@@ -136,3 +136,24 @@ AC_DEFUN([SQ_CHECK_TYPE_OFF_T],[
     sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
   ])
 ])
+
+# SQ_CHECK_EMBED_DATA
+#
+# Check if we want to use an embedded file for input
+AC_DEFUN([SQ_CHECK_EMBED_DATA],[
+  sq_embed_file=
+  AC_ARG_ENABLE([embedded-data],
+    AS_HELP_STRING([--enable-embedded-data=FILE],
+      [use FILE as embedded squashfs image]),
+    [sq_embed_file="$enableval"])
+  
+  sq_embedded=no
+  AS_IF([test "x$sq_embed_file" = x],,[sq_embedded=yes])
+  AM_CONDITIONAL([SQ_EMBED_DATA],[test "x$sq_embedded" = xyes])
+  AM_COND_IF([SQ_EMBED_DATA],[
+    AC_DEFINE([SQ_EMBED_DATA],1,
+      [Define if squashfuse should use an embedded image])
+    SQ_EMBED_FILE="$sq_embed_file"
+    AC_SUBST([SQ_EMBED_FILE])
+  ])
+])
