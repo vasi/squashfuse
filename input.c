@@ -139,9 +139,15 @@ static sqfs_err sqfs_input_windows_open_stdin(sqfs_input *in) {
 
 
 /* Implementation for POSIX file descriptor */
+typedef enum {
+  SQFS_POSIX_OK = 0,
+  SQFS_POSIX_TERM, /* input is a terminal */
+} sqfs_input_posix_err;
+
 typedef struct {
   int fd;
   int errnum;
+  sqfs_input_posix_err err;
   sqfs_mutex mutex;
 } sqfs_input_posix;
 
@@ -176,6 +182,9 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
 
 static char *sqfs_input_posix_error(sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
+  
+  if (ip->err == SQFS_POSIX_TERM)
+    return sqfs_strdup("Input is a terminal");
   
   if (ip->errnum == 0)
     return NULL; /* No error */
@@ -214,6 +223,7 @@ static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
   ip = (sqfs_input_posix*)in->data;
   ip->fd = open(path, O_RDONLY | OFLAGS);
   ip->errnum = errno;
+  ip->err = SQFS_POSIX_OK;
   
 #if !HAVE_PREAD
   sqfs_mutex_init(&ip->mutex);
@@ -239,9 +249,14 @@ sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd) {
 }
 
 sqfs_err sqfs_input_posix_open_stdin(sqfs_input *in) {
-  if (isatty(STDIN_FILENO))
+  sqfs_err err = sqfs_input_posix_create(in, STDIN_FILENO);
+  if (err)
+    return err;
+  if (isatty(STDIN_FILENO)) {
+    ((sqfs_input_posix*)in->data)->err = SQFS_POSIX_TERM;
     return SQFS_ERR;
-  return sqfs_input_posix_create(in, STDIN_FILENO);
+  }
+  return SQFS_OK;
 }
 
 
