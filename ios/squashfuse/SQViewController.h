@@ -9,5 +9,5 @@
 #import <UIKit/UIKit.h>
 
 @interface SQViewController : UIViewController
-
+@property IBOutlet UITextView *textView;
 @end
