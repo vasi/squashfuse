@@ -1,4 +1,5 @@
-/*.inc
+/*.cinc
+/*.hinc
 /squashfuse
 /squashfuse_ll
 /squashfuse_ls
@@ -20,3 +21,6 @@ build-aux
 configure
 libtool
 stamp-h1
+
+riscos/build
+vms/build.com
