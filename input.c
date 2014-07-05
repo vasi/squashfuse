@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef _WIN32
@@ -285,7 +286,7 @@ static ssize_t sqfs_input_memory_pread(sqfs_input *in, void *buf, size_t count,
   }
   
   if (count > im->length - off)
-    count = im->length - off;
+    count = (size_t)(im->length - off);
   
   memcpy(buf, im->buf + off, count);
   im->err = SQFS_MEMORY_OK;

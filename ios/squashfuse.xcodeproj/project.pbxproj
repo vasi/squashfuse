@@ -7,6 +7,29 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		595C79631967BED0001FE30E /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 595C79621967BED0001FE30E /* libz.dylib */; };
+		595C799C1967BEF0001FE30E /* array.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C797D1967BEF0001FE30E /* array.c */; };
+		595C799D1967BEF0001FE30E /* block.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C797E1967BEF0001FE30E /* block.c */; };
+		595C799E1967BEF0001FE30E /* cache.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C797F1967BEF0001FE30E /* cache.c */; };
+		595C799F1967BEF0001FE30E /* decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79801967BEF0001FE30E /* decompress.c */; };
+		595C79A01967BEF0001FE30E /* dir.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79811967BEF0001FE30E /* dir.c */; };
+		595C79A11967BEF0001FE30E /* dynstring.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79821967BEF0001FE30E /* dynstring.c */; };
+		595C79A21967BEF0001FE30E /* file_index.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79831967BEF0001FE30E /* file_index.c */; };
+		595C79A31967BEF0001FE30E /* file.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79841967BEF0001FE30E /* file.c */; };
+		595C79A41967BEF0001FE30E /* fs.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79851967BEF0001FE30E /* fs.c */; };
+		595C79A61967BEF0001FE30E /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79871967BEF0001FE30E /* hash.c */; };
+		595C79A81967BEF0001FE30E /* input.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79891967BEF0001FE30E /* input.c */; };
+		595C79B01967BEF0001FE30E /* nonstd-pread.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79911967BEF0001FE30E /* nonstd-pread.c */; };
+		595C79B21967BEF0001FE30E /* nonstd-stat.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79931967BEF0001FE30E /* nonstd-stat.c */; };
+		595C79B31967BEF0001FE30E /* nonstd-vsnprintf.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79941967BEF0001FE30E /* nonstd-vsnprintf.c */; };
+		595C79B41967BEF0001FE30E /* stack.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79951967BEF0001FE30E /* stack.c */; };
+		595C79B51967BEF0001FE30E /* swap.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79961967BEF0001FE30E /* swap.c */; };
+		595C79B61967BEF0001FE30E /* table.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79971967BEF0001FE30E /* table.c */; };
+		595C79B71967BEF0001FE30E /* thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79981967BEF0001FE30E /* thread.c */; };
+		595C79B81967BEF0001FE30E /* traverse.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C79991967BEF0001FE30E /* traverse.c */; };
+		595C79B91967BEF0001FE30E /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C799A1967BEF0001FE30E /* util.c */; };
+		595C79BA1967BEF0001FE30E /* xattr.c in Sources */ = {isa = PBXBuildFile; fileRef = 595C799B1967BEF0001FE30E /* xattr.c */; };
+		595C79C11967CECC001FE30E /* test.squashfs in Resources */ = {isa = PBXBuildFile; fileRef = 595C79C01967CEC5001FE30E /* test.squashfs */; };
 		59756A031967B6C400BAF5C2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A021967B6C400BAF5C2 /* Foundation.framework */; };
 		59756A051967B6C400BAF5C2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A041967B6C400BAF5C2 /* CoreGraphics.framework */; };
 		59756A071967B6C400BAF5C2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A061967B6C400BAF5C2 /* UIKit.framework */; };
@@ -17,22 +40,58 @@
 		59756A191967B6C400BAF5C2 /* Main_iPad.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 59756A171967B6C400BAF5C2 /* Main_iPad.storyboard */; };
 		59756A1C1967B6C400BAF5C2 /* SQViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 59756A1B1967B6C400BAF5C2 /* SQViewController.m */; };
 		59756A1E1967B6C400BAF5C2 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 59756A1D1967B6C400BAF5C2 /* Images.xcassets */; };
-		59756A251967B6C400BAF5C2 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A241967B6C400BAF5C2 /* XCTest.framework */; };
-		59756A261967B6C400BAF5C2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A021967B6C400BAF5C2 /* Foundation.framework */; };
-		59756A271967B6C400BAF5C2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59756A061967B6C400BAF5C2 /* UIKit.framework */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		59756A281967B6C400BAF5C2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 597569F71967B6C400BAF5C2 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 597569FE1967B6C400BAF5C2;
-			remoteInfo = squashfuse;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
+		595C79621967BED0001FE30E /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		595C79641967BEF0001FE30E /* array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = array.h; path = ../../array.h; sourceTree = "<group>"; };
+		595C79651967BEF0001FE30E /* block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = block.h; path = ../../block.h; sourceTree = "<group>"; };
+		595C79661967BEF0001FE30E /* cache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cache.h; path = ../../cache.h; sourceTree = "<group>"; };
+		595C79671967BEF0001FE30E /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../common.h; sourceTree = "<group>"; };
+		595C79681967BEF0001FE30E /* decompress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decompress.h; path = ../../decompress.h; sourceTree = "<group>"; };
+		595C79691967BEF0001FE30E /* dir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dir.h; path = ../../dir.h; sourceTree = "<group>"; };
+		595C796A1967BEF0001FE30E /* dynstring.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dynstring.h; path = ../../dynstring.h; sourceTree = "<group>"; };
+		595C796B1967BEF0001FE30E /* file_index.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file_index.h; path = ../../file_index.h; sourceTree = "<group>"; };
+		595C796C1967BEF0001FE30E /* file.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = file.h; path = ../../file.h; sourceTree = "<group>"; };
+		595C796D1967BEF0001FE30E /* fs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fs.h; path = ../../fs.h; sourceTree = "<group>"; };
+		595C796F1967BEF0001FE30E /* hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hash.h; path = ../../hash.h; sourceTree = "<group>"; };
+		595C79701967BEF0001FE30E /* input.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = input.h; path = ../../input.h; sourceTree = "<group>"; };
+		595C79721967BEF0001FE30E /* nonstd-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "nonstd-internal.h"; path = "../../nonstd-internal.h"; sourceTree = "<group>"; };
+		595C79731967BEF0001FE30E /* nonstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = nonstd.h; path = ../../nonstd.h; sourceTree = "<group>"; };
+		595C79741967BEF0001FE30E /* squashfs_fs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = squashfs_fs.h; path = ../../squashfs_fs.h; sourceTree = "<group>"; };
+		595C79751967BEF0001FE30E /* squashfuse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = squashfuse.h; path = ../../squashfuse.h; sourceTree = "<group>"; };
+		595C79761967BEF0001FE30E /* stack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stack.h; path = ../../stack.h; sourceTree = "<group>"; };
+		595C79771967BEF0001FE30E /* swap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = swap.h; path = ../../swap.h; sourceTree = "<group>"; };
+		595C79781967BEF0001FE30E /* table.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = table.h; path = ../../table.h; sourceTree = "<group>"; };
+		595C79791967BEF0001FE30E /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread.h; path = ../../thread.h; sourceTree = "<group>"; };
+		595C797A1967BEF0001FE30E /* traverse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = traverse.h; path = ../../traverse.h; sourceTree = "<group>"; };
+		595C797B1967BEF0001FE30E /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../util.h; sourceTree = "<group>"; };
+		595C797C1967BEF0001FE30E /* xattr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xattr.h; path = ../../xattr.h; sourceTree = "<group>"; };
+		595C797D1967BEF0001FE30E /* array.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = array.c; path = ../../array.c; sourceTree = "<group>"; };
+		595C797E1967BEF0001FE30E /* block.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = block.c; path = ../../block.c; sourceTree = "<group>"; };
+		595C797F1967BEF0001FE30E /* cache.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cache.c; path = ../../cache.c; sourceTree = "<group>"; };
+		595C79801967BEF0001FE30E /* decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decompress.c; path = ../../decompress.c; sourceTree = "<group>"; };
+		595C79811967BEF0001FE30E /* dir.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dir.c; path = ../../dir.c; sourceTree = "<group>"; };
+		595C79821967BEF0001FE30E /* dynstring.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dynstring.c; path = ../../dynstring.c; sourceTree = "<group>"; };
+		595C79831967BEF0001FE30E /* file_index.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file_index.c; path = ../../file_index.c; sourceTree = "<group>"; };
+		595C79841967BEF0001FE30E /* file.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = file.c; path = ../../file.c; sourceTree = "<group>"; };
+		595C79851967BEF0001FE30E /* fs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fs.c; path = ../../fs.c; sourceTree = "<group>"; };
+		595C79871967BEF0001FE30E /* hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hash.c; path = ../../hash.c; sourceTree = "<group>"; };
+		595C79891967BEF0001FE30E /* input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = input.c; path = ../../input.c; sourceTree = "<group>"; };
+		595C79911967BEF0001FE30E /* nonstd-pread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "nonstd-pread.c"; path = "../../nonstd-pread.c"; sourceTree = "<group>"; };
+		595C79931967BEF0001FE30E /* nonstd-stat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "nonstd-stat.c"; path = "../../nonstd-stat.c"; sourceTree = "<group>"; };
+		595C79941967BEF0001FE30E /* nonstd-vsnprintf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "nonstd-vsnprintf.c"; path = "../../nonstd-vsnprintf.c"; sourceTree = "<group>"; };
+		595C79951967BEF0001FE30E /* stack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = stack.c; path = ../../stack.c; sourceTree = "<group>"; };
+		595C79961967BEF0001FE30E /* swap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = swap.c; path = ../../swap.c; sourceTree = "<group>"; };
+		595C79971967BEF0001FE30E /* table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = table.c; path = ../../table.c; sourceTree = "<group>"; };
+		595C79981967BEF0001FE30E /* thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = thread.c; path = ../../thread.c; sourceTree = "<group>"; };
+		595C79991967BEF0001FE30E /* traverse.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = traverse.c; path = ../../traverse.c; sourceTree = "<group>"; };
+		595C799A1967BEF0001FE30E /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = util.c; path = ../../util.c; sourceTree = "<group>"; };
+		595C799B1967BEF0001FE30E /* xattr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xattr.c; path = ../../xattr.c; sourceTree = "<group>"; };
+		595C79BB1967BFAD001FE30E /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
+		595C79BC1967C316001FE30E /* swap.cinc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = swap.cinc; path = ../../swap.cinc; sourceTree = "<group>"; };
+		595C79BD1967C316001FE30E /* swap.hinc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = swap.hinc; path = ../../swap.hinc; sourceTree = "<group>"; };
+		595C79C01967CEC5001FE30E /* test.squashfs */ = {isa = PBXFileReference; lastKnownFileType = file; path = test.squashfs; sourceTree = SOURCE_ROOT; };
 		597569FF1967B6C400BAF5C2 /* squashfuse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = squashfuse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		59756A021967B6C400BAF5C2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		59756A041967B6C400BAF5C2 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -48,7 +107,6 @@
 		59756A1A1967B6C400BAF5C2 /* SQViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SQViewController.h; sourceTree = "<group>"; };
 		59756A1B1967B6C400BAF5C2 /* SQViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SQViewController.m; sourceTree = "<group>"; };
 		59756A1D1967B6C400BAF5C2 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		59756A231967B6C400BAF5C2 /* squashfuseTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = squashfuseTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		59756A241967B6C400BAF5C2 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
@@ -57,25 +115,69 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				595C79631967BED0001FE30E /* libz.dylib in Frameworks */,
 				59756A051967B6C400BAF5C2 /* CoreGraphics.framework in Frameworks */,
 				59756A071967B6C400BAF5C2 /* UIKit.framework in Frameworks */,
 				59756A031967B6C400BAF5C2 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		59756A201967B6C400BAF5C2 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				59756A251967B6C400BAF5C2 /* XCTest.framework in Frameworks */,
-				59756A271967B6C400BAF5C2 /* UIKit.framework in Frameworks */,
-				59756A261967B6C400BAF5C2 /* Foundation.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		595C795F1967BE78001FE30E /* libsquashfuse */ = {
+			isa = PBXGroup;
+			children = (
+				595C79BC1967C316001FE30E /* swap.cinc */,
+				595C79BD1967C316001FE30E /* swap.hinc */,
+				595C79641967BEF0001FE30E /* array.h */,
+				595C79651967BEF0001FE30E /* block.h */,
+				595C79661967BEF0001FE30E /* cache.h */,
+				595C79671967BEF0001FE30E /* common.h */,
+				595C79681967BEF0001FE30E /* decompress.h */,
+				595C79691967BEF0001FE30E /* dir.h */,
+				595C796A1967BEF0001FE30E /* dynstring.h */,
+				595C796B1967BEF0001FE30E /* file_index.h */,
+				595C796C1967BEF0001FE30E /* file.h */,
+				595C796D1967BEF0001FE30E /* fs.h */,
+				595C796F1967BEF0001FE30E /* hash.h */,
+				595C79701967BEF0001FE30E /* input.h */,
+				595C79721967BEF0001FE30E /* nonstd-internal.h */,
+				595C79731967BEF0001FE30E /* nonstd.h */,
+				595C79741967BEF0001FE30E /* squashfs_fs.h */,
+				595C79751967BEF0001FE30E /* squashfuse.h */,
+				595C79761967BEF0001FE30E /* stack.h */,
+				595C79771967BEF0001FE30E /* swap.h */,
+				595C79781967BEF0001FE30E /* table.h */,
+				595C79791967BEF0001FE30E /* thread.h */,
+				595C797A1967BEF0001FE30E /* traverse.h */,
+				595C797B1967BEF0001FE30E /* util.h */,
+				595C797C1967BEF0001FE30E /* xattr.h */,
+				595C797D1967BEF0001FE30E /* array.c */,
+				595C797E1967BEF0001FE30E /* block.c */,
+				595C797F1967BEF0001FE30E /* cache.c */,
+				595C79801967BEF0001FE30E /* decompress.c */,
+				595C79811967BEF0001FE30E /* dir.c */,
+				595C79821967BEF0001FE30E /* dynstring.c */,
+				595C79831967BEF0001FE30E /* file_index.c */,
+				595C79841967BEF0001FE30E /* file.c */,
+				595C79851967BEF0001FE30E /* fs.c */,
+				595C79871967BEF0001FE30E /* hash.c */,
+				595C79891967BEF0001FE30E /* input.c */,
+				595C79911967BEF0001FE30E /* nonstd-pread.c */,
+				595C79931967BEF0001FE30E /* nonstd-stat.c */,
+				595C79941967BEF0001FE30E /* nonstd-vsnprintf.c */,
+				595C79951967BEF0001FE30E /* stack.c */,
+				595C79961967BEF0001FE30E /* swap.c */,
+				595C79971967BEF0001FE30E /* table.c */,
+				595C79981967BEF0001FE30E /* thread.c */,
+				595C79991967BEF0001FE30E /* traverse.c */,
+				595C799A1967BEF0001FE30E /* util.c */,
+				595C799B1967BEF0001FE30E /* xattr.c */,
+			);
+			name = libsquashfuse;
+			sourceTree = "<group>";
+		};
 		597569F61967B6C400BAF5C2 = {
 			isa = PBXGroup;
 			children = (
@@ -89,7 +191,6 @@
 			isa = PBXGroup;
 			children = (
 				597569FF1967B6C400BAF5C2 /* squashfuse.app */,
-				59756A231967B6C400BAF5C2 /* squashfuseTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -97,6 +198,7 @@
 		59756A011967B6C400BAF5C2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				595C79621967BED0001FE30E /* libz.dylib */,
 				59756A021967B6C400BAF5C2 /* Foundation.framework */,
 				59756A041967B6C400BAF5C2 /* CoreGraphics.framework */,
 				59756A061967B6C400BAF5C2 /* UIKit.framework */,
@@ -108,6 +210,8 @@
 		59756A081967B6C400BAF5C2 /* squashfuse */ = {
 			isa = PBXGroup;
 			children = (
+				595C795F1967BE78001FE30E /* libsquashfuse */,
+				595C79BB1967BFAD001FE30E /* config.h */,
 				59756A111967B6C400BAF5C2 /* SQAppDelegate.h */,
 				59756A121967B6C400BAF5C2 /* SQAppDelegate.m */,
 				59756A141967B6C400BAF5C2 /* Main_iPhone.storyboard */,
@@ -123,6 +227,7 @@
 		59756A091967B6C400BAF5C2 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				595C79C01967CEC5001FE30E /* test.squashfs */,
 				59756A0A1967B6C400BAF5C2 /* squashfuse-Info.plist */,
 				59756A0B1967B6C400BAF5C2 /* InfoPlist.strings */,
 				59756A0E1967B6C400BAF5C2 /* main.m */,
@@ -151,24 +256,6 @@
 			productReference = 597569FF1967B6C400BAF5C2 /* squashfuse.app */;
 			productType = "com.apple.product-type.application";
 		};
-		59756A221967B6C400BAF5C2 /* squashfuseTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 59756A371967B6C400BAF5C2 /* Build configuration list for PBXNativeTarget "squashfuseTests" */;
-			buildPhases = (
-				59756A1F1967B6C400BAF5C2 /* Sources */,
-				59756A201967B6C400BAF5C2 /* Frameworks */,
-				59756A211967B6C400BAF5C2 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				59756A291967B6C400BAF5C2 /* PBXTargetDependency */,
-			);
-			name = squashfuseTests;
-			productName = squashfuseTests;
-			productReference = 59756A231967B6C400BAF5C2 /* squashfuseTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -178,11 +265,6 @@
 				CLASSPREFIX = SQ;
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = "Dave Vasilevsky";
-				TargetAttributes = {
-					59756A221967B6C400BAF5C2 = {
-						TestTargetID = 597569FE1967B6C400BAF5C2;
-					};
-				};
 			};
 			buildConfigurationList = 597569FA1967B6C400BAF5C2 /* Build configuration list for PBXProject "squashfuse" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -198,7 +280,6 @@
 			projectRoot = "";
 			targets = (
 				597569FE1967B6C400BAF5C2 /* squashfuse */,
-				59756A221967B6C400BAF5C2 /* squashfuseTests */,
 			);
 		};
 /* End PBXProject section */
@@ -208,17 +289,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				595C79C11967CECC001FE30E /* test.squashfs in Resources */,
 				59756A191967B6C400BAF5C2 /* Main_iPad.storyboard in Resources */,
 				59756A1E1967B6C400BAF5C2 /* Images.xcassets in Resources */,
 				59756A161967B6C400BAF5C2 /* Main_iPhone.storyboard in Resources */,
 				59756A0D1967B6C400BAF5C2 /* InfoPlist.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		59756A211967B6C400BAF5C2 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,28 +304,34 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				595C79B61967BEF0001FE30E /* table.c in Sources */,
+				595C79B71967BEF0001FE30E /* thread.c in Sources */,
+				595C799E1967BEF0001FE30E /* cache.c in Sources */,
+				595C799D1967BEF0001FE30E /* block.c in Sources */,
+				595C79B81967BEF0001FE30E /* traverse.c in Sources */,
+				595C79B91967BEF0001FE30E /* util.c in Sources */,
 				59756A131967B6C400BAF5C2 /* SQAppDelegate.m in Sources */,
 				59756A1C1967B6C400BAF5C2 /* SQViewController.m in Sources */,
+				595C799F1967BEF0001FE30E /* decompress.c in Sources */,
+				595C79B31967BEF0001FE30E /* nonstd-vsnprintf.c in Sources */,
+				595C79A01967BEF0001FE30E /* dir.c in Sources */,
+				595C79BA1967BEF0001FE30E /* xattr.c in Sources */,
+				595C79A41967BEF0001FE30E /* fs.c in Sources */,
+				595C79A81967BEF0001FE30E /* input.c in Sources */,
+				595C79B51967BEF0001FE30E /* swap.c in Sources */,
 				59756A0F1967B6C400BAF5C2 /* main.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		59756A1F1967B6C400BAF5C2 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				595C799C1967BEF0001FE30E /* array.c in Sources */,
+				595C79B21967BEF0001FE30E /* nonstd-stat.c in Sources */,
+				595C79A21967BEF0001FE30E /* file_index.c in Sources */,
+				595C79B41967BEF0001FE30E /* stack.c in Sources */,
+				595C79A31967BEF0001FE30E /* file.c in Sources */,
+				595C79A11967BEF0001FE30E /* dynstring.c in Sources */,
+				595C79B01967BEF0001FE30E /* nonstd-pread.c in Sources */,
+				595C79A61967BEF0001FE30E /* hash.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		59756A291967B6C400BAF5C2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 597569FE1967B6C400BAF5C2 /* squashfuse */;
-			targetProxy = 59756A281967B6C400BAF5C2 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		59756A0B1967B6C400BAF5C2 /* InfoPlist.strings */ = {
@@ -378,46 +459,6 @@
 			};
 			name = Release;
 		};
-		59756A381967B6C400BAF5C2 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/squashfuse.app/squashfuse";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "squashfuse/squashfuse-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "squashfuseTests/squashfuseTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Debug;
-		};
-		59756A391967B6C400BAF5C2 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/squashfuse.app/squashfuse";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(inherited)",
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-				);
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "squashfuse/squashfuse-Prefix.pch";
-				INFOPLIST_FILE = "squashfuseTests/squashfuseTests-Info.plist";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -435,15 +476,6 @@
 			buildConfigurations = (
 				59756A351967B6C400BAF5C2 /* Debug */,
 				59756A361967B6C400BAF5C2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		59756A371967B6C400BAF5C2 /* Build configuration list for PBXNativeTarget "squashfuseTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				59756A381967B6C400BAF5C2 /* Debug */,
-				59756A391967B6C400BAF5C2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
