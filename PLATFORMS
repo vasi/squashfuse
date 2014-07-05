@@ -25,10 +25,8 @@ These are only supported by the squashfuse_ls demo:
 * HP-UX
 * OpenVMS
 * Windows
-* RTEMS
-
-These don't have FUSE:
 * iOS
+* RTEMS
 
 
 Details
@@ -322,6 +320,14 @@ brackets, eg: [0.1]
     file.
   + Notes: For Unicode output, you may need to setup a different console font,
     and run `chcp 65001' to get the UTF-8 codepage.
+
+* iOS
+  + There's no FUSE
+  + Tested on: iOS 7 simulator [0.2]
+  + Requirements: Xcode
+  + Configure: No need to run ./configure, just use the Xcode project.
+		The project uses an embedded squashfs archive, so copy the archive of
+		your choosing to ios/test.squashfs.
 
 * RTEMS
   + Only squashfuse_ls, there's no FUSE
