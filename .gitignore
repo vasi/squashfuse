@@ -1,5 +1,6 @@
 /*.cinc
 /*.hinc
+/embed.c
 /squashfuse
 /squashfuse_ll
 /squashfuse_ls
