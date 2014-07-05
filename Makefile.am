@@ -108,7 +108,7 @@ vms/build.com: vms/gen_build.sh
 # Embedding a file
 if SQ_EMBED_DATA
 CLEANFILES += embed.c
-libsquashfuse_la_SOURCES += embed.c
+nodist_libsquashfuse_la_SOURCES = embed.c
 embed.c: $(SQ_EMBED_FILE)
 	(echo '#include "common.h"'; \
 	 echo 'unsigned char sqfs_embed[] = {'; \
