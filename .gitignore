@@ -1,7 +1,7 @@
 /*.inc
-squashfuse
-squashfuse_ll
-squashfuse_ls
+/squashfuse
+/squashfuse_ll
+/squashfuse_ls
 *.dSYM
 *.o
 *.lo
