@@ -96,7 +96,7 @@ error:
 #undef SQFMT
 }
 
-sqfs_err sqfs_open_image(sqfs *fs, const char *image) {
+sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image) {
   sqfs_err err;
   sqfs_input *in;
   char *msg;

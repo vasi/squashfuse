@@ -42,6 +42,7 @@
   typedef mode_t sqfs_mode_t;
   typedef uid_t sqfs_id_t;
   typedef off_t sqfs_off_t;
+  typedef const char *sqfs_host_path;
 #endif
 
 #ifdef __GNUC__

@@ -105,14 +105,14 @@ static sqfs_err sqfs_input_windows_create(sqfs_input *in, HANDLE file) {
   return SQFS_OK;
 }
 
-static sqfs_err sqfs_input_windows_open(sqfs_input *in, const char *path) {
+static sqfs_err sqfs_input_windows_open(sqfs_input *in, LPCTSTR path) {
   sqfs_err err;
   sqfs_input_windows *iw;
   if ((err = sqfs_input_windows_create(in, 0)))
     return err;
 
   iw = (sqfs_input_windows*)in->data;
-  iw->file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+  iw->file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (iw->file != INVALID_HANDLE_VALUE)
     return SQFS_OK;
@@ -325,14 +325,14 @@ sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len) {
 
 
 #ifdef _WIN32
-  sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
+  sqfs_err sqfs_input_open(sqfs_input *in, sqfs_host_path path) {
     return sqfs_input_windows_open(in, path);
   }
   sqfs_err sqfs_input_open_stdin(sqfs_input *in) {
     return sqfs_input_windows_open_stdin(in);
   }
 #else /* !_WIN32 */
-  sqfs_err sqfs_input_open(sqfs_input *in, const char *path) {
+  sqfs_err sqfs_input_open(sqfs_input *in, sqfs_host_path path) {
     return sqfs_input_posix_open(in, path);
   }
   sqfs_err sqfs_input_open_stdin(sqfs_input *in) {

@@ -59,7 +59,7 @@ sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd);
 sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len);
 
 /* Open a file by name, or from stdin */
-sqfs_err sqfs_input_open(sqfs_input *in, const char *path);
+sqfs_err sqfs_input_open(sqfs_input *in, sqfs_host_path path);
 sqfs_err sqfs_input_open_stdin(sqfs_input *in);
 
 #ifdef __cplusplus

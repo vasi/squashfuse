@@ -46,11 +46,16 @@ static void die(const char *msg) {
   exit(ERR_MISC);
 }
 
-int main(int argc, char *argv[]) {
+#if _WIN32
+  #include <tchar.h>
+  int _tmain(int argc, _TCHAR *argv[]) {
+#else
+  int main(int argc, char *argv[]) {
+#endif
   sqfs_err err = SQFS_OK;
   sqfs_traverse trv;
   sqfs fs;
-  char *image;
+  sqfs_host_path image;
 
   if (argc > 2)
     usage();

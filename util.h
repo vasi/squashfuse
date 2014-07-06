@@ -38,7 +38,7 @@ extern "C" {
 char *sqfs_open_error(sqfs *fs, sqfs_err err);
 
 /* Open a filesystem and print errors to stderr. */
-sqfs_err sqfs_open_image(sqfs *fs, const char *image);
+sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image);
 
 #ifdef __cplusplus
 }
