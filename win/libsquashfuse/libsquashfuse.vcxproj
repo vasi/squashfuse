@@ -18,33 +18,89 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\array.c" />
+    <ClCompile Include="..\..\block.c" />
+    <ClCompile Include="..\..\cache.c" />
+    <ClCompile Include="..\..\decompress.c" />
+    <ClCompile Include="..\..\dir.c" />
+    <ClCompile Include="..\..\dynstring.c" />
+    <ClCompile Include="..\..\file.c" />
+    <ClCompile Include="..\..\file_index.c" />
+    <ClCompile Include="..\..\fs.c" />
+    <ClCompile Include="..\..\hash.c" />
+    <ClCompile Include="..\..\input.c" />
+    <ClCompile Include="..\..\nonstd-pread.c" />
+    <ClCompile Include="..\..\nonstd-stat.c" />
+    <ClCompile Include="..\..\nonstd-vsnprintf.c" />
+    <ClCompile Include="..\..\stack.c" />
+    <ClCompile Include="..\..\swap.c" />
+    <ClCompile Include="..\..\table.c" />
+    <ClCompile Include="..\..\thread.c" />
+    <ClCompile Include="..\..\traverse.c" />
+    <ClCompile Include="..\..\util.c" />
+    <ClCompile Include="..\..\xattr.c" />
+    <ClCompile Include="..\tinfl.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\swap.cinc" />
+    <None Include="..\..\swap.hinc" />
+    <None Include="..\win_decompress.c.inc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\array.h" />
+    <ClInclude Include="..\..\block.h" />
+    <ClInclude Include="..\..\cache.h" />
+    <ClInclude Include="..\..\common.h" />
+    <ClInclude Include="..\..\decompress.h" />
+    <ClInclude Include="..\..\dir.h" />
+    <ClInclude Include="..\..\dynstring.h" />
+    <ClInclude Include="..\..\file.h" />
+    <ClInclude Include="..\..\file_index.h" />
+    <ClInclude Include="..\..\fs.h" />
+    <ClInclude Include="..\..\hash.h" />
+    <ClInclude Include="..\..\input.h" />
+    <ClInclude Include="..\..\nonstd-internal.h" />
+    <ClInclude Include="..\..\nonstd.h" />
+    <ClInclude Include="..\..\squashfs_fs.h" />
+    <ClInclude Include="..\..\squashfuse.h" />
+    <ClInclude Include="..\..\stack.h" />
+    <ClInclude Include="..\..\swap.h" />
+    <ClInclude Include="..\..\table.h" />
+    <ClInclude Include="..\..\thread.h" />
+    <ClInclude Include="..\..\traverse.h" />
+    <ClInclude Include="..\..\util.h" />
+    <ClInclude Include="..\..\xattr.h" />
+    <ClInclude Include="..\config.h" />
+    <ClInclude Include="..\win32.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{45D30A63-AAB9-4A37-976D-E0DBE1972431}</ProjectGuid>
+    <ProjectGuid>{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>squashfuse_ls</RootNamespace>
+    <RootNamespace>libsquashfuse</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -67,20 +123,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)\..;$(IncludePath)</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)\..;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..;$(ProjectDir)\..\..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)\..;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..;$(ProjectDir)\..\..;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)\..;$(ProjectDir)\..\..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)\..;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..;$(ProjectDir)\..\..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,10 +140,11 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -101,10 +154,11 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -116,10 +170,11 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
@@ -133,72 +188,16 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\array.c" />
-    <ClCompile Include="..\block.c" />
-    <ClCompile Include="..\cache.c" />
-    <ClCompile Include="..\decompress.c" />
-    <ClCompile Include="..\dir.c" />
-    <ClCompile Include="..\dynstring.c" />
-    <ClCompile Include="..\file.c" />
-    <ClCompile Include="..\file_index.c" />
-    <ClCompile Include="..\fs.c" />
-    <ClCompile Include="..\hash.c" />
-    <ClCompile Include="..\input.c" />
-    <ClCompile Include="..\ls.c" />
-    <ClCompile Include="..\nonstd-pread.c" />
-    <ClCompile Include="..\nonstd-stat.c" />
-    <ClCompile Include="..\nonstd-vsnprintf.c" />
-    <ClCompile Include="..\stack.c" />
-    <ClCompile Include="..\swap.c" />
-    <ClCompile Include="..\table.c" />
-    <ClCompile Include="..\thread.c" />
-    <ClCompile Include="..\traverse.c" />
-    <ClCompile Include="..\util.c" />
-    <ClCompile Include="..\xattr.c" />
-    <ClCompile Include="tinfl.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\array.h" />
-    <ClInclude Include="..\block.h" />
-    <ClInclude Include="..\cache.h" />
-    <ClInclude Include="..\common.h" />
-    <ClInclude Include="..\decompress.h" />
-    <ClInclude Include="..\dir.h" />
-    <ClInclude Include="..\dynstring.h" />
-    <ClInclude Include="..\file.h" />
-    <ClInclude Include="..\file_index.h" />
-    <ClInclude Include="..\fs.h" />
-    <ClInclude Include="..\hash.h" />
-    <ClInclude Include="..\input.h" />
-    <ClInclude Include="..\nonstd-internal.h" />
-    <ClInclude Include="..\nonstd.h" />
-    <ClInclude Include="..\squashfs_fs.h" />
-    <ClInclude Include="..\squashfuse.h" />
-    <ClInclude Include="..\stack.h" />
-    <ClInclude Include="..\swap.h" />
-    <ClInclude Include="..\table.h" />
-    <ClInclude Include="..\thread.h" />
-    <ClInclude Include="..\traverse.h" />
-    <ClInclude Include="..\util.h" />
-    <ClInclude Include="..\xattr.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="win32.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\swap.cinc" />
-    <None Include="..\swap.hinc" />
-    <None Include="win_decompress.c.inc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

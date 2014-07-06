@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Windows sources">
+      <UniqueIdentifier>{504e155a-bb05-4ffa-86c9-6391938a4bcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common sources">
+      <UniqueIdentifier>{dfcdb6b7-16a4-4bbd-be58-8d956411216b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Windows headers">
+      <UniqueIdentifier>{53f398a0-8535-49d4-8154-5eed2cd677ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common headers">
+      <UniqueIdentifier>{2e55ba1a-ad8b-4d0b-b358-d8f370836646}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\input.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\nonstd-pread.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\nonstd-stat.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\nonstd-vsnprintf.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\stack.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\swap.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\table.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\thread.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\traverse.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\util.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\xattr.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\array.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\block.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\cache.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\decompress.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dir.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\dynstring.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\file.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\file_index.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\fs.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\hash.c">
+      <Filter>Common sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\tinfl.c">
+      <Filter>Windows sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\swap.cinc">
+      <Filter>Common sources</Filter>
+    </None>
+    <None Include="..\..\swap.hinc">
+      <Filter>Common headers</Filter>
+    </None>
+    <None Include="..\win_decompress.c.inc">
+      <Filter>Windows sources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\block.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\cache.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\decompress.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dir.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\dynstring.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\file.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\file_index.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\fs.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\hash.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\input.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\nonstd.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\nonstd-internal.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\squashfs_fs.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\squashfuse.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\stack.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\swap.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\table.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\thread.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\traverse.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\util.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\xattr.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\array.h">
+      <Filter>Common headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\config.h">
+      <Filter>Windows headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\win32.h">
+      <Filter>Windows headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
