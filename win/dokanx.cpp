@@ -7,6 +7,38 @@
 #include <dokanx/fileinfo.h>
 #include "squashfuse.h"
 
+struct sqfs_dokan {
+  sqfs fs;
+  sqfs_inode root;
+};
+
+// Convert path
+std::string sqfs_host2sqfs(LPCTSTR path) {
+  char *buf;
+  std::string ret;
+  #ifdef UNICODE
+    // Convert to UTF8
+    size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
+    buf = new char[size];
+    WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
+    ret = buf;
+    delete[] buf;
+  #else
+    ret = path;
+  #endif
+
+  // Convert separators
+  for (auto it = ret.begin(); it != ret.end(); ++it) {
+    if (*it == '\\')
+      *it = '/';
+  }
+
+  return ret;
+}
+
+sqfs_err sqfs_dk_lookuo
+
+
 BOOL g_UseStdErr;
 BOOL g_DebugMode;
 
@@ -1009,6 +1041,7 @@ int wmain(int argc, wchar_t* argv[])
     dokanOptions->Version = DOKAN_VERSION;
     dokanOptions->ThreadCount = 0; // use default
 
+    sqfs_host_path image = NULL;
     for (command = 1; command < argc; command++) {
         switch (towlower(argv[command][1])) {
         case L'r':
@@ -1038,12 +1071,17 @@ int wmain(int argc, wchar_t* argv[])
             dokanOptions->Options |= DOKAN_OPTION_REMOVABLE;
             break;
         default:
-            fwprintf(stderr, L"unknown command: %s", argv[command]);
-            free(dokanOperations);
-            free(dokanOptions);
-            return EXIT_FAILURE;
+            image = argv[command];
         }
     }
+
+    sqfs_dokan *dk = new sqfs_dokan();
+    sqfs_err err = sqfs_open_image(&dk->fs, image);
+    if (err)
+      return EXIT_FAILURE;
+    if ((err = sqfs_inode_get(&dk->fs, &dk->root, sqfs_inode_root(&dk->fs))))
+      return EXIT_FAILURE;
+    dokanOptions->GlobalContext = (ULONG64)dk; // FIXME: cleanup
 
     if (g_DebugMode) {
         dokanOptions->Options |= DOKAN_OPTION_DEBUG;
