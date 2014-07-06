@@ -76,7 +76,7 @@ static ssize_t sqfs_input_windows_pread(sqfs_input *in, void *buf,
   ov.OffsetHigh = (DWORD)(off >> 32);
 
   ret = -1;
-  if (ReadFile(iw->file, buf, count, &bread, &ov))
+  if (ReadFile(iw->file, buf, (DWORD)count, &bread, &ov))
     ret = bread;
   iw->errcode = GetLastError();
   return ret;
@@ -174,7 +174,7 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
   if (lseek(ip->fd, off, SEEK_SET) == -1)
     ret = -1;
   else
-    ret = read(ip->fd, buf, count);
+    ret = read(ip->fd, buf, (DWORD)count);
   ip->errnum = errno;
   sqfs_mutex_unlock(&ip->mutex);
 #endif
