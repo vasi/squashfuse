@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <winbase.h>
+#include <Shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -7,25 +8,23 @@
 #include <dokanx/fileinfo.h>
 #include "squashfuse.h"
 
-struct sqfs_dokan {
-  sqfs fs;
-  sqfs_inode root;
-};
+static sqfs g_fs;
+static sqfs_inode g_root;
+static wchar_t *g_root_name;
+
+static LPCWSTR ILLEGAL_CHARS = L"<>:\"/\\|?*";
 
 // Convert path
-std::string sqfs_host2sqfs(LPCTSTR path) {
+std::string sqfs_host2sqfs(LPCWSTR path) {
   char *buf;
   std::string ret;
-  #ifdef UNICODE
-    // Convert to UTF8
-    size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
-    buf = new char[size];
-    WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
-    ret = buf;
-    delete[] buf;
-  #else
-    ret = path;
-  #endif
+  
+  // Convert to UTF8
+  size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
+  buf = new char[size];
+  WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
+  ret = buf;
+  delete[] buf;
 
   // Convert separators
   for (auto it = ret.begin(); it != ret.end(); ++it) {
@@ -36,9 +35,10 @@ std::string sqfs_host2sqfs(LPCTSTR path) {
   return ret;
 }
 
+DWORD sqfs_serial_number(sqfs *fs) {
+  return fs->sb.mkfs_time ^ fs->sb.inodes ^ (DWORD)fs->sb.inode_table_start;
+}
 
-BOOL g_UseStdErr;
-BOOL g_DebugMode;
 
 static WCHAR g_RootDirectory[MAX_PATH] = L"C:";
 static WCHAR g_MountPoint[MAX_PATH] = L"M:";
@@ -431,44 +431,6 @@ NTSTATUS MirrorUnlockFile(
   return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
-NTSTATUS MirrorGetFileSecurity(
-    LPCWSTR					FileName,
-    PSECURITY_INFORMATION	SecurityInformation,
-    PSECURITY_DESCRIPTOR	SecurityDescriptor,
-    ULONG				BufferLength,
-    PULONG				LengthNeeded,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-    HANDLE	handle;
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    if (!GetUserObjectSecurity(handle, SecurityInformation, SecurityDescriptor,
-            BufferLength, LengthNeeded)) {
-        int error = GetLastError();
-        if (error == ERROR_INSUFFICIENT_BUFFER) {
-            return STATUS_BUFFER_OVERFLOW;
-        } else {
-            return ToNtStatus(error);
-        }
-    }
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS MirrorSetFileSecurity(
-    LPCWSTR					FileName,
-    PSECURITY_INFORMATION	SecurityInformation,
-    PSECURITY_DESCRIPTOR	SecurityDescriptor,
-    ULONG				/*SecurityDescriptorLength*/,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
 NTSTATUS MirrorGetVolumeInformation(
     LPWSTR		VolumeNameBuffer,
     DWORD		VolumeNameSize,
@@ -479,18 +441,18 @@ NTSTATUS MirrorGetVolumeInformation(
     DWORD		FileSystemNameSize,
     PDOKAN_FILE_INFO	/*DokanFileInfo*/)
 {
-    wcscpy_s(VolumeNameBuffer, VolumeNameSize / sizeof(WCHAR), L"DOKAN");
-    *VolumeSerialNumber = 0x19831116;
-    *MaximumComponentLength = 256;
-    *FileSystemFlags = FILE_CASE_SENSITIVE_SEARCH | 
-                        FILE_CASE_PRESERVED_NAMES | 
-                        FILE_SUPPORTS_REMOTE_STORAGE |
-                        FILE_UNICODE_ON_DISK |
-                        FILE_PERSISTENT_ACLS;
+  wcscpy_s(VolumeNameBuffer, VolumeNameSize / sizeof(WCHAR), g_root_name);
+  *VolumeSerialNumber = sqfs_serial_number(&g_fs);
+  *MaximumComponentLength = SQUASHFS_NAME_LEN;
+  *FileSystemFlags = FILE_CASE_SENSITIVE_SEARCH | 
+                      FILE_CASE_PRESERVED_NAMES | 
+                      FILE_UNICODE_ON_DISK |
+                      FILE_PERSISTENT_ACLS |
+                      FILE_READ_ONLY_VOLUME;
 
-    wcscpy_s(FileSystemNameBuffer, FileSystemNameSize / sizeof(WCHAR), L"Dokan");
+  wcscpy_s(FileSystemNameBuffer, FileSystemNameSize / sizeof(WCHAR), L"squashfuse");
 
-    return STATUS_SUCCESS;
+  return STATUS_SUCCESS;
 }
 
 NTSTATUS MirrorUnmount(
@@ -528,9 +490,6 @@ int wmain(int argc, wchar_t* argv[])
         return EXIT_FAILURE;
     }
 
-    g_DebugMode = FALSE;
-    g_UseStdErr = FALSE;
-
     ZeroMemory(dokanOptions, sizeof(DOKAN_OPTIONS));
     dokanOptions->Version = DOKAN_VERSION;
     dokanOptions->ThreadCount = 0; // use default
@@ -551,37 +510,20 @@ int wmain(int argc, wchar_t* argv[])
             command++;
             dokanOptions->ThreadCount = (USHORT)_wtoi(argv[command]);
             break;
-        case L'd':
-            g_DebugMode = TRUE;
-            break;
-        case L's':
-            g_UseStdErr = TRUE;
-            break;
-        case L'n':
-            dokanOptions->Options |= DOKAN_OPTION_NETWORK;
-            break;
-        case L'm':
-            dokanOptions->Options |= DOKAN_OPTION_REMOVABLE;
-            break;
         default:
             image = argv[command];
         }
     }
 
-    sqfs_dokan *dk = new sqfs_dokan();
-    sqfs_err err = sqfs_open_image(&dk->fs, image);
+    sqfs_err err = sqfs_open_image(&g_fs, image);
     if (err)
       return EXIT_FAILURE;
-    if ((err = sqfs_inode_get(&dk->fs, &dk->root, sqfs_inode_root(&dk->fs))))
+    if ((err = sqfs_inode_get(&g_fs, &g_root, sqfs_inode_root(&g_fs))))
       return EXIT_FAILURE;
-    dokanOptions->GlobalContext = (ULONG64)dk; // FIXME: cleanup
 
-    if (g_DebugMode) {
-        dokanOptions->Options |= DOKAN_OPTION_DEBUG;
-    }
-    if (g_UseStdErr) {
-        dokanOptions->Options |= DOKAN_OPTION_STDERR;
-    }
+    g_root_name = _wcsdup(image);
+    PathStripPath(g_root_name);
+    PathRemoveExtension(g_root_name);
 
     dokanOptions->Options |= DOKAN_OPTION_KEEP_ALIVE;
 
@@ -596,7 +538,6 @@ int wmain(int argc, wchar_t* argv[])
     dokanOperations->FlushFileBuffers = MirrorFlushFileBuffers;
     dokanOperations->GetFileInformation = MirrorGetFileInformation;
     dokanOperations->FindFiles = MirrorFindFiles;
-    dokanOperations->FindFilesWithPattern = nullptr;
     dokanOperations->SetFileAttributes = MirrorSetFileAttributes;
     dokanOperations->SetFileTime = MirrorSetFileTime;
     dokanOperations->DeleteFile = MirrorDeleteFile;
@@ -606,9 +547,6 @@ int wmain(int argc, wchar_t* argv[])
     dokanOperations->SetAllocationSize = MirrorSetAllocationSize;
     dokanOperations->LockFile = MirrorLockFile;
     dokanOperations->UnlockFile = MirrorUnlockFile;
-    dokanOperations->GetFileSecurity = MirrorGetFileSecurity;
-    dokanOperations->SetFileSecurity = MirrorSetFileSecurity;
-    dokanOperations->GetDiskFreeSpace = nullptr;
     dokanOperations->GetVolumeInformation = MirrorGetVolumeInformation;
     dokanOperations->Unmount = MirrorUnmount;
 
