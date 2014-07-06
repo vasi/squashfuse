@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <tchar.h>
 #include <dokan.h>
 #include <dokanx/fileinfo.h>
+#include "squashfuse.h"
 
 BOOL g_UseStdErr;
 BOOL g_DebugMode;
@@ -973,7 +973,7 @@ NTSTATUS MirrorUnmount(
     return STATUS_SUCCESS;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int wmain(int argc, wchar_t* argv[])
 {
     int status;
     int command;
