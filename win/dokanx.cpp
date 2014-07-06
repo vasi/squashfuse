@@ -103,7 +103,7 @@ NTSTATUS MirrorCreateFile(
         DesiredAccess,//GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE,
         ShareMode,
         NULL, // security attribute
-        CreationDisposition,
+        OPEN_EXISTING,
         FlagsAndAttributes,// |FILE_FLAG_NO_BUFFERING,
         NULL); // template file handle
 
@@ -129,13 +129,7 @@ NTSTATUS MirrorCreateDirectory(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (!CreateDirectory(filePath.c_str(), NULL)) {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 
@@ -192,20 +186,6 @@ void MirrorCleanup(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (DokanFileInfo->Context) {
-        CloseHandle((HANDLE)DokanFileInfo->Context);
-        DokanFileInfo->Context = 0;
-
-        if (DokanFileInfo->DeleteOnClose) {
-            if (DokanFileInfo->IsDirectory) {
-                RemoveDirectory(filePath.c_str());
-            } else {
-                DeleteFile(filePath.c_str());
-            }
-        }
-    }
 }
 
 
@@ -269,67 +249,14 @@ NTSTATUS MirrorWriteFile(
     LONGLONG			Offset,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-    ULONG	offset = (ULONG)Offset;
-    BOOL	opened = FALSE;
-    std::wstring filePath = GetFilePath(FileName);
-
-    // reopen the file
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        handle = CreateFile(
-            filePath.c_str(),
-            GENERIC_WRITE,
-            FILE_SHARE_WRITE,
-            NULL,
-            OPEN_EXISTING,
-            0,
-            NULL);
-        if (handle == INVALID_HANDLE_VALUE) {
-            DWORD dwError = GetLastError();
-            return ToNtStatus(dwError);
-        }
-        opened = TRUE;
-    }
-
-    if (DokanFileInfo->WriteToEndOfFile) {
-        if (SetFilePointer(handle, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER) {
-            DWORD dwError = GetLastError();            
-            return ToNtStatus(dwError);
-        }
-    } else if (SetFilePointer(handle, offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
-        
-    if (!WriteFile(handle, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten, NULL)) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
-
-    // close the file when it is reopened
-    if (opened)
-        CloseHandle(handle);
-
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorFlushFileBuffers(
     LPCWSTR		FileName,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_SUCCESS;
-    }
-
-    if (FlushFileBuffers(handle)) {
-        return STATUS_SUCCESS;
-    } else {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 
@@ -431,45 +358,14 @@ NTSTATUS MirrorDeleteFile(
     LPCWSTR				FileName,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorDeleteDirectory(
     LPCWSTR				FileName,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-    HANDLE	hFind;
-    WIN32_FIND_DATAW findData;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    filePath = AppendPathSeperatorIfNotExist(filePath, L'\\');
-    filePath = filePath + L"*";
-
-    hFind = FindFirstFile(filePath.c_str(), &findData);
-    while (hFind != INVALID_HANDLE_VALUE) {
-        if (wcscmp(findData.cFileName, L"..") != 0 &&
-            wcscmp(findData.cFileName, L".") != 0) {
-            FindClose(hFind);
-            return -(int)ERROR_DIR_NOT_EMPTY;
-        }
-        if (!FindNextFile(hFind, &findData)) {
-            break;
-        }
-    }
-    FindClose(hFind);
-
-    DWORD dwError = GetLastError();
-    if (dwError == ERROR_NO_MORE_FILES) {
-        return STATUS_SUCCESS;
-    } else {
-        return ToNtStatus(dwError);
-    }
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 
@@ -479,28 +375,7 @@ NTSTATUS MirrorMoveFile(
     BOOL				ReplaceIfExisting,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    BOOL status;
-
-    std::wstring filePath = GetFilePath(FileName);
-    std::wstring newFilePath = GetFilePath(NewFileName);
-
-    if (DokanFileInfo->Context) {
-        // should close? or rename at closing?
-        CloseHandle((HANDLE)DokanFileInfo->Context);
-        DokanFileInfo->Context = 0;
-    }
-
-    if (ReplaceIfExisting)
-        status = MoveFileEx(filePath.c_str(), newFilePath.c_str(), MOVEFILE_REPLACE_EXISTING);
-    else
-        status = MoveFile(filePath.c_str(), newFilePath.c_str());
-
-    if (status == FALSE) {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    } else {
-        return STATUS_SUCCESS;
-    }
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorLockFile(
@@ -509,26 +384,7 @@ NTSTATUS MirrorLockFile(
     LONGLONG			Length,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle;
-    LARGE_INTEGER offset;
-    LARGE_INTEGER length;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    length.QuadPart = Length;
-    offset.QuadPart = ByteOffset;
-
-    if (LockFile(handle, offset.HighPart, offset.LowPart, length.HighPart, length.LowPart)) {
-        return STATUS_SUCCESS;
-    } else {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorSetEndOfFile(
@@ -536,28 +392,7 @@ NTSTATUS MirrorSetEndOfFile(
     LONGLONG			ByteOffset,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE			handle;
-    LARGE_INTEGER	offset;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    offset.QuadPart = ByteOffset;
-    if (!SetFilePointerEx(handle, offset, NULL, FILE_BEGIN)) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
-
-    if (!SetEndOfFile(handle)) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
-
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 
@@ -566,34 +401,7 @@ NTSTATUS MirrorSetAllocationSize(
     LONGLONG			AllocSize,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE			handle;
-    LARGE_INTEGER	fileSize;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    if (GetFileSizeEx(handle, &fileSize)) {
-        if (AllocSize < fileSize.QuadPart) {
-            fileSize.QuadPart = AllocSize;
-            if (!SetFilePointerEx(handle, fileSize, NULL, FILE_BEGIN))
-            {    
-                DWORD dwError = GetLastError();
-                return ToNtStatus(dwError);
-            }
-            if (!SetEndOfFile(handle)) {
-                DWORD dwError = GetLastError();
-                return ToNtStatus(dwError);
-            }
-        }
-    } else {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorSetFileAttributes(
@@ -601,13 +409,7 @@ NTSTATUS MirrorSetFileAttributes(
     DWORD				FileAttributes,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (!SetFileAttributes(filePath.c_str(), FileAttributes)) {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorSetFileTime(
@@ -617,22 +419,7 @@ NTSTATUS MirrorSetFileTime(
     CONST FILETIME*		LastWriteTime,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    if (!SetFileTime(handle, CreationTime, LastAccessTime, LastWriteTime)) {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
-
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorUnlockFile(
@@ -641,26 +428,7 @@ NTSTATUS MirrorUnlockFile(
     LONGLONG			Length,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle;
-    LARGE_INTEGER	length;
-    LARGE_INTEGER	offset;
-
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    length.QuadPart = Length;
-    offset.QuadPart = ByteOffset;
-
-    if (UnlockFile(handle, offset.HighPart, offset.LowPart, length.HighPart, length.LowPart)) {
-        return STATUS_SUCCESS;
-    } else {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorGetFileSecurity(
@@ -698,19 +466,7 @@ NTSTATUS MirrorSetFileSecurity(
     ULONG				/*SecurityDescriptorLength*/,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle;
-    std::wstring filePath = GetFilePath(FileName);
-
-    handle = (HANDLE)DokanFileInfo->Context;
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        return STATUS_INVALID_HANDLE;
-    }
-
-    if (!SetUserObjectSecurity(handle, SecurityInformation, SecurityDescriptor)) {
-        int error = GetLastError();
-        return ToNtStatus(error);
-    }
-    return STATUS_SUCCESS;
+  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorGetVolumeInformation(
