@@ -31,7 +31,11 @@
 
 #include <stdbool.h>
 
-#ifdef HAVE_PTHREAD
+#if _WIN32
+  #include "win32.h"
+  typedef CRITICAL_SECTION sqfs_mutex;
+  typedef CONDITION_VARIABLE sqfs_cond_var;
+#elif HAVE_PTHREAD
   #include <pthread.h>
 
   typedef pthread_mutex_t sqfs_mutex;

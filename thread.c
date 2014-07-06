@@ -24,7 +24,47 @@
  */
 #include "thread.h"
 
-#ifdef HAVE_PTHREAD
+#if _WIN32
+  bool sqfs_threads_available(void) {
+    return true;
+  }
+
+  sqfs_err sqfs_mutex_init(sqfs_mutex *m) {
+    InitializeCriticalSection(m);
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_destroy(sqfs_mutex *m) {
+    DeleteCriticalSection(m);
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_lock(sqfs_mutex *m) {
+    EnterCriticalSection(m);
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_mutex_unlock(sqfs_mutex *m) {
+    LeaveCriticalSection(m);
+    return SQFS_OK;
+  }
+
+  sqfs_err sqfs_cond_init(sqfs_cond_var *cv) {
+    InitializeConditionVariable(cv);
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_cond_destroy(sqfs_cond_var *cv) {
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_cond_wait(sqfs_cond_var *cv, sqfs_mutex *m)  {
+    return SleepConditionVariableCS(cv, m, INFINITE) ? SQFS_OK : SQFS_ERR;
+  }
+  sqfs_err sqfs_cond_signal(sqfs_cond_var *cv) {
+    WakeConditionVariable(cv);
+    return SQFS_OK;
+  }
+  sqfs_err sqfs_cond_broadcast(sqfs_cond_var *cv)  {
+    WakeAllConditionVariable(cv);
+    return SQFS_OK;
+  }
+#elif HAVE_PTHREAD
   bool sqfs_threads_available(void) {
     return true;
   }
