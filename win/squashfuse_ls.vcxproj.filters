@@ -169,14 +169,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="win_decompress.c.inc">
+      <Filter>Windows sources</Filter>
+    </None>
     <None Include="..\swap.hinc">
       <Filter>Common headers</Filter>
     </None>
     <None Include="..\swap.cinc">
       <Filter>Common sources</Filter>
-    </None>
-    <None Include="win_decompress.c.inc">
-      <Filter>Windows sources</Filter>
     </None>
   </ItemGroup>
 </Project>

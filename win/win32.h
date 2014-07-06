@@ -35,6 +35,8 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
+#define STDIN_FILENO 0
+
 #define S_IFIFO 0010000
 #define S_IFBLK 0060000
 #define S_IFLNK 0120000
