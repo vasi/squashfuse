@@ -10,10 +10,17 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "squashfuse_ls", "squashfuse
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsquashfuse", "libsquashfuse\libsquashfuse.vcxproj", "{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "squashfuse_dokanx", "squashfuse_dokanx\squashfuse_dokanx.vcxproj", "{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201} = {2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
+		Dokan Debug|Win32 = Dokan Debug|Win32
+		Dokan Debug|x64 = Dokan Debug|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
@@ -22,6 +29,10 @@ Global
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Debug|Win32.Build.0 = Debug|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Debug|x64.ActiveCfg = Debug|x64
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Debug|x64.Build.0 = Debug|x64
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|Win32.ActiveCfg = Debug|Win32
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|Win32.Build.0 = Debug|Win32
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|x64.ActiveCfg = Debug|x64
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|x64.Build.0 = Debug|x64
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|Win32.ActiveCfg = Release|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|Win32.Build.0 = Release|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|x64.ActiveCfg = Release|x64
@@ -30,10 +41,21 @@ Global
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Debug|Win32.Build.0 = Debug|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Debug|x64.ActiveCfg = Debug|x64
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Debug|x64.Build.0 = Debug|x64
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|Win32.ActiveCfg = Debug|Win32
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|Win32.Build.0 = Debug|Win32
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|x64.ActiveCfg = Debug|x64
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|x64.Build.0 = Debug|x64
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|Win32.ActiveCfg = Release|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|Win32.Build.0 = Release|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|x64.ActiveCfg = Release|x64
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|x64.Build.0 = Release|x64
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Debug|Win32.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Debug|x64.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|Win32.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|Win32.Build.0 = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|x64.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Release|Win32.ActiveCfg = Release|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
