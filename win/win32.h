@@ -34,6 +34,7 @@
 #include <Windows.h>
 #include <sys/stat.h>
 #include <stdint.h>
+#include <io.h>
 
 #define STDIN_FILENO 0
 

@@ -28,6 +28,7 @@
 #include "fs.h"
 #include "input.h"
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -130,3 +131,60 @@ sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image) {
   
   return SQFS_OK;
 }
+
+void sqfs_print(FILE *file, const char *str) {
+  #if _WIN32
+    fwprintf_s(file, L"%s", sqfs_str_wide(str));
+  #else
+    fprintf(file, "%s", str); 
+  #endif
+}
+
+void sqfs_print_init(void) {
+  #if _WIN32
+    wchar_t bom = 0xFEFF;
+    _setmode(1, _O_U16TEXT);
+    fwprintf(stdout, L"%c", bom);
+    _setmode(2, _O_U16TEXT);
+    fwprintf(stderr, L"%c", bom);
+#endif
+}
+
+#if _WIN32
+wchar_t *sqfs_str_wide(const char *utf8) {
+  size_t size, size2;
+  wchar_t *ret;
+  
+  size = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
+  if (size == 0)
+    return NULL;
+  if (!(ret = malloc(sizeof(wchar_t) * size)))
+    return NULL;
+
+  size2 = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, ret, size);
+  if (size2 != size) {
+    free(ret);
+    return NULL;
+  }
+  return ret;
+}
+
+char *sqfs_str_utf8(const wchar_t *wide) {
+  size_t size, size2;
+  char *ret;
+
+  size = WideCharToMultiByte(CP_UTF8, 0, wide, -1, NULL, 0, NULL, NULL);
+  if (size == 0)
+    return NULL;  
+  if (!(ret = malloc(size)))
+    return NULL;
+
+  size2 = WideCharToMultiByte(CP_UTF8, 0, wide, -1, ret, size, NULL, NULL);
+  if (size2 != size) {
+    free(ret);
+    return NULL;
+  }
+
+  return ret;
+}
+#endif

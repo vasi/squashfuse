@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #define PROGNAME "squashfuse_ls"
 
 #define ERR_MISC  (-1)
@@ -36,13 +35,17 @@
 #define ERR_OPEN  (-3)
 
 static void usage() {
-  fprintf(stderr, "%s (c) 2013 Dave Vasilevsky\n\n", PROGNAME);
-  fprintf(stderr, "Usage: %s ARCHIVE\n", PROGNAME);
+  sqfs_print(stderr, PROGNAME);
+  sqfs_print(stderr, " (c) 2013 Dave Vasilevsky\n\n");
+  sqfs_print(stderr, "Usage: ");
+  sqfs_print(stderr, PROGNAME);
+  sqfs_print(stderr, " ARCHIVE\n");
   exit(ERR_USAGE);
 }
 
 static void die(const char *msg) {
-  fprintf(stderr, "%s\n", msg);
+  sqfs_print(stderr, msg);
+  sqfs_print(stderr, "\n");
   exit(ERR_MISC);
 }
 
@@ -57,6 +60,8 @@ static void die(const char *msg) {
   sqfs fs;
   sqfs_host_path image;
 
+  sqfs_print_init();
+
   if (argc > 2)
     usage();
   image = argc == 2 ? argv[1] : NULL;
@@ -68,7 +73,8 @@ static void die(const char *msg) {
     die("sqfs_traverse_open error");
   while (sqfs_traverse_next(&trv, &err)) {
     if (!trv.dir_end) {
-      printf("%s\n", sqfs_traverse_path(&trv));
+      sqfs_print(stdout, sqfs_traverse_path(&trv));
+      sqfs_print(stdout, "\n");
     }
   }
   if (err)

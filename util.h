@@ -40,6 +40,18 @@ char *sqfs_open_error(sqfs *fs, sqfs_err err);
 /* Open a filesystem and print errors to stderr. */
 sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image);
 
+/* Print to a FILE */
+void sqfs_print(FILE *f, const char *str);
+
+/* Initialize printing */
+void sqfs_print_init(void);
+
+#if _WIN32
+// Unicode conversion, returning allocated strings
+wchar_t *sqfs_str_wide(const char *utf8);
+char *sqfs_str_utf8(const wchar_t *wide);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

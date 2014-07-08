@@ -318,8 +318,7 @@ brackets, eg: [0.1]
     - A compiler. I've tested with Visual Studio 2013 Express
   + Configure: No need to run ./configure, just use the Visual Studio solution
     file.
-  + Notes: For Unicode output, you may need to setup a different console font,
-    and run `chcp 65001' to get the UTF-8 codepage.
+  + Notes: For Unicode output, you may need to setup a different console font
 
 * iOS
   + There's no FUSE

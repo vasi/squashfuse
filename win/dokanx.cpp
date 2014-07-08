@@ -13,13 +13,9 @@ struct sqfs_dokan {
 
 // Convert path from Win to squashfs internal
 static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
-  // Convert to UTF8
-  size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL,
-    NULL);
-  char *buf = new char[size];
-  WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
+  char *buf = sqfs_str_utf8(path);
   std::string ret = buf;
-  delete[] buf;
+  free(buf);
 
   // Convert separators
   for (auto it = ret.begin(); it != ret.end(); ++it) {
@@ -40,11 +36,9 @@ static std::wstring sqfs_dk_win_name(const char *name) {
     return std::wstring();
 
   // Convert to unicode
-  size_t size = MultiByteToWideChar(CP_UTF8, 0, name, -1, NULL, 0);
-  wchar_t *buf = new wchar_t[size];
-  MultiByteToWideChar(CP_UTF8, 0, name, -1, buf, size);
+  wchar_t *buf = sqfs_str_wide(name);
   std::wstring ret = buf;
-  delete[] buf;
+  free(buf);
   return ret;
 }
 
