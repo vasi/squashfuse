@@ -1,12 +1,7 @@
-#include <windows.h>
-#include <winbase.h>
-#include <shlwapi.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string>
 #include <dokan.h>
-#include <dokanx/fileinfo.h>
 #include "squashfuse.h"
+
+#include <shlwapi.h>
 
 static sqfs g_fs;
 static sqfs_inode g_root;
@@ -15,7 +10,8 @@ static wchar_t *g_root_name;
 // Convert path from Win to squashfs internal
 static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
   // Convert to UTF8
-  size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
+  size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL,
+    NULL);
   char *buf = new char[size];
   WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
   std::string ret = buf;
@@ -89,21 +85,10 @@ static void sqfs_dk_file_info(T *info, sqfs_inode &inode) {
   }
 }
 
-
-
-static WCHAR g_RootDirectory[MAX_PATH] = L"C:";
-static WCHAR g_MountPoint[MAX_PATH] = L"M:";
-
-NTSTATUS MirrorCreateFile(
-    LPCWSTR					FileName,
-    DWORD					DesiredAccess,
-    DWORD					ShareMode,
-    DWORD					CreationDisposition,
-    DWORD					FlagsAndAttributes,
-    PDOKAN_FILE_INFO		DokanFileInfo)
-{
+static NTSTATUS sqfs_dk_op_create_file(LPCWSTR path, DWORD access,
+    DWORD sharemode, DWORD create, DWORD flags, PDOKAN_FILE_INFO fi) {
   sqfs_inode *inode = new sqfs_inode();
-  NTSTATUS nterr = sqfs_dk_lookup(FileName, *inode);
+  NTSTATUS nterr = sqfs_dk_lookup(path, *inode);
   if (nterr) {
     delete inode;
     return nterr;
@@ -111,16 +96,13 @@ NTSTATUS MirrorCreateFile(
 
   // FIXME: Check if it's a regular file?
 
-  DokanFileInfo->Context = (ULONG64)inode;
+  fi->Context = (ULONG64)inode;
   return STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorOpenDirectory(
-    LPCWSTR					FileName,
-    PDOKAN_FILE_INFO		DokanFileInfo)
-{
+static NTSTATUS sqfs_dk_op_open_directory(LPCWSTR path, PDOKAN_FILE_INFO fi) {
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
   if (nterr)
     return nterr;
 
@@ -129,55 +111,40 @@ NTSTATUS MirrorOpenDirectory(
   return STATUS_SUCCESS;
 }
 
-void MirrorCloseFile(
-    LPCWSTR					FileName,
-    PDOKAN_FILE_INFO		DokanFileInfo)
-{
-  delete (sqfs_inode*)DokanFileInfo->Context;
+static void sqfs_dk_op_close_file(LPCWSTR path, PDOKAN_FILE_INFO fi) {
+  delete (sqfs_inode*)fi->Context;
 }
 
-NTSTATUS MirrorReadFile(
-    LPCWSTR				FileName,
-    LPVOID				Buffer,
-    DWORD				BufferLength,
-    LPDWORD				ReadLength,
-    LONGLONG			Offset,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  sqfs_inode *inode = (sqfs_inode*)DokanFileInfo->Context;
-  sqfs_off_t osize = BufferLength;
-  if (sqfs_read_range(&g_fs, inode, Offset, &osize, Buffer))
+static NTSTATUS sqfs_dk_op_read_file(LPCWSTR path, LPVOID buf, DWORD bufsize,
+    LPDWORD size, LONGLONG offset, PDOKAN_FILE_INFO fi) {
+  sqfs_inode *inode = (sqfs_inode*)fi->Context;
+  sqfs_off_t osize = bufsize;
+  if (sqfs_read_range(&g_fs, inode, offset, &osize, buf))
     return STATUS_INTERNAL_ERROR;
-  if (ReadLength)
-    *ReadLength = (DWORD)osize;
+  if (size)
+    *size = (DWORD)osize;
   return STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorGetFileInformation(
-    LPCWSTR							FileName,
-    LPBY_HANDLE_FILE_INFORMATION	HandleFileInformation,
-    PDOKAN_FILE_INFO				DokanFileInfo)
-{
+static NTSTATUS sqfs_dk_op_get_file_information(LPCWSTR path,
+    LPBY_HANDLE_FILE_INFORMATION info, PDOKAN_FILE_INFO fi) {
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
   if (nterr)
     return nterr;
 
-  ZeroMemory(HandleFileInformation, sizeof(*HandleFileInformation));
-  sqfs_dk_file_info(HandleFileInformation, inode);
-  HandleFileInformation->nNumberOfLinks = inode.nlink;
-  HandleFileInformation->nFileIndexLow = inode.base.inode_number;
-  HandleFileInformation->dwVolumeSerialNumber = sqfs_dk_serial_number(g_fs);
+  ZeroMemory(info, sizeof(*info));
+  sqfs_dk_file_info(info, inode);
+  info->nNumberOfLinks = inode.nlink;
+  info->nFileIndexLow = inode.base.inode_number;
+  info->dwVolumeSerialNumber = sqfs_dk_serial_number(g_fs);
   return STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorFindFiles(
-    LPCWSTR				FileName,
-    PFillFindData		FillFindData, // function pointer
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
+static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
+    PDOKAN_FILE_INFO fi) {
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
   if (nterr)
     return nterr;
 
@@ -210,147 +177,106 @@ NTSTATUS MirrorFindFiles(
     sqfs_dk_file_info(&find, child);
     wcscpy_s(find.cFileName, name.c_str());
 
-    FillFindData(&find, DokanFileInfo);
+    filler(&find, fi);
   }
   return err ? STATUS_INTERNAL_ERROR : STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorGetVolumeInformation(
-    LPWSTR		VolumeNameBuffer,
-    DWORD		VolumeNameSize,
-    LPDWORD		VolumeSerialNumber,
-    LPDWORD		MaximumComponentLength,
-    LPDWORD		FileSystemFlags,
-    LPWSTR		FileSystemNameBuffer,
-    DWORD		FileSystemNameSize,
-    PDOKAN_FILE_INFO	/*DokanFileInfo*/)
-{
-  wcscpy_s(VolumeNameBuffer, VolumeNameSize / sizeof(WCHAR), g_root_name);
-  *VolumeSerialNumber = sqfs_dk_serial_number(g_fs);
-  *MaximumComponentLength = SQUASHFS_NAME_LEN;
-  *FileSystemFlags = FILE_CASE_SENSITIVE_SEARCH | 
-                      FILE_CASE_PRESERVED_NAMES | 
-                      FILE_UNICODE_ON_DISK |
-                      FILE_PERSISTENT_ACLS |
-                      FILE_READ_ONLY_VOLUME;
-
-  wcscpy_s(FileSystemNameBuffer, FileSystemNameSize / sizeof(WCHAR), L"squashfuse");
+static NTSTATUS sqfs_dk_op_get_volume_information(
+    LPWSTR volname, DWORD volnamelen,
+    LPDWORD serial, LPDWORD maxpath, LPDWORD flags,
+    LPWSTR fsname, DWORD fsnamelen, PDOKAN_FILE_INFO fi) {
+  wcscpy_s(volname, volnamelen / sizeof(WCHAR), g_root_name);
+  *serial = sqfs_dk_serial_number(g_fs);
+  *maxpath = SQUASHFS_NAME_LEN;
+  *flags = FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES | 
+    FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS | FILE_READ_ONLY_VOLUME;
+  wcscpy_s(fsname, fsnamelen / sizeof(WCHAR), L"squashfuse");
 
   return STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorUnmount(
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-    return STATUS_SUCCESS;
+static NTSTATUS sqfs_dk_op_unmount(PDOKAN_FILE_INFO fi) {
+  return STATUS_SUCCESS;
 }
 
-int wmain(int argc, wchar_t* argv[])
-{
-    int status;
-    int command;
-    PDOKAN_OPERATIONS dokanOperations = (PDOKAN_OPERATIONS)malloc(sizeof(DOKAN_OPERATIONS));
-    if (dokanOperations == nullptr)
-    {
-        return EXIT_FAILURE;
-    }
+static void die(const char *msg) {
+  fprintf(stderr, "%s\n", msg);
+  exit(EXIT_FAILURE);
+}
 
-    PDOKAN_OPTIONS dokanOptions = (PDOKAN_OPTIONS)malloc(sizeof(DOKAN_OPTIONS));
-    if (dokanOperations == nullptr)
-    {
-        free(dokanOperations);
-        return EXIT_FAILURE;
-    }
+static void usage() {
+  // FIXME!
+  die("usage!");
+}
 
-    if (argc < 5) {
-        fprintf(stderr, "mirror.exe\n"
-            "  /r RootDirectory (ex. /r c:\\test)\n"
-            "  /l DriveLetter (ex. /l m)\n"
-            "  /t ThreadCount (ex. /t 5)\n"
-            "  /d (enable debug output)\n"
-            "  /s (use stderr for output)\n"
-            "  /n (use network drive)\n"
-            "  /m (use removable drive)");
-        return EXIT_FAILURE;
-    }
+int wmain(int argc, wchar_t *argv[]) {
+  DOKAN_OPERATIONS dokan_ops;
+  ZeroMemory(&dokan_ops, sizeof(dokan_ops));
+  dokan_ops.CreateFile = sqfs_dk_op_create_file;
+  dokan_ops.OpenDirectory = sqfs_dk_op_open_directory;
+  dokan_ops.CloseFile = sqfs_dk_op_close_file;
+  dokan_ops.ReadFile = sqfs_dk_op_read_file;
+  dokan_ops.GetFileInformation = sqfs_dk_op_get_file_information;
+  dokan_ops.FindFiles = sqfs_dk_op_find_files;
+  dokan_ops.GetVolumeInformation = sqfs_dk_op_get_volume_information;
+  dokan_ops.Unmount = sqfs_dk_op_unmount;
 
-    ZeroMemory(dokanOptions, sizeof(DOKAN_OPTIONS));
-    dokanOptions->Version = DOKAN_VERSION;
-    dokanOptions->ThreadCount = 0; // use default
+  DOKAN_OPTIONS opts;
+  ZeroMemory(&opts, sizeof(opts));
+  opts.Version = DOKAN_VERSION;
+  opts.ThreadCount = 0; // default
+  opts.Options = DOKAN_OPTION_KEEP_ALIVE;
 
-    sqfs_host_path image = NULL;
-    for (command = 1; command < argc; command++) {
-        switch (towlower(argv[command][1])) {
-        case L'r':
-            command++;
-            wcscpy_s(g_RootDirectory, _countof(g_RootDirectory), argv[command]);
-            break;
-        case L'l':
-            command++;
-            wcscpy_s(g_MountPoint, _countof(g_MountPoint), argv[command]);
-            dokanOptions->MountPoint = g_MountPoint;
-            break;
-        case L't':
-            command++;
-            dokanOptions->ThreadCount = (USHORT)_wtoi(argv[command]);
-            break;
+  // Parse arguments
+  sqfs_host_path image = NULL;
+  for (int i = 1; i < argc; ++i) {
+    wchar_t *arg = argv[i];
+    if (arg[0] == L'/') {
+      switch (arg[1]) {
+        case L'd':
+          opts.Options |= DOKAN_OPTION_DEBUG;
+          break;
         default:
-            image = argv[command];
-        }
+          usage();
+      }
+    } else if (!image) {
+      image = arg;
+    } else if (!opts.MountPoint) {
+      opts.MountPoint = arg;
+    } else {
+      usage();
     }
+  }
+  if (!opts.MountPoint)
+    usage();
 
-    sqfs_err err = sqfs_open_image(&g_fs, image);
-    if (err)
-      return EXIT_FAILURE;
-    if ((err = sqfs_inode_get(&g_fs, &g_root, sqfs_inode_root(&g_fs))))
-      return EXIT_FAILURE;
+  // Open the image
+  sqfs_err err = sqfs_open_image(&g_fs, image);
+  if (err)
+    return EXIT_FAILURE;
+  if ((err = sqfs_inode_get(&g_fs, &g_root, sqfs_inode_root(&g_fs))))
+    return EXIT_FAILURE;
 
-    g_root_name = _wcsdup(image);
-    PathStripPath(g_root_name);
-    PathRemoveExtension(g_root_name);
+  // Get the name of the volume, based on squashfs archive name
+  g_root_name = _wcsdup(image);
+  PathStripPath(g_root_name);
+  PathRemoveExtension(g_root_name);
 
-    dokanOptions->Options |= DOKAN_OPTION_KEEP_ALIVE;
-
-    ZeroMemory(dokanOperations, sizeof(DOKAN_OPERATIONS));
-    dokanOperations->CreateFile = MirrorCreateFile;
-    dokanOperations->OpenDirectory = MirrorOpenDirectory;
-    dokanOperations->CloseFile = MirrorCloseFile;
-    dokanOperations->ReadFile = MirrorReadFile;
-    dokanOperations->GetFileInformation = MirrorGetFileInformation;
-    dokanOperations->FindFiles = MirrorFindFiles;
-    dokanOperations->GetVolumeInformation = MirrorGetVolumeInformation;
-    dokanOperations->Unmount = MirrorUnmount;
-
-    status = DokanMain(dokanOptions, dokanOperations);
-    switch (status) {
-    case DOKAN_SUCCESS:
-        fprintf(stderr, "Success");
-        break;
-    case DOKAN_ERROR:
-        fprintf(stderr, "Error");
-        break;
-    case DOKAN_DRIVE_LETTER_ERROR:
-        fprintf(stderr, "Bad Drive letter");
-        break;
-    case DOKAN_DRIVER_INSTALL_ERROR:
-        fprintf(stderr, "Can't install driver");
-        break;
-    case DOKAN_START_ERROR:
-        fprintf(stderr, "Driver something wrong");
-        break;
-    case DOKAN_MOUNT_ERROR:
-        fprintf(stderr, "Can't assign a drive letter");
-        break;
-    case DOKAN_MOUNT_POINT_ERROR:
-        fprintf(stderr, "Mount point error");
-        break;
+  // Mount and handle errors
+  int status = DokanMain(&opts, &dokan_ops);
+  switch (status) {
+    case DOKAN_SUCCESS: break;
+    case DOKAN_ERROR: die("Unknown error");
+    case DOKAN_DRIVE_LETTER_ERROR: die("Bad drive letter");
+    case DOKAN_DRIVER_INSTALL_ERROR: die("Can't install driver");
+    case DOKAN_START_ERROR: die("Unknown driver error");
+    case DOKAN_MOUNT_ERROR: die("Can't assign drive letter");
+    case DOKAN_MOUNT_POINT_ERROR: die("Mount point error");
     default:
-        fprintf(stderr, "Unknown error: %d", status);
-        break;
-    }
-
-    free(dokanOptions);
-    free(dokanOperations);
-
-    return 0;
+      fprintf(stderr, "Unknown error %d\n", status);
+      exit(EXIT_FAILURE);
+  }
+  
+  return 0;
 }
