@@ -183,7 +183,7 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 
   want = inode->xtra.symlink_size;
   if (!buf) {
-    *size = want;
+    *size = want + 1; // terminator
     return SQFS_OK;
   }
 
