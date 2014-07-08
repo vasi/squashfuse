@@ -9,11 +9,80 @@ struct sqfs_dokan {
   sqfs fs;
   sqfs_inode root;
   std::wstring volname;
+  bool escape; // Escape illegal characters?
 };
 
+static const wchar_t *ILLEGAL_CHARS = L"<>:\"/\\|?*";
+static const wchar_t ESCAPE = L'%';
+
+static wchar_t sqfs_hexchar(int v) {
+  if (v < 10)
+    return L'0' + v;
+  return L'A' + (v - 10);
+}
+static int sqfs_hexdigit(wchar_t h) {
+  if (h >= L'A' && h <= L'F')
+    return h - L'A' + 10;
+  if (h >= L'a' && h <= L'f')
+    return h - L'a' + 10;
+  if (h >= L'0' && h <= L'9')
+    return h - L'0';
+  return -1;
+}
+
+static std::wstring sqfs_escape(const std::wstring &s, bool escape) {
+  std::wstring ret;
+  for (auto it = s.begin(); it != s.end(); ++it) {
+    bool illegal = false;
+    for (const wchar_t *c = ILLEGAL_CHARS; *c; ++c) {
+      if (*it == *c) {
+        illegal  = true;
+        break;
+      }
+    }
+
+    if (illegal && !escape)
+      return std::wstring(); // Reject unescaped illegal chars
+    if (illegal || (escape && *it == ESCAPE)) {
+      ret.push_back(ESCAPE);
+      ret.push_back(sqfs_hexchar(*it / 16));
+      ret.push_back(sqfs_hexchar(*it & 0xf));
+    } else {
+      ret.push_back(*it);
+    }
+  }
+  return ret;
+}
+static std::wstring sqfs_unescape(const std::wstring &s) {
+  std::wstring ret;
+  for (auto it = s.begin(); it != s.end(); ++it) {
+    if (*it == ESCAPE) {
+      int a = -1, b = -1;
+      if (it++ != s.end())
+        a = sqfs_hexdigit(*it);
+      if (it++ != s.end())
+        b = sqfs_hexdigit(*it);
+      if (a != -1 && b != -1)
+        ret.push_back(a * 16 + b);
+    } else {
+      ret.push_back(*it);
+    }
+  }
+  return ret;
+}
+
+// Convert filename from squashfs to Win. Return empty on failure
+
+
 // Convert path from Win to squashfs internal
-static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
-  char *buf = sqfs_str_utf8(path);
+static std::string sqfs_dk_sqfs_path(LPCWSTR path, bool escape) {
+  // Unescape characters
+  std::wstring wname = path;
+  if (escape)
+    wname = sqfs_unescape(wname);
+
+  // Convert to UTF8
+  char *buf = sqfs_str_utf8(wname.c_str());
   std::string ret = buf;
   free(buf);
 
@@ -26,26 +95,19 @@ static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
   return ret;
 }
 
-// Convert filename from squashfs to Win. Return empty on failure
-// FIXME: Escape illegal characters?
-static const char *ILLEGAL_CHARS = "<>:\"/\\|?*";
-static std::wstring sqfs_dk_win_name(const char *name) {
-  // Check for illegal characters
-  const char *found = strpbrk(name, ILLEGAL_CHARS);
-  if (found)
-    return std::wstring();
-
+static std::wstring sqfs_dk_win_name(const char *name, bool escape) {
   // Convert to unicode
   wchar_t *buf = sqfs_str_wide(name);
-  std::wstring ret = buf;
+  std::wstring wname = buf;
   free(buf);
-  return ret;
+
+  return sqfs_escape(wname, escape);
 }
 
 // Lookup a file
 static NTSTATUS sqfs_dk_lookup(sqfs_dokan *ctx, LPCWSTR path,
     sqfs_inode &inode) {
-  std::string spath = sqfs_dk_sqfs_path(path);
+  std::string spath = sqfs_dk_sqfs_path(path, ctx->escape);
   inode = ctx->root;
   bool found = false;
   sqfs_err err = sqfs_lookup_path(&ctx->fs, &inode, spath.c_str(), &found);
@@ -167,7 +229,8 @@ static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
   sqfs_err err;
   sqfs_inode child;
   while (sqfs_dir_next(fs, &dir, &entry, &err)) {
-    std::wstring name = sqfs_dk_win_name(sqfs_dentry_name(&entry));
+    std::wstring name = sqfs_dk_win_name(sqfs_dentry_name(&entry),
+      SQCONTEXT->escape);
     if (name.empty())
       continue; // Ignore illegal names
 
@@ -225,17 +288,22 @@ static void sqfs_dk_usage(wchar_t *progname) {
   fwprintf(stderr, L"Usage: %s [options] ARCHIVE MOUNPOINT\n\n", progname);
   fwprintf(stderr, L"Options:\n");
   fwprintf(stderr, L"  /d   Print debug messages\n");
+  fwprintf(stderr, L"  /e   Escape illegal characters in filenames\n");
   sqfs_dk_die(NULL);
 }
 
 static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
     sqfs_host_path &image, DOKAN_OPTIONS &opts) {
+  sqfs_dokan *ctx = (sqfs_dokan*)opts.GlobalContext;
   for (int i = 1; i < argc; ++i) {
     wchar_t *arg = argv[i];
     if (arg[0] == L'/') {
       switch (arg[1]) {
       case L'd':
         opts.Options |= DOKAN_OPTION_DEBUG;
+        break;
+      case L'e':
+        ctx->escape = true;
         break;
       default:
         return false; // Unknown option
@@ -271,20 +339,22 @@ int wmain(int argc, wchar_t *argv[]) {
   opts.ThreadCount = 0; // default
   opts.Options = DOKAN_OPTION_KEEP_ALIVE;
 
+  sqfs_dokan *ctx = new sqfs_dokan();
+  ctx->escape = false;
+  opts.GlobalContext = (ULONG64)ctx;
+
   // Parse arguments
   sqfs_host_path image = NULL;
   if (!sqfs_dk_parse_args(argc, argv, image, opts))
     sqfs_dk_usage(argv[0]);
 
   // Open the image
-  sqfs_dokan *ctx = new sqfs_dokan();
   sqfs_err err = sqfs_open_image(&ctx->fs, image);
   if (err)
     return EXIT_FAILURE;
   if ((err = sqfs_inode_get(&ctx->fs, &ctx->root, sqfs_inode_root(&ctx->fs))))
     return EXIT_FAILURE;
   ctx->volname = sqfs_dk_volname(image);
-  opts.GlobalContext = (ULONG64)ctx;
 
   // Mount and handle errors
   int status = DokanMain(&opts, &dokan_ops);
