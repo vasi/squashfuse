@@ -110,7 +110,8 @@ sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id);
 sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sqfs_id_t *id);
 
 /* Puts up to *size characters of the link name into buf. Always null-
- * terminates the buffer. Pass null as buf to have the size returned. */
+terminates the buffer. Pass null as buf to have the size returned, including
+space for the terminator. */
 sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
 
 /* Find inode_id by inode_num */
