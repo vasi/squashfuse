@@ -337,7 +337,8 @@ int wmain(int argc, wchar_t *argv[]) {
   ZeroMemory(&opts, sizeof(opts));
   opts.Version = DOKAN_VERSION;
   opts.ThreadCount = 0; // default
-  opts.Options = DOKAN_OPTION_KEEP_ALIVE;
+  // Need Removable to be able to run executables!
+  opts.Options = DOKAN_OPTION_KEEP_ALIVE | DOKAN_OPTION_REMOVABLE;
 
   sqfs_dokan *ctx = new sqfs_dokan();
   ctx->escape = false;
