@@ -3,9 +3,13 @@
 
 #include <shlwapi.h>
 
-static sqfs g_fs;
-static sqfs_inode g_root;
-static wchar_t *g_root_name;
+#define SQCONTEXT ((sqfs_dokan*)fi->DokanOptions->GlobalContext)
+
+struct sqfs_dokan {
+  sqfs fs;
+  sqfs_inode root;
+  std::wstring volname;
+};
 
 // Convert path from Win to squashfs internal
 static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
@@ -45,11 +49,12 @@ static std::wstring sqfs_dk_win_name(const char *name) {
 }
 
 // Lookup a file
-static NTSTATUS sqfs_dk_lookup(LPCWSTR path, sqfs_inode &inode) {
+static NTSTATUS sqfs_dk_lookup(sqfs_dokan *ctx, LPCWSTR path,
+    sqfs_inode &inode) {
   std::string spath = sqfs_dk_sqfs_path(path);
-  inode = g_root;
+  inode = ctx->root;
   bool found = false;
-  sqfs_err err = sqfs_lookup_path(&g_fs, &inode, spath.c_str(), &found);
+  sqfs_err err = sqfs_lookup_path(&ctx->fs, &inode, spath.c_str(), &found);
   if (err)
     return STATUS_INTERNAL_ERROR;
   if (!found)
@@ -88,7 +93,7 @@ static void sqfs_dk_file_info(T *info, sqfs_inode &inode) {
 static NTSTATUS sqfs_dk_op_create_file(LPCWSTR path, DWORD access,
     DWORD sharemode, DWORD create, DWORD flags, PDOKAN_FILE_INFO fi) {
   sqfs_inode *inode = new sqfs_inode();
-  NTSTATUS nterr = sqfs_dk_lookup(path, *inode);
+  NTSTATUS nterr = sqfs_dk_lookup(SQCONTEXT, path, *inode);
   if (nterr) {
     delete inode;
     return nterr;
@@ -102,7 +107,7 @@ static NTSTATUS sqfs_dk_op_create_file(LPCWSTR path, DWORD access,
 
 static NTSTATUS sqfs_dk_op_open_directory(LPCWSTR path, PDOKAN_FILE_INFO fi) {
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(SQCONTEXT, path, inode);
   if (nterr)
     return nterr;
 
@@ -119,7 +124,7 @@ static NTSTATUS sqfs_dk_op_read_file(LPCWSTR path, LPVOID buf, DWORD bufsize,
     LPDWORD size, LONGLONG offset, PDOKAN_FILE_INFO fi) {
   sqfs_inode *inode = (sqfs_inode*)fi->Context;
   sqfs_off_t osize = bufsize;
-  if (sqfs_read_range(&g_fs, inode, offset, &osize, buf))
+  if (sqfs_read_range(&SQCONTEXT->fs, inode, offset, &osize, buf))
     return STATUS_INTERNAL_ERROR;
   if (size)
     *size = (DWORD)osize;
@@ -129,7 +134,7 @@ static NTSTATUS sqfs_dk_op_read_file(LPCWSTR path, LPVOID buf, DWORD bufsize,
 static NTSTATUS sqfs_dk_op_get_file_information(LPCWSTR path,
     LPBY_HANDLE_FILE_INFORMATION info, PDOKAN_FILE_INFO fi) {
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(SQCONTEXT, path, inode);
   if (nterr)
     return nterr;
 
@@ -137,14 +142,15 @@ static NTSTATUS sqfs_dk_op_get_file_information(LPCWSTR path,
   sqfs_dk_file_info(info, inode);
   info->nNumberOfLinks = inode.nlink;
   info->nFileIndexLow = inode.base.inode_number;
-  info->dwVolumeSerialNumber = sqfs_dk_serial_number(g_fs);
+  info->dwVolumeSerialNumber = sqfs_dk_serial_number(SQCONTEXT->fs);
   return STATUS_SUCCESS;
 }
 
 static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
     PDOKAN_FILE_INFO fi) {
+  sqfs *fs = &SQCONTEXT->fs;
   sqfs_inode inode;
-  NTSTATUS nterr = sqfs_dk_lookup(path, inode);
+  NTSTATUS nterr = sqfs_dk_lookup(SQCONTEXT, path, inode);
   if (nterr)
     return nterr;
 
@@ -152,7 +158,7 @@ static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
     return STATUS_NOT_A_DIRECTORY;
 
   sqfs_dir dir;
-  if (sqfs_dir_open(&g_fs, &inode, &dir, 0))
+  if (sqfs_dir_open(fs, &inode, &dir, 0))
     return STATUS_INTERNAL_ERROR;
 
   sqfs_dir_entry entry;
@@ -166,12 +172,12 @@ static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
 
   sqfs_err err;
   sqfs_inode child;
-  while (sqfs_dir_next(&g_fs, &dir, &entry, &err)) {
+  while (sqfs_dir_next(fs, &dir, &entry, &err)) {
     std::wstring name = sqfs_dk_win_name(sqfs_dentry_name(&entry));
     if (name.empty())
       continue; // Ignore illegal names
 
-    if (sqfs_inode_get(&g_fs, &child, sqfs_dentry_inode(&entry)))
+    if (sqfs_inode_get(fs, &child, sqfs_dentry_inode(&entry)))
       return STATUS_INTERNAL_ERROR;
 
     sqfs_dk_file_info(&find, child);
@@ -186,8 +192,9 @@ static NTSTATUS sqfs_dk_op_get_volume_information(
     LPWSTR volname, DWORD volnamelen,
     LPDWORD serial, LPDWORD maxpath, LPDWORD flags,
     LPWSTR fsname, DWORD fsnamelen, PDOKAN_FILE_INFO fi) {
-  wcscpy_s(volname, volnamelen / sizeof(WCHAR), g_root_name);
-  *serial = sqfs_dk_serial_number(g_fs);
+  wcscpy_s(volname, volnamelen / sizeof(WCHAR),
+    SQCONTEXT->volname.c_str());
+  *serial = sqfs_dk_serial_number(SQCONTEXT->fs);
   *maxpath = SQUASHFS_NAME_LEN;
   *flags = FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES | 
     FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS | FILE_READ_ONLY_VOLUME;
@@ -200,14 +207,56 @@ static NTSTATUS sqfs_dk_op_unmount(PDOKAN_FILE_INFO fi) {
   return STATUS_SUCCESS;
 }
 
-static void die(const char *msg) {
-  fprintf(stderr, "%s\n", msg);
+
+// Figure out a good volume name for this image
+static std::wstring sqfs_dk_volname(const wchar_t *image) {
+  wchar_t *name, *buf;
+  name = buf = _wcsdup(image);
+  PathStripPath(name);
+  PathRemoveExtension(name);
+  std::wstring ret = name;
+  free(buf);
+  return ret;
+}
+
+static void sqfs_dk_die(const wchar_t *msg) {
+  if (msg)
+    fwprintf(stderr, L"%s\n", msg);
   exit(EXIT_FAILURE);
 }
 
-static void usage() {
-  // FIXME!
-  die("usage!");
+static void sqfs_dk_usage(wchar_t *progname) {
+  PathStripPath(progname);
+  fwprintf(stderr, L"squashfuse (c) 2012 Dave Vasilevsky\n\n");
+  fwprintf(stderr, L"Usage: %s [options] ARCHIVE MOUNPOINT\n\n", progname);
+  fwprintf(stderr, L"Options:\n");
+  fwprintf(stderr, L"  /d   Print debug messages\n");
+  sqfs_dk_die(NULL);
+}
+
+static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
+    sqfs_host_path &image, DOKAN_OPTIONS &opts) {
+  for (int i = 1; i < argc; ++i) {
+    wchar_t *arg = argv[i];
+    if (arg[0] == L'/') {
+      switch (arg[1]) {
+      case L'd':
+        opts.Options |= DOKAN_OPTION_DEBUG;
+        break;
+      default:
+        return false; // Unknown option
+      }
+    } else if (!image) {
+      image = arg;
+    } else if (!opts.MountPoint) {
+      opts.MountPoint = arg;
+    } else {
+      return false; // Too many args
+    }
+  }
+  if (!opts.MountPoint)
+    return false; // Missing args
+  return true;
 }
 
 int wmain(int argc, wchar_t *argv[]) {
@@ -230,51 +279,31 @@ int wmain(int argc, wchar_t *argv[]) {
 
   // Parse arguments
   sqfs_host_path image = NULL;
-  for (int i = 1; i < argc; ++i) {
-    wchar_t *arg = argv[i];
-    if (arg[0] == L'/') {
-      switch (arg[1]) {
-        case L'd':
-          opts.Options |= DOKAN_OPTION_DEBUG;
-          break;
-        default:
-          usage();
-      }
-    } else if (!image) {
-      image = arg;
-    } else if (!opts.MountPoint) {
-      opts.MountPoint = arg;
-    } else {
-      usage();
-    }
-  }
-  if (!opts.MountPoint)
-    usage();
+  if (!sqfs_dk_parse_args(argc, argv, image, opts))
+    sqfs_dk_usage(argv[0]);
 
   // Open the image
-  sqfs_err err = sqfs_open_image(&g_fs, image);
+  sqfs_dokan *ctx = new sqfs_dokan();
+  sqfs_err err = sqfs_open_image(&ctx->fs, image);
   if (err)
     return EXIT_FAILURE;
-  if ((err = sqfs_inode_get(&g_fs, &g_root, sqfs_inode_root(&g_fs))))
+  if ((err = sqfs_inode_get(&ctx->fs, &ctx->root, sqfs_inode_root(&ctx->fs))))
     return EXIT_FAILURE;
-
-  // Get the name of the volume, based on squashfs archive name
-  g_root_name = _wcsdup(image);
-  PathStripPath(g_root_name);
-  PathRemoveExtension(g_root_name);
+  ctx->volname = sqfs_dk_volname(image);
+  opts.GlobalContext = (ULONG64)ctx;
 
   // Mount and handle errors
   int status = DokanMain(&opts, &dokan_ops);
   switch (status) {
     case DOKAN_SUCCESS: break;
-    case DOKAN_ERROR: die("Unknown error");
-    case DOKAN_DRIVE_LETTER_ERROR: die("Bad drive letter");
-    case DOKAN_DRIVER_INSTALL_ERROR: die("Can't install driver");
-    case DOKAN_START_ERROR: die("Unknown driver error");
-    case DOKAN_MOUNT_ERROR: die("Can't assign drive letter");
-    case DOKAN_MOUNT_POINT_ERROR: die("Mount point error");
+    case DOKAN_ERROR: sqfs_dk_die(L"Unknown error");
+    case DOKAN_DRIVE_LETTER_ERROR: sqfs_dk_die(L"Bad drive letter");
+    case DOKAN_DRIVER_INSTALL_ERROR: sqfs_dk_die(L"Can't install driver");
+    case DOKAN_START_ERROR: sqfs_dk_die(L"Unknown driver error");
+    case DOKAN_MOUNT_ERROR: sqfs_dk_die(L"Can't assign drive letter");
+    case DOKAN_MOUNT_POINT_ERROR: sqfs_dk_die(L"Mount point error");
     default:
-      fprintf(stderr, "Unknown error %d\n", status);
+      fwprintf(stderr, L"Unknown error %d\n", status);
       exit(EXIT_FAILURE);
   }
   
