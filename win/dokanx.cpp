@@ -115,14 +115,6 @@ NTSTATUS MirrorCreateFile(
   return STATUS_SUCCESS;
 }
 
-NTSTATUS MirrorCreateDirectory(
-    LPCWSTR					FileName,
-    PDOKAN_FILE_INFO		DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-
 NTSTATUS MirrorOpenDirectory(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
@@ -137,18 +129,11 @@ NTSTATUS MirrorOpenDirectory(
   return STATUS_SUCCESS;
 }
 
-
 void MirrorCloseFile(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
   delete (sqfs_inode*)DokanFileInfo->Context;
-}
-
-void MirrorCleanup(
-    LPCWSTR					FileName,
-    PDOKAN_FILE_INFO		DokanFileInfo)
-{
 }
 
 NTSTATUS MirrorReadFile(
@@ -166,24 +151,6 @@ NTSTATUS MirrorReadFile(
   if (ReadLength)
     *ReadLength = (DWORD)osize;
   return STATUS_SUCCESS;
-}
-
-NTSTATUS MirrorWriteFile(
-    LPCWSTR		FileName,
-    LPCVOID		Buffer,
-    DWORD		NumberOfBytesToWrite,
-    LPDWORD		NumberOfBytesWritten,
-    LONGLONG			Offset,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorFlushFileBuffers(
-    LPCWSTR		FileName,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorGetFileInformation(
@@ -246,83 +213,6 @@ NTSTATUS MirrorFindFiles(
     FillFindData(&find, DokanFileInfo);
   }
   return err ? STATUS_INTERNAL_ERROR : STATUS_SUCCESS;
-}
-
-NTSTATUS MirrorDeleteFile(
-    LPCWSTR				FileName,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorDeleteDirectory(
-    LPCWSTR				FileName,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-
-NTSTATUS MirrorMoveFile(
-    LPCWSTR				FileName, // existing file name
-    LPCWSTR				NewFileName,
-    BOOL				ReplaceIfExisting,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorLockFile(
-    LPCWSTR				FileName,
-    LONGLONG			ByteOffset,
-    LONGLONG			Length,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorSetEndOfFile(
-    LPCWSTR				FileName,
-    LONGLONG			ByteOffset,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-
-NTSTATUS MirrorSetAllocationSize(
-    LPCWSTR				FileName,
-    LONGLONG			AllocSize,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorSetFileAttributes(
-    LPCWSTR				FileName,
-    DWORD				FileAttributes,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorSetFileTime(
-    LPCWSTR				FileName,
-    CONST FILETIME*		CreationTime,
-    CONST FILETIME*		LastAccessTime,
-    CONST FILETIME*		LastWriteTime,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
-}
-
-NTSTATUS MirrorUnlockFile(
-    LPCWSTR				FileName,
-    LONGLONG			ByteOffset,
-    LONGLONG			Length,
-    PDOKAN_FILE_INFO	DokanFileInfo)
-{
-  return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
 NTSTATUS MirrorGetVolumeInformation(
@@ -424,23 +314,10 @@ int wmain(int argc, wchar_t* argv[])
     ZeroMemory(dokanOperations, sizeof(DOKAN_OPERATIONS));
     dokanOperations->CreateFile = MirrorCreateFile;
     dokanOperations->OpenDirectory = MirrorOpenDirectory;
-    dokanOperations->CreateDirectory = MirrorCreateDirectory;
-    dokanOperations->Cleanup = MirrorCleanup;
     dokanOperations->CloseFile = MirrorCloseFile;
     dokanOperations->ReadFile = MirrorReadFile;
-    dokanOperations->WriteFile = MirrorWriteFile;
-    dokanOperations->FlushFileBuffers = MirrorFlushFileBuffers;
     dokanOperations->GetFileInformation = MirrorGetFileInformation;
     dokanOperations->FindFiles = MirrorFindFiles;
-    dokanOperations->SetFileAttributes = MirrorSetFileAttributes;
-    dokanOperations->SetFileTime = MirrorSetFileTime;
-    dokanOperations->DeleteFile = MirrorDeleteFile;
-    dokanOperations->DeleteDirectory = MirrorDeleteDirectory;
-    dokanOperations->MoveFile = MirrorMoveFile;
-    dokanOperations->SetEndOfFile = MirrorSetEndOfFile;
-    dokanOperations->SetAllocationSize = MirrorSetAllocationSize;
-    dokanOperations->LockFile = MirrorLockFile;
-    dokanOperations->UnlockFile = MirrorUnlockFile;
     dokanOperations->GetVolumeInformation = MirrorGetVolumeInformation;
     dokanOperations->Unmount = MirrorUnmount;
 
