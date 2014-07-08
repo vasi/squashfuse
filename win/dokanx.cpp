@@ -1,6 +1,6 @@
 #include <windows.h>
 #include <winbase.h>
-#include <Shlwapi.h>
+#include <shlwapi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -12,18 +12,13 @@ static sqfs g_fs;
 static sqfs_inode g_root;
 static wchar_t *g_root_name;
 
-static LPCWSTR ILLEGAL_CHARS = L"<>:\"/\\|?*";
-
-// Convert path
-std::string sqfs_host2sqfs(LPCWSTR path) {
-  char *buf;
-  std::string ret;
-  
+// Convert path from Win to squashfs internal
+static std::string sqfs_dk_sqfs_path(LPCWSTR path) {
   // Convert to UTF8
   size_t size = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
-  buf = new char[size];
+  char *buf = new char[size];
   WideCharToMultiByte(CP_UTF8, 0, path, -1, buf, size, NULL, NULL);
-  ret = buf;
+  std::string ret = buf;
   delete[] buf;
 
   // Convert separators
@@ -35,47 +30,69 @@ std::string sqfs_host2sqfs(LPCWSTR path) {
   return ret;
 }
 
-DWORD sqfs_serial_number(sqfs *fs) {
-  return fs->sb.mkfs_time ^ fs->sb.inodes ^ (DWORD)fs->sb.inode_table_start;
+// Convert filename from squashfs to Win. Return empty on failure
+// FIXME: Escape illegal characters?
+static const char *ILLEGAL_CHARS = "<>:\"/\\|?*";
+static std::wstring sqfs_dk_win_name(const char *name) {
+  // Check for illegal characters
+  const char *found = strpbrk(name, ILLEGAL_CHARS);
+  if (found)
+    return std::wstring();
+
+  // Convert to unicode
+  size_t size = MultiByteToWideChar(CP_UTF8, 0, name, -1, NULL, 0);
+  wchar_t *buf = new wchar_t[size];
+  MultiByteToWideChar(CP_UTF8, 0, name, -1, buf, size);
+  std::wstring ret = buf;
+  delete[] buf;
+  return ret;
 }
+
+// Lookup a file
+static NTSTATUS sqfs_dk_lookup(LPCWSTR path, sqfs_inode &inode) {
+  std::string spath = sqfs_dk_sqfs_path(path);
+  inode = g_root;
+  bool found = false;
+  sqfs_err err = sqfs_lookup_path(&g_fs, &inode, spath.c_str(), &found);
+  if (err)
+    return STATUS_INTERNAL_ERROR;
+  if (!found)
+    return STATUS_OBJECT_PATH_NOT_FOUND;
+  return STATUS_SUCCESS;
+}
+
+// Generate a serial number for this fs
+static DWORD sqfs_dk_serial_number(sqfs &fs) {
+  return fs.sb.mkfs_time ^ fs.sb.inodes ^ (DWORD)fs.sb.inode_table_start;
+}
+
+// Convert a time_t to a FILETIME
+static void sqfs_dk_filetime(time_t t, LPFILETIME pft) {
+  LONGLONG ll = Int32x32To64(t, 10000000) + 116444736000000000;
+  pft->dwLowDateTime = (DWORD)ll;
+  pft->dwHighDateTime = ll >> 32;
+}
+
+// Fill a file information structure from an inode
+template <typename T>
+static void sqfs_dk_file_info(T *info, sqfs_inode &inode) {
+  info->dwFileAttributes = 0;
+  if (S_ISDIR(inode.base.mode))
+    info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+  info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
+  sqfs_dk_filetime(inode.base.mtime, &info->ftLastWriteTime);
+  info->ftCreationTime = info->ftLastWriteTime;
+  info->ftLastAccessTime = info->ftLastWriteTime;
+  if (S_ISREG(inode.base.mode)) {
+    info->nFileSizeHigh = inode.xtra.reg.file_size >> 32;
+    info->nFileSizeLow = (DWORD)inode.xtra.reg.file_size;
+  }
+}
+
 
 
 static WCHAR g_RootDirectory[MAX_PATH] = L"C:";
 static WCHAR g_MountPoint[MAX_PATH] = L"M:";
-
-std::wstring AppendPathSeperatorIfNotExist(
-  __in const std::wstring& path,
-  __in WCHAR pathSeperator /*= '/'*/
-  )
-{
-  if (path.empty() || path[path.size() - 1] != pathSeperator)
-  {
-    return path + pathSeperator;
-  }
-  return path;
-}
-
-NTSTATUS ToNtStatus(DWORD dwError)
-{
-    switch (dwError)
-    {
-    case ERROR_FILE_NOT_FOUND:
-        return STATUS_OBJECT_NAME_NOT_FOUND;
-    case ERROR_PATH_NOT_FOUND:
-        return STATUS_OBJECT_PATH_NOT_FOUND;
-    case ERROR_INVALID_PARAMETER:
-        return STATUS_INVALID_PARAMETER;
-    default:
-        return STATUS_ACCESS_DENIED;
-    }
-}
-
-std::wstring GetFilePath(
-    __in const std::wstring& fileName
-    )
-{
-    return std::wstring(g_RootDirectory) + fileName;
-}
 
 NTSTATUS MirrorCreateFile(
     LPCWSTR					FileName,
@@ -85,45 +102,18 @@ NTSTATUS MirrorCreateFile(
     DWORD					FlagsAndAttributes,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
-    std::wstring filePath;
-    HANDLE handle;
-    DWORD fileAttr;
+  sqfs_inode *inode = new sqfs_inode();
+  NTSTATUS nterr = sqfs_dk_lookup(FileName, *inode);
+  if (nterr) {
+    delete inode;
+    return nterr;
+  }
 
-    filePath = GetFilePath(FileName);
+  // FIXME: Check if it's a regular file?
 
-    // When filePath is a directory, needs to change the flag so that the file can be opened.
-    fileAttr = GetFileAttributes(filePath.c_str());
-    if (fileAttr && fileAttr & FILE_ATTRIBUTE_DIRECTORY) {
-        FlagsAndAttributes |= FILE_FLAG_BACKUP_SEMANTICS;
-        //AccessMode = 0;
-    }
-
-    handle = CreateFile(
-        filePath.c_str(),
-        DesiredAccess,//GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE,
-        ShareMode,
-        NULL, // security attribute
-        OPEN_EXISTING,
-        FlagsAndAttributes,// |FILE_FLAG_NO_BUFFERING,
-        NULL); // template file handle
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        DWORD error = GetLastError();
-        if (error == ERROR_FILE_NOT_FOUND)
-        {
-            return STATUS_OBJECT_NAME_NOT_FOUND;
-        }
-        else
-        {
-            return STATUS_ACCESS_DENIED;
-        }
-    }
-
-    // save the file handle in Context
-    DokanFileInfo->Context = (ULONG64)handle;
-    return STATUS_SUCCESS;
+  DokanFileInfo->Context = (ULONG64)inode;
+  return STATUS_SUCCESS;
 }
-
 
 NTSTATUS MirrorCreateDirectory(
     LPCWSTR					FileName,
@@ -137,36 +127,14 @@ NTSTATUS MirrorOpenDirectory(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
-    HANDLE handle;
-    DWORD attr;
-    std::wstring filePath = GetFilePath(FileName);
+  sqfs_inode inode;
+  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  if (nterr)
+    return nterr;
 
-    attr = GetFileAttributes(filePath.c_str());
-    if (attr == INVALID_FILE_ATTRIBUTES) {
-        DWORD error = GetLastError();
-        return ToNtStatus(error);
-    }
-    if (!(attr & FILE_ATTRIBUTE_DIRECTORY)) {
-        return STATUS_NOT_A_DIRECTORY;
-    }
-
-    handle = CreateFile(
-        filePath.c_str(),
-        0,
-        FILE_SHARE_READ|FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        NULL);
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
-
-    DokanFileInfo->Context = (ULONG64)handle;
-
-    return STATUS_SUCCESS;
+  if (!S_ISDIR(inode.base.mode))
+    return STATUS_NOT_A_DIRECTORY;
+  return STATUS_SUCCESS;
 }
 
 
@@ -174,12 +142,7 @@ void MirrorCloseFile(
     LPCWSTR					FileName,
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (DokanFileInfo->Context) {
-        CloseHandle((HANDLE)DokanFileInfo->Context);
-        DokanFileInfo->Context = 0;
-    }
+  delete (sqfs_inode*)DokanFileInfo->Context;
 }
 
 void MirrorCleanup(
@@ -187,7 +150,6 @@ void MirrorCleanup(
     PDOKAN_FILE_INFO		DokanFileInfo)
 {
 }
-
 
 NTSTATUS MirrorReadFile(
     LPCWSTR				FileName,
@@ -197,49 +159,14 @@ NTSTATUS MirrorReadFile(
     LONGLONG			Offset,
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-    ULONG	offset = (ULONG)Offset;
-    BOOL	opened = FALSE;
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        handle = CreateFile(
-            filePath.c_str(),
-            GENERIC_READ,
-            FILE_SHARE_READ,
-            NULL,
-            OPEN_EXISTING,
-            0,
-            NULL);
-        if (handle == INVALID_HANDLE_VALUE) {
-            DWORD dwError = GetLastError();
-            return ToNtStatus(dwError);
-        }
-        opened = TRUE;
-    }
-    
-    if (SetFilePointer(handle, offset, NULL, FILE_BEGIN) == 0xFFFFFFFF) {
-        DWORD dwError = GetLastError();
-        if (opened)
-            CloseHandle(handle);
-        
-        return ToNtStatus(dwError);
-    }
-        
-    if (!ReadFile(handle, Buffer, BufferLength, ReadLength,NULL)) {
-        DWORD dwError = GetLastError();
-        if (opened)
-            CloseHandle(handle);
-        
-        return ToNtStatus(dwError);
-    }
-
-    if (opened)
-        CloseHandle(handle);
-
-    return STATUS_SUCCESS;
+  sqfs_inode *inode = (sqfs_inode*)DokanFileInfo->Context;
+  sqfs_off_t osize = BufferLength;
+  if (sqfs_read_range(&g_fs, inode, Offset, &osize, Buffer))
+    return STATUS_INTERNAL_ERROR;
+  if (ReadLength)
+    *ReadLength = (DWORD)osize;
+  return STATUS_SUCCESS;
 }
-
 
 NTSTATUS MirrorWriteFile(
     LPCWSTR		FileName,
@@ -259,59 +186,22 @@ NTSTATUS MirrorFlushFileBuffers(
   return STATUS_MEDIA_WRITE_PROTECTED;
 }
 
-
 NTSTATUS MirrorGetFileInformation(
     LPCWSTR							FileName,
     LPBY_HANDLE_FILE_INFORMATION	HandleFileInformation,
     PDOKAN_FILE_INFO				DokanFileInfo)
 {
-    HANDLE	handle = (HANDLE)DokanFileInfo->Context;
-    BOOL	opened = FALSE;
+  sqfs_inode inode;
+  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  if (nterr)
+    return nterr;
 
-    std::wstring filePath = GetFilePath(FileName);
-
-    if (!handle || handle == INVALID_HANDLE_VALUE) {
-        // If CreateDirectory returned FILE_ALREADY_EXISTS and 
-        // it is called with FILE_OPEN_IF, that handle must be opened.
-        handle = CreateFile(filePath.c_str(), 0, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS, NULL);
-        if (handle == INVALID_HANDLE_VALUE)
-        {
-            DWORD dwError = GetLastError();
-            return ToNtStatus(dwError);
-        }
-        opened = TRUE;
-    }
-
-    if (!GetFileInformationByHandle(handle,HandleFileInformation)) {
-        // FileName is a root directory
-        // in this case, FindFirstFile can't get directory information
-        if (wcslen(FileName) == 1) {
-            HandleFileInformation->dwFileAttributes = GetFileAttributes(filePath.c_str());
-
-        } else {
-            WIN32_FIND_DATAW find;
-            ZeroMemory(&find, sizeof(WIN32_FIND_DATAW));
-            handle = FindFirstFile(filePath.c_str(), &find);
-            if (handle == INVALID_HANDLE_VALUE) {
-                DWORD dwError = GetLastError();
-                return ToNtStatus(dwError);
-            }
-            HandleFileInformation->dwFileAttributes = find.dwFileAttributes;
-            HandleFileInformation->ftCreationTime = find.ftCreationTime;
-            HandleFileInformation->ftLastAccessTime = find.ftLastAccessTime;
-            HandleFileInformation->ftLastWriteTime = find.ftLastWriteTime;
-            HandleFileInformation->nFileSizeHigh = find.nFileSizeHigh;
-            HandleFileInformation->nFileSizeLow = find.nFileSizeLow;
-            FindClose(handle);
-        }
-    }
-
-    if (opened) {
-        CloseHandle(handle);
-    }
-
-    return STATUS_SUCCESS;
+  ZeroMemory(HandleFileInformation, sizeof(*HandleFileInformation));
+  sqfs_dk_file_info(HandleFileInformation, inode);
+  HandleFileInformation->nNumberOfLinks = inode.nlink;
+  HandleFileInformation->nFileIndexLow = inode.base.inode_number;
+  HandleFileInformation->dwVolumeSerialNumber = sqfs_dk_serial_number(g_fs);
+  return STATUS_SUCCESS;
 }
 
 NTSTATUS MirrorFindFiles(
@@ -319,40 +209,44 @@ NTSTATUS MirrorFindFiles(
     PFillFindData		FillFindData, // function pointer
     PDOKAN_FILE_INFO	DokanFileInfo)
 {
-    HANDLE				hFind;
-    WIN32_FIND_DATAW	findData;
-    DWORD				error;
-    PWCHAR				yenStar = L"\\*";
-    int count = 0;
+  sqfs_inode inode;
+  NTSTATUS nterr = sqfs_dk_lookup(FileName, inode);
+  if (nterr)
+    return nterr;
 
-    std::wstring filePath = GetFilePath(FileName);
-    filePath = filePath + yenStar;
+  if (!S_ISDIR(inode.base.mode))
+    return STATUS_NOT_A_DIRECTORY;
 
-    hFind = FindFirstFile(filePath.c_str(), &findData);
+  sqfs_dir dir;
+  if (sqfs_dir_open(&g_fs, &inode, &dir, 0))
+    return STATUS_INTERNAL_ERROR;
 
-    if (hFind == INVALID_HANDLE_VALUE) {
-        DWORD dwError = GetLastError();
-        return ToNtStatus(dwError);
-    }
+  sqfs_dir_entry entry;
+  sqfs_name namebuf;
+  sqfs_dentry_init(&entry, namebuf);
 
-    FillFindData(&findData, DokanFileInfo);
-    count++;
+  WIN32_FIND_DATAW find;
+  find.dwReserved0 = 0;
+  find.dwReserved1 = 0;
+  find.cAlternateFileName[0] = L'\0';
 
-    while (FindNextFile(hFind, &findData) != 0) {
-        FillFindData(&findData, DokanFileInfo);
-        count++;
-    }
-    
-    error = GetLastError();
-    FindClose(hFind);
+  sqfs_err err;
+  sqfs_inode child;
+  while (sqfs_dir_next(&g_fs, &dir, &entry, &err)) {
+    std::wstring name = sqfs_dk_win_name(sqfs_dentry_name(&entry));
+    if (name.empty())
+      continue; // Ignore illegal names
 
-    if (error != ERROR_NO_MORE_FILES) {
-        return ToNtStatus(error);
-    }
+    if (sqfs_inode_get(&g_fs, &child, sqfs_dentry_inode(&entry)))
+      return STATUS_INTERNAL_ERROR;
 
-    return STATUS_SUCCESS;
+    sqfs_dk_file_info(&find, child);
+    wcscpy_s(find.cFileName, name.c_str());
+
+    FillFindData(&find, DokanFileInfo);
+  }
+  return err ? STATUS_INTERNAL_ERROR : STATUS_SUCCESS;
 }
-
 
 NTSTATUS MirrorDeleteFile(
     LPCWSTR				FileName,
@@ -442,7 +336,7 @@ NTSTATUS MirrorGetVolumeInformation(
     PDOKAN_FILE_INFO	/*DokanFileInfo*/)
 {
   wcscpy_s(VolumeNameBuffer, VolumeNameSize / sizeof(WCHAR), g_root_name);
-  *VolumeSerialNumber = sqfs_serial_number(&g_fs);
+  *VolumeSerialNumber = sqfs_dk_serial_number(g_fs);
   *MaximumComponentLength = SQUASHFS_NAME_LEN;
   *FileSystemFlags = FILE_CASE_SENSITIVE_SEARCH | 
                       FILE_CASE_PRESERVED_NAMES | 
