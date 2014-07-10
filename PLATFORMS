@@ -160,14 +160,20 @@ brackets, eg: [0.1]
     - Usually /data/local/tmp is a location with exec privileges
 
 * Windows
-  + Only squashfuse_ls, there's no good FUSE on Windows
+  + Uses dokanx as an alternate user-space filesystem API
   + Versions: unknown
   + Tested on: Windows 7 / x64 [0.2]
   + Requirements:
     - A compiler. I've tested with Visual Studio 2013 Express
+    - dokanx: https://github.com/BenjaminKim/dokanx
+      It's rather complicated to get dokanx properly installed, see my notes
+      in win/dokanx.txt
   + Configure: No need to run ./configure, just use the Visual Studio solution
     file.
-  + Notes: For Unicode output, you may need to setup a different console font
+  + Usage: Run at the cmd prompt something like:
+      squashfuse_dokanx myarchive.squashfs m:\
+  + Notes: For Unicode output of squashfuse_ls, you may need to setup a
+    different console font
 
 * RTEMS
   + Only squashfuse_ls, there's no FUSE
