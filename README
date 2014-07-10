@@ -65,20 +65,24 @@ To build from the development repository, rather than a tarball, you'll need:
   - libtool 2
 
 Known supported platforms:
-  - Linux
-  - Mac OS X
-  - FreeBSD
-  - NetBSD
-  - illumos
-  - Android
-  - OpenBSD
-  - Dragonfly BSD
-  - Solaris
-  - Minix
-  - Haiku
-  - QNX
-  - Hurd
-  - other platforms may work too!
+	+ Major platforms
+	  - Mac OS X
+	  - Linux
+	  - Android
+		- Windows
+	+ BSD
+  	- Dragonfly BSD
+		- FreeBSD
+  	- NetBSD
+  	- OpenBSD
+	+ Other un*x
+	  - Haiku
+	  - Hurd
+	  - illumos
+	  - Minix
+	+ Commercial un*x
+	  - QNX
+	  - Solaris
 
 For a precise list of packages you will need on your OS, and other platform
 notes, please see the file `PLATFORMS'.

@@ -1,68 +1,72 @@
 Overview
 --------
-The following operating systems are supported:
-* Linux
-* Mac OS X
-* FreeBSD
-* NetBSD
-* illumos
-* Android
+See the `Details' section below for details on how to get squashfuse
+working on each platform.
 
-These are not supported by squashfuse_ll, just squashfuse:
-* OpenBSD
-* DragonflyBSD
-* Solaris
-* Minix
-* Haiku
-* QNX
-* Hurd (mostly)
+Support high-level squashfuse and low-level squashfuse_ll:
+  * Mac OS X
+  * Linux
+  * Android
+  * FreeBSD
+  * NetBSD
+  * illumos
 
-These are only supported by the squashfuse_ls demo:
-* AROS
-* Syllable
-* RISC OS
-* AIX
-* HP-UX
-* OpenVMS
-* Windows
-* iOS
-* RTEMS
+Support high-level squashfuse:
+  * DragonflyBSD
+  * OpenBSD
+  * Haiku
+  * Hurd (mostly)
+  * Minix
+  * QNX
+  * Solaris
+
+Support an alternate user-space filesystem API:
+  * Windows
+
+Support only the squashfuse_ls demo:
+  * AROS
+  * RISC OS
+  * RTEMS
+  * Syllable
+  * AIX
+  * HP-UX
+  * iOS
+  * OpenVMS
+  
+By platform:
+  + Where noted with a *, support is somewhat broken
+  + Major platforms
+    - Mac OS X        - high & low
+    - Linux           - high & low
+    - Android         - high & low
+    - Windows         - dokanx
+  + BSD
+    - Dragonfly BSD   - high
+    - FreeBSD         - high & low
+    - NetBSD          - high & low
+    - OpenBSD         - high
+  + Other un*x
+    - AROS            - ls
+    - Haiku           - high
+    - Hurd            - high*
+    - illumos         - high & low
+    - Minix           - high
+    - RISC OS         - ls
+    - RTEMS           - ls*
+    - Syllable        - ls
+  + Commercial un*x
+    - AIX             - ls
+    - HP-UX           - ls
+    - iOS             - ls
+    - OpenVMS         - ls
+    - QNX             - high
+    - Solaris         - high
 
 
 Details
 -------
 Systems are marked with the last tested version of squashfuse in square
 brackets, eg: [0.1]
-
-* Linux
-  + Versions: Kernel 2.4.6 or later, for FUSE
-    - See below for Android
-  + Tested on:
-    - Ubuntu    / Trusty  14.04    / i386, amd64             [0.2]
-    - Ubuntu    / Precise 12.04    / amd64                   [0.1]
-    - Ubuntu    / Lucid   10.04    / amd64                   [0.1]
-    - Debian    / squeeze  6.0     / i386, ppc, armel        [0.2]
-    - CentOS    / 6.5              / amd64                   [0.2]
-    - CentOS    / 3.9              / i386      / FUSE  2.5   [0.2]
-    - SLES      / 11 SP3           / ppc64     / xlc_r       [0.2]
-    - Red Hat   / 7.2              / i386      / FUSE  0.95  [0.2]
-  + Requirements:
-    - A compiler: gcc, clang, icc (Intel), xlc_r (IBM), tcc, open64
-      - tcc requires --disable-fuse-context , because it lacks versioned
-        symbol support
-    - libfuse 2.1 or higher, 2.5 or higher for the low-level front-end
-    - FUSE kernel module. Usually this comes from the CONFIG_FUSE_FS kernel
-      option, the default on most distros since 2004.
-  + Packages:
-    - apt-get
-      - Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev \
-        liblzma-dev liblz4-dev libattr1-dev pkg-config
-      - Runtime: libfuse2 zlib1g liblzo2-2 liblzma2 liblz4-1
-      - It's helpful to have fuse-utils as well
-      - Older distros may not have liblz4, just leave it out.
-    - yum
-      - Build: gcc fuse fuse-devel zlib-devel lzo-devel xz-devel libattr-devel
-      - Runtime: fuse lzo
 
 * Mac OS X
   + Versions: Mac OS X 10.4 and later
@@ -94,6 +98,101 @@ brackets, eg: [0.1]
       they may not be very useful
     - LZ4 often builds a dynamic liblz4 with a bad install_name on OS X.
       Either link statically, or use install_name_tool to correct it.
+
+* Linux
+  + Versions: Kernel 2.4.6 or later, for FUSE
+    - See below for Android
+  + Tested on:
+    - Ubuntu    / Trusty  14.04    / i386, amd64             [0.2]
+    - Ubuntu    / Precise 12.04    / amd64                   [0.1]
+    - Ubuntu    / Lucid   10.04    / amd64                   [0.1]
+    - Debian    / squeeze  6.0     / i386, ppc, armel        [0.2]
+    - CentOS    / 6.5              / amd64                   [0.2]
+    - CentOS    / 3.9              / i386      / FUSE  2.5   [0.2]
+    - SLES      / 11 SP3           / ppc64     / xlc_r       [0.2]
+    - Red Hat   / 7.2              / i386      / FUSE  0.95  [0.2]
+  + Requirements:
+    - A compiler: gcc, clang, icc (Intel), xlc_r (IBM), tcc, open64
+      - tcc requires --disable-fuse-context , because it lacks versioned
+        symbol support
+    - libfuse 2.1 or higher, 2.5 or higher for the low-level front-end
+    - FUSE kernel module. Usually this comes from the CONFIG_FUSE_FS kernel
+      option, the default on most distros since 2004.
+  + Packages:
+    - apt-get
+      - Build: gcc make libc-dev libfuse-dev libz-dev liblzo2-dev \
+        liblzma-dev liblz4-dev libattr1-dev pkg-config
+      - Runtime: libfuse2 zlib1g liblzo2-2 liblzma2 liblz4-1
+      - It's helpful to have fuse-utils as well
+      - Older distros may not have liblz4, just leave it out.
+    - yum
+      - Build: gcc fuse fuse-devel zlib-devel lzo-devel xz-devel libattr-devel
+      - Runtime: fuse lzo
+
+* Android
+  + Versions: all
+  + Tested on:
+    - Samsung Galaxy S4 / 4.4.2 / armel [0.2]
+    - Android emulator  / 4.4.2 / x86   [0.2]
+    - Android emulator  / 2.3.3 / armel [0.1]
+  + Requirements:
+    - Android SDK and NDK
+    - CONFIG_FUSE_FS enabled in kernel. Recent Android kernels (> 4.2) usually
+      have this enabled. Otherwise you'll have to compile your own kernel.
+    - fuse-android: https://github.com/seth-hg/fuse-android
+  + Configure:
+    - Assuming $NDK_ROOT points to your Android NDK directory, and
+      $FUSE_ANDROID points to your fuse-android directory
+    - Create a standalone toolchain:
+      `$NDK_ROOT/build/tools/make-standalone-toolchain.sh \
+        --install-dir=toolchain --arch=arm'
+    - Put it in the path: `export PATH=$PWD/toolchain/bin:$PATH'
+    - Copy in android-fuse library and headers:
+      `cp $FUSE_ANDROID/obj/local/armeabi-v7a/libfuse.a \
+        toolchain/sysroot/usr/lib/
+       cp -R $FUSE_ANDROID/jni/include/* toolchain/sysroot/usr/include/'
+    - Disable pkg-config: `export PKG_CONFIG_LIBDIR='
+    - Configure for cross-compiling, with --host=arm-linux-androideabi
+  + Notes:
+    - No files more than 2GB in size
+    - Mounting requires root
+    - Use the adb shell to run squashfuse
+    - Usually /data/local/tmp is a location with exec privileges
+
+* Windows
+  + Only squashfuse_ls, there's no good FUSE on Windows
+  + Versions: unknown
+  + Tested on: Windows 7 / x64 [0.2]
+  + Requirements:
+    - A compiler. I've tested with Visual Studio 2013 Express
+  + Configure: No need to run ./configure, just use the Visual Studio solution
+    file.
+  + Notes: For Unicode output, you may need to setup a different console font
+
+* RTEMS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: RTEMS 4.11/sparc-sis [0.2]
+  + Build
+    - Use an appropriate CC for your RTEMS platform, eg:
+      CC='sparc-rtems4.11-gcc -B/path/to/rtems/prefix -specs bsp_specs -qrtems'
+    - Build zlib for RTEMS
+    - Configure and build squashfuse, passing --disable-fuse and --host
+  + Notes
+    - I can't figure out how to access a filesystem inside RTEMS, any ideas?
+      For now, you can pass --enable-embedded-data=myarchive.squashfs to
+      configure to use an embedded squashfs filesytem. You'll need 'xxd' to
+      be installed.
+
+* DragonflyBSD
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: DragonflyBSD 3.2 and later
+  + Tested on: DragonflyBSD 3.8 / amd64 [0.2]
+  + Packages: lzo2
+  + Configure: ./configure --with-decompressors=/usr/local
+  + Notes:
+    - Need to load kernel module: `kldload puffs`
+    - Mounting requires root
+    - No extended attributes support
 
 * FreeBSD
   + Versions: FreeBSD 6.0 and later
@@ -128,45 +227,6 @@ brackets, eg: [0.1]
     - Set `sysctl -w vfs.generic.usermount=1' for non-root
     - No extended attributes support
 
-* illumos
-  + Versions: all
-  + Tested on: OpenIndiana 151a8 / i386 [0.2]
-  + Requirements: C compiler: gcc or Sun Studio 12.3 work
-  + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
-  + Notes:
-    - Mounting requires root
-    - No extended attributes support
-
-* Android
-  + Versions: all
-  + Tested on:
-    - Samsung Galaxy S4 / 4.4.2 / armel [0.2]
-    - Android emulator  / 4.4.2 / x86   [0.2]
-    - Android emulator  / 2.3.3 / armel [0.1]
-  + Requirements:
-    - Android SDK and NDK
-    - CONFIG_FUSE_FS enabled in kernel. Recent Android kernels (> 4.2) usually
-      have this enabled. Otherwise you'll have to compile your own kernel.
-    - fuse-android: https://github.com/seth-hg/fuse-android
-  + Configure:
-    - Assuming $NDK_ROOT points to your Android NDK directory, and
-      $FUSE_ANDROID points to your fuse-android directory
-    - Create a standalone toolchain:
-      `$NDK_ROOT/build/tools/make-standalone-toolchain.sh \
-        --install-dir=toolchain --arch=arm'
-    - Put it in the path: `export PATH=$PWD/toolchain/bin:$PATH'
-    - Copy in android-fuse library and headers:
-      `cp $FUSE_ANDROID/obj/local/armeabi-v7a/libfuse.a \
-        toolchain/sysroot/usr/lib/
-       cp -R $FUSE_ANDROID/jni/include/* toolchain/sysroot/usr/include/'
-    - Disable pkg-config: `export PKG_CONFIG_LIBDIR='
-    - Configure for cross-compiling, with --host=arm-linux-androideabi
-  + Notes:
-    - No files more than 2GB in size
-    - Mounting requires root
-    - Use the adb shell to run squashfuse
-    - Usually /data/local/tmp is a location with exec privileges
-
 * OpenBSD
   + Only squashfuse and squashfuse_ls, there's no low-level API
   + Versions: OpenBSD 5.4 and later
@@ -177,48 +237,10 @@ brackets, eg: [0.1]
     - Mounting requires root
     - No extended attributes support
 
-* DragonflyBSD
-  + Only squashfuse and squashfuse_ls, there's no low-level API
-  + Versions: DragonflyBSD 3.2 and later
-  + Tested on: DragonflyBSD 3.8 / amd64 [0.2]
-  + Packages: lzo2
-  + Configure: ./configure --with-decompressors=/usr/local
-  + Notes:
-    - Need to load kernel module: `kldload puffs`
-    - Mounting requires root
-    - No extended attributes support
-
-* Solaris
-  + Only squashfuse and squashfuse_ls, there's no low-level API
-  + Versions: Solaris 11 and later
-  + Tested on: Solaris 11.1 / i386 [0.2]
-  + Packages:
-    - libfuse
-    - Either Solaris Studio or gcc
-  + Notes:
-    - Mounting requires root
-    - No extended attributes support
-
-* Minix
-  + Only squashfuse and squashfuse_ls, there's no low-level API
-  + Versions: Minix 3.2.1 and later
-  + Tested on: Minix 3.2.1 [0.2]
-  + Packages: lzo
-  + Configure
-    - ./configure --with-decompressors=/usr/pkg
-  + Usage
-    - Copy the `squashfuse' executable to /usr/pkg/bin/squashfuse and to
-      /usr/pkg/bin/mount.squashfuse
-    - Create /etc/system.conf.d/squashfuse, whose contents should be similar
-      to the ntfs-3g stanza in /etc/system.conf. You may need to reboot
-      afterwards.
-  + Notes
-    - Mounting requires root
-    - No extended attributes support
-    - No files more than 2 GB in size
-    - No thread support
-    - Lots of workarounds needed, see
-      https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
+* AROS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: icaros desktop 1.5.2 [0.2]
+  + Configure: Pass --disable-fuse
 
 * Haiku
   + Only squashfuse and squashfuse_ls, there's no low-level API
@@ -248,6 +270,89 @@ brackets, eg: [0.1]
       'readlink my-sym-link'.
     - Is a bit crashy, for unknown reasons. Clues are welcomed!
 
+* illumos
+  + Versions: all
+  + Tested on: OpenIndiana 151a8 / i386 [0.2]
+  + Requirements: C compiler: gcc or Sun Studio 12.3 work
+  + Packages: From `Spec Files Extra` repo: fusefs libfuse lzo xz
+  + Notes:
+    - Mounting requires root
+    - No extended attributes support
+
+* Minix
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: Minix 3.2.1 and later
+  + Tested on: Minix 3.2.1 [0.2]
+  + Packages: lzo
+  + Configure
+    - ./configure --with-decompressors=/usr/pkg
+  + Usage
+    - Copy the `squashfuse' executable to /usr/pkg/bin/squashfuse and to
+      /usr/pkg/bin/mount.squashfuse
+    - Create /etc/system.conf.d/squashfuse, whose contents should be similar
+      to the ntfs-3g stanza in /etc/system.conf. You may need to reboot
+      afterwards.
+  + Notes
+    - Mounting requires root
+    - No extended attributes support
+    - No files more than 2 GB in size
+    - No thread support
+    - Lots of workarounds needed, see
+      https://groups.google.com/forum/#!topic/minix-dev/bJLw8geYbT4
+
+* RISC OS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: RISC OS 5.20 [0.2]
+  + Packages: GCC4, ZLib1-Dev from PackMan:
+    http://www.riscos.info/index.php/GCC_for_RISC_OS
+  + Build
+    - On a Unix-like platform, run the script 'riscos/prepare.sh' to modify
+      your source directory into something amenable for compilation on RISC OS.
+      Copy the source directory to your RISC OS environment.
+    - In RISC OS, open Task Manager and set the 'Next' slot to at least 6MB.
+      Then run !GCC .
+    - In the RISC OS Filer, navigate to your squashfuse source directory, and
+      choose 'Set Directory' from the middle-click menu.
+    - In RISC OS, press ctrl-F12 to open a Task Window. Type 'obey build' to
+      build squashfuse_ls.
+  + Usage: Run squashfuse_ls in the Task Window.
+
+* Syllable
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: Syllable Desktop 0.6.7 [0.2]
+  + Packages: development files, Developer's Delight, Shell Essentials
+  + Configure: Pass --disable-fuse
+
+* AIX
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: AIX 7.1 powerpc / gcc 4.6 [0.2]
+  + Configure: Pass --disable-fuse
+
+* HP-UX
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: HP-UX 11.11 hppa / gcc 4.2 [0.2]
+  + Configure: Pass --disable-fuse
+
+* iOS
+  + There's no FUSE
+  + Tested on: iOS 7 simulator [0.2]
+  + Requirements: Xcode
+  + Configure: No need to run ./configure, just use the Xcode project.
+    The project uses an embedded squashfs archive, so copy the archive of
+    your choosing to ios/test.squashfs.
+
+* OpenVMS
+  + Only squashfuse_ls, there's no FUSE
+  + Tested on: OpenVMS 7.3 alpha / HP C 6.5 [0.2]
+  + Requirements: zlib
+  + Build: Run the build command procedure: '@[.vms]build'
+  + Usage
+    - Run 'mcr []squashfuse_ls [path.to]archive.squashfs
+    - For easier usage, set up a foreign command:
+        $ squashfuse_ls == "$" + F$ENVIRONMENT("DEFAULT") + "squashfuse_ls.exe"
+      Then run:
+        $ squashfuse_ls [path.to]archive.squashfuse
+
 * QNX
   + Versions: 6.5 and higher
   + Tested on: QNX 6.5 [0.2]
@@ -260,84 +365,13 @@ brackets, eg: [0.1]
     - The low-level driver doesn't seem to work
     - Is rather crashy
 
-* AROS
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: icaros desktop 1.5.2 [0.2]
-  + Configure: Pass --disable-fuse
-
-* Syllable
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: Syllable Desktop 0.6.7 [0.2]
-  + Packages: development files, Developer's Delight, Shell Essentials
-  + Configure: Pass --disable-fuse
-
-* RISC OS
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: RISC OS 5.20 [0.2]
-	+ Packages: GCC4, ZLib1-Dev from PackMan:
-		http://www.riscos.info/index.php/GCC_for_RISC_OS
-	+ Build
-		- On a Unix-like platform, run the script 'riscos/prepare.sh' to modify
-			your source directory into something amenable for compilation on RISC OS.
-			Copy the source directory to your RISC OS environment.
-		- In RISC OS, open Task Manager and set the 'Next' slot to at least 6MB.
-			Then run !GCC .
-		- In the RISC OS Filer, navigate to your squashfuse source directory, and
-			choose 'Set Directory' from the middle-click menu.
-		- In RISC OS, press ctrl-F12 to open a Task Window. Type 'obey build' to
-		  build squashfuse_ls.
-	+ Usage: Run squashfuse_ls in the Task Window.
-
-* AIX
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: AIX 7.1 powerpc / gcc 4.6 [0.2]
-  + Configure: Pass --disable-fuse
-
-* HP-UX
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: HP-UX 11.11 hppa / gcc 4.2 [0.2]
-  + Configure: Pass --disable-fuse
-
-* OpenVMS
-  + Only squashfuse_ls, there's no FUSE
-	+ Tested on: OpenVMS 7.3 alpha / HP C 6.5 [0.2]
-	+ Requirements: zlib
-  + Build: Run the build command procedure: '@[.vms]build'
-	+ Usage
-		- Run 'mcr []squashfuse_ls [path.to]archive.squashfs
-		- For easier usage, set up a foreign command:
-				$ squashfuse_ls == "$" + F$ENVIRONMENT("DEFAULT") + "squashfuse_ls.exe"
-			Then run:
-				$ squashfuse_ls [path.to]archive.squashfuse
-
-* Windows
-  + Only squashfuse_ls, there's no good FUSE on Windows
-  + Versions: unknown
-  + Tested on: Windows 7 / x64 [0.2]
-  + Requirements:
-    - A compiler. I've tested with Visual Studio 2013 Express
-  + Configure: No need to run ./configure, just use the Visual Studio solution
-    file.
-  + Notes: For Unicode output, you may need to setup a different console font
-
-* iOS
-  + There's no FUSE
-  + Tested on: iOS 7 simulator [0.2]
-  + Requirements: Xcode
-  + Configure: No need to run ./configure, just use the Xcode project.
-		The project uses an embedded squashfs archive, so copy the archive of
-		your choosing to ios/test.squashfs.
-
-* RTEMS
-  + Only squashfuse_ls, there's no FUSE
-  + Tested on: RTEMS 4.11/sparc-sis [0.2]
-  + Build
-    - Use an appropriate CC for your RTEMS platform, eg:
-      CC='sparc-rtems4.11-gcc -B/path/to/rtems/prefix -specs bsp_specs -qrtems'
-    - Build zlib for RTEMS
-    - Configure and build squashfuse, passing --disable-fuse and --host
-  + Notes
-    - I can't figure out how to access a filesystem inside RTEMS, any ideas?
-      For now, you can pass --enable-embedded-data=myarchive.squashfs to
-      configure to use an embedded squashfs filesytem. You'll need 'xxd' to
-      be installed.
+* Solaris
+  + Only squashfuse and squashfuse_ls, there's no low-level API
+  + Versions: Solaris 11 and later
+  + Tested on: Solaris 11.1 / i386 [0.2]
+  + Packages:
+    - libfuse
+    - Either Solaris Studio or gcc
+  + Notes:
+    - Mounting requires root
+    - No extended attributes support
