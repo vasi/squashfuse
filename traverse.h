@@ -54,7 +54,7 @@ typedef struct {
    this inode itself. */
 sqfs_err sqfs_traverse_open(sqfs_traverse *trv, sqfs *fs, sqfs_inode_id iid);
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
-  sqfs_inode *inode);
+  const sqfs_inode *inode);
 
 /* Clean up at any point during or after a traversal */
 void sqfs_traverse_close(sqfs_traverse *trv);

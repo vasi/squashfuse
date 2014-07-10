@@ -47,12 +47,12 @@ void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
   *max_minor = SQUASHFS_MINOR;
 }
 
-void sqfs_version(sqfs *fs, int *major, int *minor) {
+void sqfs_version(const sqfs *fs, int *major, int *minor) {
   *major = fs->sb.s_major;
   *minor = fs->sb.s_minor;
 }
 
-sqfs_compression_type sqfs_compression(sqfs *fs) {
+sqfs_compression_type sqfs_compression(const sqfs *fs) {
   return fs->sb.compression;
 }
 
@@ -124,7 +124,8 @@ void sqfs_destroy(sqfs *fs, bool close) {
   sqfs_cache_destroy(&fs->blockidx);
 }
 
-void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sqfs_off_t base) {
+void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id,
+    sqfs_off_t base) {
   cur->block = (id >> 16) + base;
   cur->offset = id & 0xffff;
 }
@@ -174,7 +175,8 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sqfs_id_t *id) {
   return SQFS_OK;
 }
 
-sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
+sqfs_err sqfs_readlink(sqfs *fs, const sqfs_inode *inode, char *buf,
+    size_t *size) {
   size_t want;
   sqfs_md_cursor cur;
   sqfs_err err = SQFS_OK;
@@ -195,7 +197,7 @@ sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
   return err;
 }
 
-int sqfs_export_ok(sqfs *fs) {
+int sqfs_export_ok(const sqfs *fs) {
   return (int64_t)fs->sb.lookup_table_start != SQUASHFS_INVALID_BLK;
 }
 
@@ -214,7 +216,7 @@ sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i) {
   return SQFS_OK;
 }
 
-sqfs_inode_id sqfs_inode_root(sqfs *fs) {
+sqfs_inode_id sqfs_inode_root(const sqfs *fs) {
   return fs->sb.root_inode;
 }
 

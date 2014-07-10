@@ -35,8 +35,8 @@ static size_t sqfs_array_next_capacity(size_t current);
 static sqfs_err sqfs_array_ensure_capacity(sqfs_array *a, size_t cap);
 
 /* Unconditionally get the item at an index */
-static void *sqfs_array_at_unchecked(sqfs_array *a, size_t idx);
-static void sqfs_array_at_put(sqfs_array *a, size_t idx, void *vout);
+static void *sqfs_array_at_unchecked(const sqfs_array *a, size_t idx);
+static void sqfs_array_at_put(const sqfs_array *a, size_t idx, void *vout);
 
 /* A default freer, that does nothing */
 static void sqfs_array_freer_null(void *v);
@@ -87,11 +87,11 @@ static sqfs_err sqfs_array_ensure_capacity(sqfs_array *a, size_t cap) {
   return SQFS_OK;
 }
 
-static void *sqfs_array_at_unchecked(sqfs_array *a, size_t idx) {
+static void *sqfs_array_at_unchecked(const sqfs_array *a, size_t idx) {
   return a->items + idx * a->value_size;
 }
 
-static void sqfs_array_at_put(sqfs_array *a, size_t idx, void *vout) {
+static void sqfs_array_at_put(const sqfs_array *a, size_t idx, void *vout) {
   if (vout)
     *(void**)vout = sqfs_array_at_unchecked(a, idx);
 }
@@ -140,7 +140,7 @@ void sqfs_array_destroy(sqfs_array *a) {
 }
 
 
-size_t sqfs_array_size(sqfs_array *a) {
+size_t sqfs_array_size(const sqfs_array *a) {
   return a->size;
 }
 
@@ -163,7 +163,7 @@ sqfs_err sqfs_array_grow(sqfs_array *a, size_t grow, void *vout) {
 }
 
 
-sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout) {
+sqfs_err sqfs_array_at(const sqfs_array *a, size_t idx, void *vout) {
   if (idx > a->size)
     return SQFS_ERR;
   
@@ -171,13 +171,13 @@ sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout) {
   return SQFS_OK;
 }
 
-sqfs_err sqfs_array_last(sqfs_array *a, void *vout) {
+sqfs_err sqfs_array_last(const sqfs_array *a, void *vout) {
   if (a->size == 0)
     return SQFS_ERR;
   return sqfs_array_at(a, a->size - 1, vout);
 }
 
-sqfs_err sqfs_array_first(sqfs_array *a, void *vout) {
+sqfs_err sqfs_array_first(const sqfs_array *a, void *vout) {
   return sqfs_array_at(a, 0, vout);
 }
 

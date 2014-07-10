@@ -42,7 +42,7 @@ const char *sqfs_compression_name(sqfs_compression_type type);
 void sqfs_compression_supported(sqfs_compression_type *types);
 
 
-typedef sqfs_err (*sqfs_decompressor)(void *in, size_t insz,
+typedef sqfs_err (*sqfs_decompressor)(const void *in, size_t insz,
   void *out, size_t *outsz);
 
 sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type);

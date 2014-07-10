@@ -42,7 +42,8 @@ sqfs_err sqfs_table_init(sqfs_table *table, sqfs_input *in, sqfs_off_t start,
   size_t each, size_t count);
 void sqfs_table_destroy(sqfs_table *table);
 
-sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf);
+sqfs_err sqfs_table_get(const sqfs_table *table, sqfs *fs, size_t idx,
+  void *buf);
 
 #ifdef __cplusplus
 }

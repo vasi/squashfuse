@@ -52,7 +52,7 @@ typedef char sqfs_name[SQUASHFS_NAME_LEN + 1];
 
 /* Begin a directory traversal, initializing the dir structure.
    If offset is non-zero, fast-forward to that offset in the directory. */
-sqfs_err  sqfs_dir_open(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
+sqfs_err  sqfs_dir_open(sqfs *fs, const sqfs_inode *inode, sqfs_dir *dir,
   off_t offset);
 
 /* Initialize a dir_entry structure before use.
@@ -68,7 +68,7 @@ bool sqfs_dir_next(sqfs *fs, sqfs_dir *dir, sqfs_dir_entry *entry,
 
 /* Lookup an entry in a directory inode.
    The dir_entry must have been initialized with a buffer. */
-sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
+sqfs_err sqfs_dir_lookup(sqfs *fs, const sqfs_inode *inode,
   const char *name, size_t namelen, sqfs_dir_entry *entry, bool *found);
 
 /* Lookup a complete path, and replace *inode with the results.
@@ -78,14 +78,14 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
 
 
 /* Accessors on sqfs_dir_entry */
-sqfs_off_t      sqfs_dentry_offset      (sqfs_dir_entry *entry);
-sqfs_off_t      sqfs_dentry_next_offset (sqfs_dir_entry *entry);
-int             sqfs_dentry_type        (sqfs_dir_entry *entry);
-sqfs_mode_t     sqfs_dentry_mode        (sqfs_dir_entry *entry);
-sqfs_inode_id   sqfs_dentry_inode       (sqfs_dir_entry *entry);
-sqfs_inode_num  sqfs_dentry_inode_num   (sqfs_dir_entry *entry);
-size_t          sqfs_dentry_name_size   (sqfs_dir_entry *entry);
-bool            sqfs_dentry_is_dir      (sqfs_dir_entry *entry);
+sqfs_off_t      sqfs_dentry_offset      (const sqfs_dir_entry *entry);
+sqfs_off_t      sqfs_dentry_next_offset (const sqfs_dir_entry *entry);
+int             sqfs_dentry_type        (const sqfs_dir_entry *entry);
+sqfs_mode_t     sqfs_dentry_mode        (const sqfs_dir_entry *entry);
+sqfs_inode_id   sqfs_dentry_inode       (const sqfs_dir_entry *entry);
+sqfs_inode_num  sqfs_dentry_inode_num   (const sqfs_dir_entry *entry);
+size_t          sqfs_dentry_name_size   (const sqfs_dir_entry *entry);
+bool            sqfs_dentry_is_dir      (const sqfs_dir_entry *entry);
 
 /* Yields the name of this directory entry, or NULL if the dir_entry structure
    was initialized without a name buffer. Name will be nul-terminated. */

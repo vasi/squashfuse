@@ -69,7 +69,7 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
     fs->xattr_info.xattr_ids);
 }
 
-sqfs_err sqfs_xattr_open(sqfs *fs, sqfs_inode *inode, sqfs_xattr *x) {
+sqfs_err sqfs_xattr_open(sqfs *fs, const sqfs_inode *inode, sqfs_xattr *x) {
   sqfs_err err;
   
   x->remain = 0; /* assume none exist */
@@ -118,7 +118,7 @@ sqfs_err sqfs_xattr_read(sqfs_xattr *x) {
   return err;
 }
 
-size_t sqfs_xattr_name_size(sqfs_xattr *x) {
+size_t sqfs_xattr_name_size(const sqfs_xattr *x) {
   return x->entry.size + sqfs_xattr_prefixes[x->type].len;
 }
 
@@ -242,7 +242,7 @@ done:
   return err;
 }
 
-sqfs_err sqfs_xattr_lookup(sqfs *fs, sqfs_inode *inode, const char *name,
+sqfs_err sqfs_xattr_lookup(sqfs *fs, const sqfs_inode *inode, const char *name,
     void *buf, size_t *size) {
   sqfs_err err = SQFS_OK;
   bool found;

@@ -36,7 +36,7 @@
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
 
-static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
+static sqfs_err sqfs_decompressor_zlib(const void *in, size_t insz,
     void *out, size_t *outsz) {
   uLongf zout = *outsz;
   int zerr = uncompress((Bytef*)out, &zout, (const Bytef*)in, insz);
@@ -52,7 +52,7 @@ static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
 #ifdef HAVE_LZMA_H
 #include <lzma.h>
 
-static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
+static sqfs_err sqfs_decompressor_xz(const void *in, size_t insz,
     void *out, size_t *outsz) {
   /* FIXME: Save stream state, to minimize setup time? */
   uint64_t memlimit = UINT64_MAX;
@@ -72,7 +72,7 @@ static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
 #ifdef HAVE_LZO_LZO1X_H
 #include <lzo/lzo1x.h>
 
-static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
+static sqfs_err sqfs_decompressor_lzo(const void *in, size_t insz,
     void *out, size_t *outsz) {
   lzo_uint lzout = *outsz;
   int err = lzo1x_decompress_safe((const lzo_bytep)in, insz,
@@ -88,7 +88,7 @@ static sqfs_err sqfs_decompressor_lzo(void *in, size_t insz,
 
 #ifdef HAVE_LZ4_H
 #include <lz4.h>
-static sqfs_err sqfs_decompressor_lz4(void *in, size_t insz,
+static sqfs_err sqfs_decompressor_lz4(const void *in, size_t insz,
     void *out, size_t *outsz) {
   int lz4out = LZ4_decompress_safe((const char*)in, (char*)out, insz, *outsz);
   if (lz4out < 0)

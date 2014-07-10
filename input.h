@@ -43,10 +43,10 @@ struct sqfs_input {
   ssize_t (*i_pread)(sqfs_input *in, void *buf, size_t count, sqfs_off_t off);
   
   /* Return an error message, caller must free it */
-  char *(*i_error)(sqfs_input *in);
+  char *(*i_error)(const sqfs_input *in);
   
   /* Is the input non-seekable? */
-  bool (*i_seek_error)(sqfs_input *in);
+  bool (*i_seek_error)(const sqfs_input *in);
 };
 
 /* Initialize the structure */
@@ -56,7 +56,7 @@ void sqfs_input_init(sqfs_input *in);
 sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd);
 
 /* Entry point to memory implementation */
-sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len);
+sqfs_err sqfs_input_memory_create(sqfs_input *in, const void *buf, size_t len);
 
 /* Open a file by name, or from stdin */
 sqfs_err sqfs_input_open(sqfs_input *in, sqfs_host_path path);

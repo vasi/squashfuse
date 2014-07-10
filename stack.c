@@ -50,14 +50,14 @@ bool sqfs_stack_pop(sqfs_stack *s) {
   return true;
 }
 
-size_t sqfs_stack_size(sqfs_stack *s) {
+size_t sqfs_stack_size(const sqfs_stack *s) {
   return sqfs_array_size(s);
 }
 
-sqfs_err sqfs_stack_at(sqfs_stack *s, size_t i, void *vout) {
+sqfs_err sqfs_stack_at(const sqfs_stack *s, size_t i, void *vout) {
   return sqfs_array_at(s, i, vout);
 }
 
-sqfs_err sqfs_stack_top(sqfs_stack *s, void *vout) {
+sqfs_err sqfs_stack_top(const sqfs_stack *s, void *vout) {
   return sqfs_array_last(s, vout);
 }

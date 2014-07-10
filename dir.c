@@ -36,15 +36,15 @@ static sqfs_err sqfs_dir_md_read(sqfs *fs, sqfs_dir *dir, void *buf,
     size_t size);
 
 /* Fast forwards to a directory header. */
-typedef sqfs_err sqfs_dir_header_f(sqfs *fs, sqfs_md_cursor *cur,
-  struct squashfs_dir_index *index, bool *stop, void *arg);
-static sqfs_err sqfs_dir_ff_header(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
-  sqfs_dir_header_f func, void *arg);
+typedef sqfs_err (*sqfs_dir_header_f)(sqfs *fs, sqfs_md_cursor *cur,
+  const struct squashfs_dir_index *index, bool *stop, void *arg);
+static sqfs_err sqfs_dir_ff_header(sqfs *fs, const sqfs_inode *inode,
+  sqfs_dir *dir, const sqfs_dir_header_f func, void *arg);
 
 /* Fast forward a directory to the given offset. Return error if it doesn't
    exist. */
-static sqfs_err sqfs_dir_ff_offset(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
-  sqfs_off_t offset);
+static sqfs_err sqfs_dir_ff_offset(sqfs *fs, const sqfs_inode *inode,
+  sqfs_dir *dir, sqfs_off_t offset);
 
 
 static sqfs_err sqfs_dir_md_read(sqfs *fs, sqfs_dir *dir, void *buf,
@@ -54,7 +54,7 @@ static sqfs_err sqfs_dir_md_read(sqfs *fs, sqfs_dir *dir, void *buf,
 }
 
 
-sqfs_err sqfs_dir_open(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
+sqfs_err sqfs_dir_open(sqfs *fs, const sqfs_inode *inode, sqfs_dir *dir,
     off_t offset) {
   if (!S_ISDIR(inode->base.mode))
     return SQFS_ERR;
@@ -81,30 +81,30 @@ void sqfs_dentry_init(sqfs_dir_entry *entry, char *namebuf) {
   entry->name = namebuf;
 }
 
-sqfs_off_t sqfs_dentry_offset(sqfs_dir_entry *entry) {
+sqfs_off_t sqfs_dentry_offset(const sqfs_dir_entry *entry) {
   return entry->offset;
 }
 
-sqfs_off_t sqfs_dentry_next_offset(sqfs_dir_entry *entry) {
+sqfs_off_t sqfs_dentry_next_offset(const sqfs_dir_entry *entry) {
   return entry->next_offset;
 }
 
-int sqfs_dentry_type(sqfs_dir_entry *entry) {
+int sqfs_dentry_type(const sqfs_dir_entry *entry) {
   return entry->type;
 }
-sqfs_mode_t sqfs_dentry_mode(sqfs_dir_entry *entry) {
+sqfs_mode_t sqfs_dentry_mode(const sqfs_dir_entry *entry) {
   return sqfs_mode(sqfs_dentry_type(entry));
 }
 
-sqfs_inode_id sqfs_dentry_inode(sqfs_dir_entry *entry) {
+sqfs_inode_id sqfs_dentry_inode(const sqfs_dir_entry *entry) {
   return entry->inode;
 }
 
-sqfs_inode_num sqfs_dentry_inode_num(sqfs_dir_entry *entry) {
+sqfs_inode_num sqfs_dentry_inode_num(const sqfs_dir_entry *entry) {
   return entry->inode_number;
 }
 
-size_t sqfs_dentry_name_size(sqfs_dir_entry *entry) {
+size_t sqfs_dentry_name_size(const sqfs_dir_entry *entry) {
   return entry->name_size;
 }
 
@@ -116,7 +116,7 @@ const char *sqfs_dentry_name(sqfs_dir_entry *entry) {
   return entry->name;
 }
 
-bool sqfs_dentry_is_dir(sqfs_dir_entry *entry) {
+bool sqfs_dentry_is_dir(const sqfs_dir_entry *entry) {
   return S_ISDIR(sqfs_dentry_mode(entry));
 }
 
@@ -160,8 +160,8 @@ bool sqfs_dir_next(sqfs *fs, sqfs_dir *dir, sqfs_dir_entry *entry,
 }
 
 
-static sqfs_err sqfs_dir_ff_header(sqfs *fs, sqfs_inode *inode,
-    sqfs_dir *dir, sqfs_dir_header_f func, void *arg) {
+static sqfs_err sqfs_dir_ff_header(sqfs *fs, const sqfs_inode *inode,
+    sqfs_dir *dir, const sqfs_dir_header_f func, void *arg) {
   struct squashfs_dir_index idx;
   sqfs_md_cursor cur = inode->next;
   size_t count = inode->xtra.dir.idx_count;
@@ -193,7 +193,7 @@ static sqfs_err sqfs_dir_ff_header(sqfs *fs, sqfs_inode *inode,
 
 /* Helper for sqfs_dir_ff_offset */
 static sqfs_err sqfs_dir_ff_offset_f(sqfs *fs, sqfs_md_cursor *cur,
-    struct squashfs_dir_index *index, bool *stop, void *arg) {
+    const struct squashfs_dir_index *index, bool *stop, void *arg) {
   sqfs_off_t offset = *(sqfs_off_t*)arg;
   
   if (index->index >= offset) {
@@ -204,8 +204,8 @@ static sqfs_err sqfs_dir_ff_offset_f(sqfs *fs, sqfs_md_cursor *cur,
   return sqfs_md_read(fs, cur, NULL, index->size + 1); /* skip name */
 }
 
-static sqfs_err sqfs_dir_ff_offset(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
-    sqfs_off_t offset) {
+static sqfs_err sqfs_dir_ff_offset(sqfs *fs, const sqfs_inode *inode,
+    sqfs_dir *dir, sqfs_off_t offset) {
   sqfs_err err;
   sqfs_dir_entry entry;
   
@@ -231,7 +231,7 @@ typedef struct {
 } sqfs_dir_ff_name_t;
 
 static sqfs_err sqfs_dir_ff_name_f(sqfs *fs, sqfs_md_cursor *cur,
-    struct squashfs_dir_index *index, bool *stop, void *arg) {
+    const struct squashfs_dir_index *index, bool *stop, void *arg) {
   sqfs_err err;
   int order;
   sqfs_dir_ff_name_t *args = (sqfs_dir_ff_name_t*)arg;
@@ -248,7 +248,7 @@ static sqfs_err sqfs_dir_ff_name_f(sqfs *fs, sqfs_md_cursor *cur,
   return SQFS_OK;
 }
 
-sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
+sqfs_err sqfs_dir_lookup(sqfs *fs, const sqfs_inode *inode,
     const char *name, size_t namelen, sqfs_dir_entry *entry, bool *found) {
   sqfs_err err;
   sqfs_dir dir;

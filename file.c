@@ -39,7 +39,7 @@ static sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
   uint32_t idx);
 
 /* Read a fragment block from the cache */
-static sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
+static sqfs_err sqfs_frag_block(sqfs *fs, const sqfs_inode *inode,
   size_t *offset, size_t *size, sqfs_block **block);
 
 
@@ -56,7 +56,7 @@ static sqfs_err sqfs_frag_entry(sqfs *fs, struct squashfs_fragment_entry *frag,
   return err;
 }
 
-static sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
+static sqfs_err sqfs_frag_block(sqfs *fs, const sqfs_inode *inode,
     size_t *offset, size_t *size, sqfs_block **block) {
   struct squashfs_fragment_entry frag;
   sqfs_err err = SQFS_OK;
@@ -78,7 +78,7 @@ static sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
   return SQFS_OK;
 }
 
-size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode) {
+size_t sqfs_blocklist_count(const sqfs *fs, const sqfs_inode *inode) {
   uint64_t size = inode->xtra.reg.file_size;
   size_t block = fs->sb.block_size;
   if (inode->xtra.reg.frag_idx == SQUASHFS_INVALID_FRAG) {
@@ -88,7 +88,7 @@ size_t sqfs_blocklist_count(sqfs *fs, sqfs_inode *inode) {
   }
 }
 
-void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode,
+void sqfs_blocklist_init(sqfs *fs, const sqfs_inode *inode,
     sqfs_blocklist *bl) {
   bl->fs = fs;
   bl->remain = sqfs_blocklist_count(fs, inode);
@@ -123,7 +123,7 @@ sqfs_err sqfs_blocklist_next(sqfs_blocklist *bl) {
   return SQFS_OK;
 }
 
-sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
+sqfs_err sqfs_read_range(sqfs *fs, const sqfs_inode *inode, sqfs_off_t start,
     sqfs_off_t *size, void *buf) {
   sqfs_err err = SQFS_OK;
   

@@ -73,7 +73,7 @@ static sqfs_err sqfs_opt_parse_ersatz(struct fuse_args *outargs, int argc,
 #endif
 
 
-sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
+sqfs_err sqfs_stat(sqfs *fs, const sqfs_inode *inode, struct stat *st) {
   sqfs_err err = SQFS_OK;
   uid_t id;
   
@@ -109,7 +109,8 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
   return SQFS_OK;
 }
 
-int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
+int sqfs_listxattr(sqfs *fs, const sqfs_inode *inode, char *buf,
+    size_t *size) {
   sqfs_xattr x;
   size_t count = 0;
   
@@ -136,7 +137,7 @@ int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
   return 0;
 }
 
-void sqfs_usage(char *progname, bool fuse_usage) {
+void sqfs_usage(const char *progname, bool fuse_usage) {
   fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
   fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
     progname ? progname : PACKAGE_NAME);

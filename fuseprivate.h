@@ -53,17 +53,17 @@ extern "C" {
 #define SQFS_ENV_IMAGE "_SQFS_ENV_IMAGE"
 
 /* Fill in a stat structure. Does not set st_ino */
-sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st);
+sqfs_err sqfs_stat(sqfs *fs, const sqfs_inode *inode, struct stat *st);
 
 /* Populate an xattr list. Return an errno value. */
-int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
+int sqfs_listxattr(sqfs *fs, const sqfs_inode *inode, char *buf, size_t *size);
 
 /* Print a usage string */
-void sqfs_usage(char *progname, bool fuse_usage);
+void sqfs_usage(const char *progname, bool fuse_usage);
 
 /* Parse command-line arguments */
 typedef struct {
-  char *progname;
+  const char *progname;
   char *image;
   int mountpoint;
 } sqfs_opts;

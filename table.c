@@ -66,7 +66,8 @@ void sqfs_table_destroy(sqfs_table *table) {
   table->blocks = NULL;
 }
 
-sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
+sqfs_err sqfs_table_get(const sqfs_table *table, sqfs *fs, size_t idx,
+    void *buf) {
   sqfs_err err;
   sqfs_block *block;
   

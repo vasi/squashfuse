@@ -54,13 +54,13 @@ void sqfs_array_init(sqfs_array *a);
    Passing zero as an initial capacity is allowed.
    Passing NULL as the freer will just use a default that does nothing. */
 sqfs_err sqfs_array_create(sqfs_array *a, size_t value_size, size_t initial,
-  sqfs_array_free_t freer);
+  const sqfs_array_free_t freer);
 
 /* Destroy an array */
 void sqfs_array_destroy(sqfs_array *a);
 
 /* Get the size of an array */
-size_t sqfs_array_size(sqfs_array *a);
+size_t sqfs_array_size(const sqfs_array *a);
 
 /* Shrink the array by 'shrink' items. Must be at most the current size */
 sqfs_err sqfs_array_shrink(sqfs_array *a, size_t shrink);
@@ -72,11 +72,11 @@ sqfs_err sqfs_array_shrink(sqfs_array *a, size_t shrink);
 sqfs_err sqfs_array_grow(sqfs_array *a, size_t grow, void *vout);
 
 /* Get the item at a given position, put its address into *(void**)vout */
-sqfs_err sqfs_array_at(sqfs_array *a, size_t idx, void *vout);
+sqfs_err sqfs_array_at(const sqfs_array *a, size_t idx, void *vout);
 
 /* Get the first/last item in the array */
-sqfs_err sqfs_array_first(sqfs_array *a, void *vout);
-sqfs_err sqfs_array_last(sqfs_array *a, void *vout);
+sqfs_err sqfs_array_first(const sqfs_array *a, void *vout);
+sqfs_err sqfs_array_last(const sqfs_array *a, void *vout);
 
 /* Append a new item. If vout is not null, put the new item's address into
   *(void**)vout. */

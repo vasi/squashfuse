@@ -57,7 +57,7 @@ typedef struct {
 
 
 /* Is a file worth indexing? */
-static bool sqfs_blockidx_indexable(sqfs *fs, sqfs_inode *inode) {
+static bool sqfs_blockidx_indexable(const sqfs *fs, const sqfs_inode *inode) {
   size_t blocks = sqfs_blocklist_count(fs, inode);
   size_t md_size = blocks * sizeof(sqfs_blocklist_entry);
   return md_size >= SQUASHFS_METADATA_SIZE;
@@ -75,7 +75,7 @@ sqfs_err sqfs_blockidx_init(sqfs_cache *cache) {
 }
 
 /* Fill idx with all the block-index entries for this file */
-static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
+static sqfs_err sqfs_blockidx_add(sqfs *fs, const sqfs_inode *inode,
     sqfs_blockidx *idx) {
   sqfs_blockidx_entry *blockidx;
   sqfs_blocklist bl;
@@ -107,7 +107,8 @@ static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
      * inode->next.offset */
     if (bl.cur.offset < sizeof(sqfs_blocklist_entry) && !first) {
       blockidx[i].data_block = bl.block + bl.input_size;
-      blockidx[i++].md_block = (uint32_t)(bl.cur.block - fs->sb.inode_table_start);
+      blockidx[i++].md_block =
+        (uint32_t)(bl.cur.block - fs->sb.inode_table_start);
     }
     first = false;
     
@@ -121,7 +122,7 @@ static sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
   return err;
 }
 
-sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
+sqfs_err sqfs_blockidx_blocklist(sqfs *fs, const sqfs_inode *inode,
     sqfs_blocklist *bl, sqfs_off_t start) {
   sqfs_err err, ret;
   size_t block, metablock, skipped;

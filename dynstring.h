@@ -45,7 +45,7 @@ void sqfs_dynstring_init(sqfs_dynstring *s);
 sqfs_err sqfs_dynstring_create(sqfs_dynstring *s, size_t initial);
 void sqfs_dynstring_destroy(sqfs_dynstring *s);
 
-size_t sqfs_dynstring_size(sqfs_dynstring *s);
+size_t sqfs_dynstring_size(const sqfs_dynstring *s);
 
 /* Get the contents as a C-string */
 char *sqfs_dynstring_string(sqfs_dynstring *s);

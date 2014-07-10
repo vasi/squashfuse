@@ -137,7 +137,7 @@ sqfs_cache_value sqfs_cache_entry_value(sqfs_cache_entry *entry) {
   return entry->value;
 }
 
-bool sqfs_cache_entry_is_initialized(sqfs_cache_entry *entry) {
+bool sqfs_cache_entry_is_initialized(const sqfs_cache_entry *entry) {
   return entry->ready;
 }
 

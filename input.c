@@ -47,7 +47,7 @@ void sqfs_input_init(sqfs_input *in) {
   in->data = NULL;
 }
 
-static bool sqfs_no_seek_error(sqfs_input *SQFS_UNUSED(in)) {
+static bool sqfs_no_seek_error(const sqfs_input *SQFS_UNUSED(in)) {
   return false;
 }
 
@@ -82,7 +82,7 @@ static ssize_t sqfs_input_windows_pread(sqfs_input *in, void *buf,
   return ret;
 }
 
-static char *sqfs_input_windows_error(sqfs_input *in) {
+static char *sqfs_input_windows_error(const sqfs_input *in) {
   /* FIXME: Use FormatMessage() to return a real error */
   sqfs_input_windows *iw = (sqfs_input_windows*)in->data;
   return sqfs_asprintf("File error #%d", iw->errcode);
@@ -181,7 +181,7 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
   return ret;
 }
 
-static char *sqfs_input_posix_error(sqfs_input *in) {
+static char *sqfs_input_posix_error(const sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
   
   if (ip->err == SQFS_POSIX_TERM)
@@ -210,7 +210,7 @@ static char *sqfs_input_posix_error(sqfs_input *in) {
 #endif
 }
 
-static bool sqfs_input_posix_seek_error(sqfs_input *in) {
+static bool sqfs_input_posix_seek_error(const sqfs_input *in) {
   sqfs_input_posix *ip = (sqfs_input_posix*)in->data;
   return ip->errnum == ESPIPE;
 }
@@ -268,7 +268,7 @@ typedef enum {
 } sqfs_input_memory_err;
 
 typedef struct {
-  char *buf;
+  const char *buf;
   size_t length;
   sqfs_input_memory_err err;
 } sqfs_input_memory;
@@ -293,7 +293,7 @@ static ssize_t sqfs_input_memory_pread(sqfs_input *in, void *buf, size_t count,
   return count;
 }
 
-static char *sqfs_input_memory_error(sqfs_input *in) {
+static char *sqfs_input_memory_error(const sqfs_input *in) {
   sqfs_input_memory *im = (sqfs_input_memory*)in->data;
   switch (im->err) {
     case SQFS_MEMORY_OK:
@@ -305,13 +305,14 @@ static char *sqfs_input_memory_error(sqfs_input *in) {
   }
 }
 
-sqfs_err sqfs_input_memory_create(sqfs_input *in, void *buf, size_t len) {
+sqfs_err sqfs_input_memory_create(sqfs_input *in, const void *buf,
+    size_t len) {
   sqfs_input_memory *im =
     (sqfs_input_memory*)malloc(sizeof(sqfs_input_memory));
   if (!im)
     return SQFS_ERR;
   
-  im->buf = (char*)buf;
+  im->buf = (const char*)buf;
   im->length = len;
   im->err = SQFS_MEMORY_OK;
   

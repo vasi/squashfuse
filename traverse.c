@@ -63,7 +63,7 @@ static void sqfs_traverse_init(sqfs_traverse *trv);
 
 /* Descend into new directories, and ascend back */
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
-  sqfs_inode *inode);
+  const sqfs_inode *inode);
 static sqfs_err sqfs_traverse_descend(sqfs_traverse *trv, sqfs_inode_id iid);
 static sqfs_err sqfs_traverse_ascend(sqfs_traverse *trv);
 
@@ -76,7 +76,7 @@ static void sqfs_traverse_init(sqfs_traverse *trv) {
 }
 
 sqfs_err sqfs_traverse_open_inode(sqfs_traverse *trv, sqfs *fs,
-    sqfs_inode *inode) {
+    const sqfs_inode *inode) {
   sqfs_err err;
   
   sqfs_traverse_init(trv);
@@ -198,7 +198,7 @@ char *sqfs_traverse_path(sqfs_traverse *trv) {
 
 
 static sqfs_err sqfs_traverse_descend_inode(sqfs_traverse *trv,
-    sqfs_inode *inode) {
+    const sqfs_inode *inode) {
   sqfs_err err;
   sqfs_traverse_level *level;
   bool initial;

@@ -144,7 +144,7 @@ sqfs_err sqfs_cache_entry_ready(sqfs_cache_entry *entry);
 
 /* Check if the entry is initialized or not. If it is not, this thread must
    perform initialization. */
-bool sqfs_cache_entry_is_initialized(sqfs_cache_entry *entry);
+bool sqfs_cache_entry_is_initialized(const sqfs_cache_entry *entry);
 
 #ifdef __cplusplus
 }

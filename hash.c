@@ -29,7 +29,7 @@
 
 #define HASH_DEFAULT_INITIAL 8
 
-static size_t sqfs_hash_hash(sqfs_hash *h, sqfs_hash_key k) {
+static size_t sqfs_hash_hash(const sqfs_hash *h, sqfs_hash_key k) {
   return (k & (h->capacity - 1));
 }
 
@@ -114,7 +114,7 @@ void sqfs_hash_destroy(sqfs_hash *h) {
   sqfs_hash_init(h);
 }
 
-sqfs_hash_value sqfs_hash_get(sqfs_hash *h, sqfs_hash_key k) {
+sqfs_hash_value sqfs_hash_get(const sqfs_hash *h, sqfs_hash_key k) {
   size_t hash = (k & (h->capacity - 1));
   sqfs_hash_bucket *b = h->buckets[hash];
   while (b) {
@@ -150,6 +150,6 @@ sqfs_err sqfs_hash_remove(sqfs_hash *h, sqfs_hash_key k) {
   return SQFS_OK;
 }
 
-size_t sqfs_hash_size(sqfs_hash *h) {
+size_t sqfs_hash_size(const sqfs_hash *h) {
   return h->size;
 }

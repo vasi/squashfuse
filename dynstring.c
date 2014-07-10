@@ -76,7 +76,7 @@ void sqfs_dynstring_destroy(sqfs_dynstring *s) {
   sqfs_array_destroy(s);
 }
 
-size_t sqfs_dynstring_size(sqfs_dynstring *s) {
+size_t sqfs_dynstring_size(const sqfs_dynstring *s) {
   return sqfs_array_size(s) - 1;
 }
 

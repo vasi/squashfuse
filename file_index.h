@@ -39,7 +39,7 @@ extern "C" {
 sqfs_err sqfs_blockidx_init(sqfs_cache *cache);
 
 /* Get a blocklist fast-forwarded to the given offset */
-sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
+sqfs_err sqfs_blockidx_blocklist(sqfs *fs, const sqfs_inode *inode,
   sqfs_blocklist *bl, sqfs_off_t start);
 
 #ifdef __cplusplus

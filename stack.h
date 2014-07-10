@@ -38,15 +38,15 @@ typedef sqfs_array sqfs_stack;
 void sqfs_stack_init(sqfs_stack *s);
 
 sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
-  sqfs_stack_free_t freer);
+  const sqfs_stack_free_t freer);
 void sqfs_stack_destroy(sqfs_stack *s);
 
 sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout);
 bool sqfs_stack_pop(sqfs_stack *s);
 
-size_t sqfs_stack_size(sqfs_stack *s);
-sqfs_err sqfs_stack_at(sqfs_stack *s, size_t i, void *vout);
-sqfs_err sqfs_stack_top(sqfs_stack *s, void *vout);
+size_t sqfs_stack_size(const sqfs_stack *s);
+sqfs_err sqfs_stack_at(const sqfs_stack *s, size_t i, void *vout);
+sqfs_err sqfs_stack_top(const sqfs_stack *s, void *vout);
 
 #ifdef __cplusplus
 }

@@ -94,8 +94,8 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_input *in);
 void sqfs_destroy(sqfs *fs, bool close);
 
 /* Ok to call these even on incompletely constructed filesystems */
-void sqfs_version(sqfs *fs, int *major, int *minor);
-sqfs_compression_type sqfs_compression(sqfs *fs);
+void sqfs_version(const sqfs *fs, int *major, int *minor);
+sqfs_compression_type sqfs_compression(const sqfs *fs);
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id,
   sqfs_off_t base);
@@ -112,14 +112,15 @@ sqfs_err sqfs_id_get(sqfs *fs, uint16_t idx, sqfs_id_t *id);
 /* Puts up to *size characters of the link name into buf. Always null-
 terminates the buffer. Pass null as buf to have the size returned, including
 space for the terminator. */
-sqfs_err sqfs_readlink(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
+sqfs_err sqfs_readlink(sqfs *fs, const sqfs_inode *inode, char *buf,
+  size_t *size);
 
 /* Find inode_id by inode_num */
-int sqfs_export_ok(sqfs *fs);
+int sqfs_export_ok(const sqfs *fs);
 sqfs_err sqfs_export_inode(sqfs *fs, sqfs_inode_num n, sqfs_inode_id *i);
 
 /* Find the root inode */
-sqfs_inode_id sqfs_inode_root(sqfs *fs);
+sqfs_inode_id sqfs_inode_root(const sqfs *fs);
 
 #ifdef __cplusplus
 }
