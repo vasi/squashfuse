@@ -39,7 +39,7 @@ enum
 size_t tinfl_decompress_mem_to_mem(void *pOut_buf, size_t out_buf_len,
 	const void *pSrc_buf, size_t src_buf_len, int flags);
 
-static sqfs_err sqfs_decompressor_zlib(void *in, size_t insz,
+static sqfs_err sqfs_decompressor_zlib(const void *in, size_t insz,
 		void *out, size_t *outsz) {
 	size_t bytes = tinfl_decompress_mem_to_mem(out, *outsz, in, insz,
 		TINFL_FLAG_PARSE_ZLIB_HEADER | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF);

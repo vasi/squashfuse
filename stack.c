@@ -29,7 +29,7 @@ void sqfs_stack_init(sqfs_stack *s) {
 }
 
 sqfs_err sqfs_stack_create(sqfs_stack *s, size_t vsize, size_t initial,
-    sqfs_stack_free_t freer) {
+    const sqfs_stack_free_t freer) {
   return sqfs_array_create(s, vsize, initial, freer);
 }
 

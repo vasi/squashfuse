@@ -125,7 +125,7 @@ void sqfs_array_init(sqfs_array *a) {
 }
 
 sqfs_err sqfs_array_create(sqfs_array *a, size_t value_size, size_t initial,
-    sqfs_array_free_t freer) {
+    const sqfs_array_free_t freer) {
   a->value_size = value_size;
   a->items = NULL;
   a->capacity = a->size = 0;
