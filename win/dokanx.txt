@@ -1,0 +1,92 @@
+Dokanx ( https://github.com/BenjaminKim/dokanx ) provides a user-space
+filesystem API for Windows. Unfortunately, it's very hard to build and
+install, so here's documentation of how I got it working.
+
+Platform: Windows 7 x64 SP1
+
+1.  Install Visual Studio. I chose Visual Studio 2013 Express (free).
+    Make sure to install the C and C++ components.
+
+2.  Install the Windows Driver Kit (free). I used version 7.1
+
+3.  Clone the dokanx git repository, I put it in C:\dokanx . Choose the branch
+    "release/0.6.1"
+
+4.  Set some environment variables necessary for building dokanx
+    
+    a. Open the Start Menu
+    b. Right-clock on "Computer", and choose Properties
+    c. Click "Advanced system settings"
+    d. Go to the Advanced tab
+    e. Click the "Environment Variables..." button
+    f. In the "System variables" area, click "New..." to add a variable.
+    
+    You need to set each of these variables:
+    
+      WIN7BASE="C:\WinDDK\7600.16385.1"
+      DOKANX_PATH="C:\dokanx" (or wherever you cloned it)
+    
+    g. Click "OK" to close System Properties
+    h. Reboot
+
+5.  Setup some compiler search paths. Dokanx uses Microsoft's Active Template
+    Library (ATL), which isn't included by default in some versions of
+    Visual Studio, so we will instruct the compiler to search the Windows
+    Driver Kit paths instead.
+    
+    a. In Visual Studio, open the dokanx.sln solution
+    b. Choose VIEW -> Other Windows -> Property Manager
+    c. Edit the Win32 property sheet:
+       A. In the Property Manager, reveal Common -> "Debug | Win32" ->
+          Microsoft.Cpp.Win32.user
+       B. Double-click it to open the Property Pages
+       C. Navigate to "Common Properties" -> "VC++ Directories"
+       D. Edit the header search path:
+          i.   Click on "Include Directories"
+          ii.  In the popup menu to the right, choose "Edit..."
+          iii. Click the "New Line" button, and add the path
+               "C:\WinDDK\7600.16385.1\inc\atl71"
+          iv.  Click OK
+       E. Edit the library search path. Do as with step D., but:
+          i.   Instead of "Include Directories", use "Library Directories"
+          ii.  Add the path "C:\WinDDK\7600.16385.1\lib\ATL\i386"
+    d. Edit the x64 property sheet. Do as with step c., but:
+       A. Use the sheet Common -> "Debug | x64" -> Microsoft.Cpp.x64.user
+       B. Change the Library Directories to use "amd64" instead of "i386" in
+          the path
+
+6.  Build the dokanx solution for both Release/Win32 and Release/x64
+
+7.  Install the dokanx library. Copy Release\dokanx.dll to sysdir, eg:
+    C:\Windows\SysWOW64\
+
+8.  Install the dokanx driver. Copy dokanx.sys (eg:
+    sys\objfre_win7_amd64\amd64\dokanx.sys ) to C:\Windows\System32\Drivers\
+
+9.  On 64-bit Windows, drivers need to be signed. Since you probably don't
+    have a driver signing key, we'll have to fake it.
+    
+    a. Download the "Driver Signature Enforcer Overrider" utility
+    b. Run the utility, and choose "Sign a System File"
+    c. Enter "C:\Windows\System32\Drivers\dokanx.sys"
+    d. Back at the main menu of the utility, choose "Enable Test Mode"
+    e. Reboot
+
+10. We now need to load the driver.
+    
+    a. Download the "OSR Driver Loader" utility
+    b. Run Projects\OsrLoader\kit\WLH\AMD64\FRE\OSRLOADER.exe
+    c. Under Driver Path, use "C:\Windows\System32\Drivers\dokanx.sys"
+    d. Click "Register Service"
+    e. Click "Start Service"
+    
+11. Ensure dokanx has all its components loaded. From the dokanx root
+    directory, run: "Release\dokanx_control.exe /i a". Ignore any failures.
+
+12. Test that dokanx is working! Run
+    "Release\mirrorfs.exe /r c:\WinDDK /l m". You should now have a copy of
+    your WinDDK directory mounted as drive M:
+
+13. If that worked, you should now be able to compile and run the dokanx
+    project of squashfuse.
+
