@@ -31,9 +31,16 @@
 
 #include <stdbool.h>
 
-#if _WIN32
+#if _WIN32 && _WIN32_WINNT >= 0x0600
   typedef CRITICAL_SECTION sqfs_mutex;
   typedef CONDITION_VARIABLE sqfs_cond_var;
+#elif _WIN32
+  typedef HANDLE sqfs_mutex;
+  typedef struct {
+    LONG waiters;
+    CRITICAL_SECTION lock;
+    HANDLE sem;
+  } sqfs_cond_var;
 #elif HAVE_PTHREAD
   #include <pthread.h>
 
