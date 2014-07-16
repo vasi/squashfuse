@@ -1,9 +1,20 @@
-#include <dokan.h>
 #include "squashfuse.h"
+#include <dokan.h>
 
 #include <shlwapi.h>
 #include <stack>
 #include <queue>
+
+#if _WIN32
+  typedef wchar_t argchar_t;
+  #define main_function wmain
+  #define ST(_c) (L ## _c)
+#else
+  typedef char argchar_t;
+  #define main_function main
+  #define ST(_c) (_c)
+#endif
+
 
 // Shortcut to get the global context
 #define SQCONTEXT ((sqfs_dokan*)fi->DokanOptions->GlobalContext)
@@ -15,6 +26,13 @@ struct sqfs_dokan {
   std::wstring volname;
   bool escape; // Escape illegal characters?
 };
+
+// Safe string copying
+static wchar_t *sqfs_dk_wcsncpy(wchar_t *dst, const wchar_t *src,
+  size_t count);
+
+// Convert arguments to allocated wide strings
+static wchar_t *sqfs_dk_wide_arg(const argchar_t *str);
 
 // Characters that are illegal in filenames
 static const wchar_t *SQ_ILLEGAL_CHARS = L"<>:\"/\\|?*";
@@ -45,7 +63,7 @@ static sqfs_err sqfs_dk_readlink(sqfs *fs, sqfs_inode *inode,
   std::string &target);
 
 // Generate a good volume name for this image
-static std::wstring sqfs_dk_volname(const wchar_t *image);
+static std::wstring sqfs_dk_volname(const argchar_t *image);
 // Generate a serial number for this fs
 static DWORD sqfs_dk_serial_number(sqfs &fs);
 
@@ -95,6 +113,21 @@ static void sqfs_dk_file_info(T *info, sqfs_inode *inode,
   } else {
     info->nFileSizeHigh = info->nFileSizeLow = 0;
   }
+}
+
+static wchar_t *sqfs_dk_wcsncpy(wchar_t *dst, const wchar_t *src,
+    size_t count) {
+  wchar_t *ret = wcsncpy(dst, src, count);
+  dst[count - 1] = '\0';
+  return ret;
+}
+
+static wchar_t *sqfs_dk_wide_arg(const argchar_t *str) {
+  #if _WIN32
+    return wcsdup(str);
+  #else
+    return sqfs_str_wide(str);
+  #endif
 }
 
 static wchar_t sqfs_dk_hexchar(int v) {
@@ -282,11 +315,11 @@ static DWORD sqfs_dk_serial_number(sqfs &fs) {
   return fs.sb.mkfs_time ^ fs.sb.inodes ^ (DWORD)fs.sb.inode_table_start;
 }
 
-static std::wstring sqfs_dk_volname(const wchar_t *image) {
+static std::wstring sqfs_dk_volname(const argchar_t *image) {
   wchar_t *name, *buf;
-  name = buf = _wcsdup(image);
-  PathStripPath(name);
-  PathRemoveExtension(name);
+  name = buf = sqfs_dk_wide_arg(image);
+  PathStripPathW(name);
+  PathRemoveExtensionW(name);
   std::wstring ret = name;
   free(buf);
   return ret;
@@ -390,7 +423,8 @@ static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
       : &child_resolver.target();
     
     sqfs_dk_file_info(&find, child, &entry);
-    wcscpy_s(find.cFileName, name.c_str());
+    sqfs_dk_wcsncpy(find.cFileName, name.c_str(),
+      sizeof(find.cFileName) / sizeof(find.cFileName[0]));
 
     filler(&find, fi);
   }
@@ -401,13 +435,12 @@ static NTSTATUS sqfs_dk_op_get_volume_information(
     LPWSTR volname, DWORD volnamelen,
     LPDWORD serial, LPDWORD maxpath, LPDWORD flags,
     LPWSTR fsname, DWORD fsnamelen, PDOKAN_FILE_INFO fi) {
-  wcscpy_s(volname, volnamelen / sizeof(WCHAR),
-    SQCONTEXT->volname.c_str());
+  sqfs_dk_wcsncpy(volname, SQCONTEXT->volname.c_str(), volnamelen / sizeof(WCHAR));
   *serial = sqfs_dk_serial_number(SQCONTEXT->fs);
   *maxpath = SQUASHFS_NAME_LEN;
   *flags = FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES | 
     FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS | FILE_READ_ONLY_VOLUME;
-  wcscpy_s(fsname, fsnamelen / sizeof(WCHAR), L"squashfuse");
+  sqfs_dk_wcsncpy(fsname, L"squashfuse", fsnamelen / sizeof(WCHAR));
 
   return STATUS_SUCCESS;
 }
@@ -423,28 +456,35 @@ static void sqfs_dk_die(const wchar_t *msg) {
   exit(EXIT_FAILURE);
 }
 
-static void sqfs_dk_usage(wchar_t *progname) {
-  PathStripPath(progname);
+static void sqfs_dk_usage(argchar_t *progname) {
+  wchar_t *wprog = sqfs_dk_wide_arg(progname);
+  PathStripPathW(wprog);
   fwprintf(stderr, L"squashfuse (c) 2012 Dave Vasilevsky\n\n");
-  fwprintf(stderr, L"Usage: %s [options] ARCHIVE MOUNPOINT\n\n", progname);
+  fwprintf(stderr, L"Usage: %ls [options] ARCHIVE MOUNPOINT\n\n",
+    wprog);
   fwprintf(stderr, L"Options:\n");
   fwprintf(stderr, L"  /d   Print debug messages\n");
   fwprintf(stderr, L"  /e   Escape illegal characters in filenames\n");
   sqfs_dk_die(NULL);
 }
 
-static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
+static bool sqfs_dk_parse_args(int argc, argchar_t *argv[],
     sqfs_host_path &image, DOKAN_OPTIONS &opts) {
   sqfs_dokan *ctx = (sqfs_dokan*)opts.GlobalContext;
+  bool want_opts = true;
   for (int i = 1; i < argc; ++i) {
-    wchar_t *arg = argv[i];
-    if (arg[0] == L'/') {
+    argchar_t *arg = argv[i];
+
+    if (want_opts && arg[0] == ST('/')) {
       switch (arg[1]) {
-      case L'd':
+      case ST('d'):
         opts.Options |= DOKAN_OPTION_DEBUG;
         break;
-      case L'e':
+      case ST('e'):
         ctx->escape = true;
+        break;
+      case ST('-'):
+        want_opts = false;
         break;
       default:
         return false; // Unknown option
@@ -452,7 +492,7 @@ static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
     } else if (!image) {
       image = arg;
     } else if (!opts.MountPoint) {
-      opts.MountPoint = arg;
+      opts.MountPoint = sqfs_dk_wide_arg(arg);
     } else {
       return false; // Too many args
     }
@@ -462,7 +502,7 @@ static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
   return true;
 }
 
-int wmain(int argc, wchar_t *argv[]) {
+int main_function(int argc, argchar_t *argv[]) {
   DOKAN_OPERATIONS dokan_ops;
   ZeroMemory(&dokan_ops, sizeof(dokan_ops));
   dokan_ops.CreateFile = sqfs_dk_op_create_file;

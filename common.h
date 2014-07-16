@@ -26,8 +26,8 @@
 #define SQFS_COMMON_H
 
 #include "config.h"
-#ifdef _WIN32
-  #include <win32.h>
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #include "win32.h"
 #endif
 
 #include <stdbool.h>

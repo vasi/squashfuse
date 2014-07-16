@@ -46,7 +46,7 @@ void sqfs_print(FILE *f, const char *str);
 /* Initialize printing */
 void sqfs_print_init(void);
 
-#if _WIN32
+#if WINDOWS_API
 // Unicode conversion, returning allocated strings
 wchar_t *sqfs_str_wide(const char *utf8);
 char *sqfs_str_utf8(const wchar_t *wide);

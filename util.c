@@ -150,7 +150,7 @@ void sqfs_print_init(void) {
 #endif
 }
 
-#if _WIN32
+#if WINDOWS_API
 wchar_t *sqfs_str_wide(const char *utf8) {
   size_t size, size2;
   wchar_t *ret;
