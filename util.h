@@ -53,6 +53,7 @@ void sqfs_print_init(void);
   
   #include <tchar.h>
   int sqfs_main(void);
+  int sqfs_main_real(int argc, _TCHAR *argv[]);
   #define SQFS_MAIN \
     int main(void) { return sqfs_main(); } \
     int sqfs_main_real(int argc, _TCHAR *argv[])

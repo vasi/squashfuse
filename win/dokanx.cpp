@@ -472,7 +472,7 @@ static bool sqfs_dk_parse_args(int argc, wchar_t *argv[],
   return true;
 }
 
-int wmain(int argc, wchar_t *argv[]) {
+SQFS_MAIN {
   DOKAN_OPERATIONS dokan_ops;
   ZeroMemory(&dokan_ops, sizeof(dokan_ops));
   dokan_ops.CreateFile = sqfs_dk_op_create_file;
