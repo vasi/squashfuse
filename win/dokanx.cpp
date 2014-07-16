@@ -16,6 +16,9 @@ struct sqfs_dokan {
   bool escape; // Escape illegal characters?
 };
 
+// Safely copy strings
+static size_t sqfs_dk_wcslcpy(wchar_t *dst, const wchar_t *src, size_t size);
+
 // Characters that are illegal in filenames
 static const wchar_t *SQ_ILLEGAL_CHARS = L"<>:\"/\\|?*";
 // Character for escaping illegal characters
@@ -95,6 +98,13 @@ static void sqfs_dk_file_info(T *info, sqfs_inode *inode,
   } else {
     info->nFileSizeHigh = info->nFileSizeLow = 0;
   }
+}
+
+static size_t sqfs_dk_wcslcpy(wchar_t *dst, const wchar_t *src, size_t size) {
+  wcsncpy(dst, src, size);
+  if (size)
+    dst[size - 1] = L'\0';
+  return wcslen(src);
 }
 
 static wchar_t sqfs_dk_hexchar(int v) {
@@ -390,7 +400,8 @@ static NTSTATUS sqfs_dk_op_find_files(LPCWSTR path, PFillFindData filler,
       : &child_resolver.target();
     
     sqfs_dk_file_info(&find, child, &entry);
-    wcscpy_s(find.cFileName, name.c_str());
+    sqfs_dk_wcslcpy(find.cFileName, name.c_str(),
+      sizeof(find.cFileName) / sizeof(find.cFileName[0]));
 
     filler(&find, fi);
   }
@@ -401,13 +412,12 @@ static NTSTATUS sqfs_dk_op_get_volume_information(
     LPWSTR volname, DWORD volnamelen,
     LPDWORD serial, LPDWORD maxpath, LPDWORD flags,
     LPWSTR fsname, DWORD fsnamelen, PDOKAN_FILE_INFO fi) {
-  wcscpy_s(volname, volnamelen / sizeof(WCHAR),
-    SQCONTEXT->volname.c_str());
+  sqfs_dk_wcslcpy(volname, SQCONTEXT->volname.c_str(), volnamelen / sizeof(WCHAR));
   *serial = sqfs_dk_serial_number(SQCONTEXT->fs);
   *maxpath = SQUASHFS_NAME_LEN;
   *flags = FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES | 
     FILE_UNICODE_ON_DISK | FILE_PERSISTENT_ACLS | FILE_READ_ONLY_VOLUME;
-  wcscpy_s(fsname, fsnamelen / sizeof(WCHAR), L"squashfuse");
+  sqfs_dk_wcslcpy(fsname, L"squashfuse", fsnamelen / sizeof(WCHAR));
 
   return STATUS_SUCCESS;
 }
