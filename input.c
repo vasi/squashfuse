@@ -215,24 +215,6 @@ static bool sqfs_input_posix_seek_error(const sqfs_input *in) {
   return ip->errnum == ESPIPE;
 }
 
-static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
-  sqfs_err err;
-  sqfs_input_posix *ip;
-  if ((err = sqfs_input_posix_create(in, 0)))
-    return err;
-  
-  ip = (sqfs_input_posix*)in->data;
-  ip->fd = open(path, O_RDONLY | OFLAGS);
-  ip->errnum = errno;
-  ip->err = SQFS_POSIX_OK;
-  
-#if !HAVE_PREAD
-  sqfs_mutex_init(&ip->mutex);
-#endif
-  
-  return (ip->fd == -1) ? SQFS_ERR : SQFS_OK;
-}
-
 sqfs_err sqfs_input_posix_create(sqfs_input *in, int fd) {
   sqfs_input_posix *ip = (sqfs_input_posix*)malloc(sizeof(sqfs_input_posix));
   if (!ip)
@@ -333,6 +315,24 @@ sqfs_err sqfs_input_memory_create(sqfs_input *in, const void *buf,
     return sqfs_input_windows_open_stdin(in);
   }
 #else /* !_WIN32 */
+  static sqfs_err sqfs_input_posix_open(sqfs_input *in, const char *path) {
+    sqfs_err err;
+    sqfs_input_posix *ip;
+    if ((err = sqfs_input_posix_create(in, 0)))
+      return err;
+  
+    ip = (sqfs_input_posix*)in->data;
+    ip->fd = open(path, O_RDONLY | OFLAGS);
+    ip->errnum = errno;
+    ip->err = SQFS_POSIX_OK;
+  
+  #if !HAVE_PREAD
+    sqfs_mutex_init(&ip->mutex);
+  #endif
+  
+    return (ip->fd == -1) ? SQFS_ERR : SQFS_OK;
+  }
+
   sqfs_err sqfs_input_open(sqfs_input *in, sqfs_host_path path) {
     return sqfs_input_posix_open(in, path);
   }
