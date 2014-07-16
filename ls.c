@@ -49,12 +49,7 @@ static void die(const char *msg) {
   exit(ERR_MISC);
 }
 
-#if _WIN32
-  #include <tchar.h>
-  int _tmain(int argc, _TCHAR *argv[]) {
-#else
-  int main(int argc, char *argv[]) {
-#endif
+SQFS_MAIN {
   sqfs_err err = SQFS_OK;
   sqfs_traverse trv;
   sqfs fs;

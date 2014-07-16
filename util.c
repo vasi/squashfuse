@@ -133,15 +133,17 @@ sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image) {
 }
 
 void sqfs_print(FILE *file, const char *str) {
-  #if _WIN32
-    fwprintf(file, L"%s", sqfs_str_wide(str));
+  #if _WIN32 && UNICODE
+    wchar_t *w = sqfs_str_wide(str);
+    fwprintf(file, L"%s", w);
+    free(w);
   #else
     fprintf(file, "%s", str); 
   #endif
 }
 
 void sqfs_print_init(void) {
-  #if _WIN32
+  #if _WIN32 && UNICODE
     wchar_t bom = 0xFEFF;
     _setmode(1, _O_U16TEXT);
     fwprintf(stdout, L"%c", bom);
@@ -186,5 +188,30 @@ char *sqfs_str_utf8(const wchar_t *wide) {
   }
 
   return ret;
+}
+
+/* Wrapper for main, to handle wide chars */
+extern int sqfs_main_real(int argc, _TCHAR *argv[]);
+int sqfs_main(void) {
+  int argc;
+  LPWSTR cli, *wargv;
+  
+  cli = GetCommandLineW();
+  wargv = CommandLineToArgvW(cli, &argc);
+  
+  #if UNICODE
+    return sqfs_main_real(argc, wargv);
+  #else
+    {
+      _TCHAR **argv;
+      int i;
+      argv = malloc(argc * sizeof(*argv));
+      for (i = 0; i < argc; ++i) {
+        argv[i] = sqfs_str_utf8(wargv[i]);
+      }
+      LocalFree(wargv);
+      return sqfs_main_real(argc, argv);
+    }
+  #endif
 }
 #endif

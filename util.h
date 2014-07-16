@@ -47,9 +47,17 @@ void sqfs_print(FILE *f, const char *str);
 void sqfs_print_init(void);
 
 #if _WIN32
-// Unicode conversion, returning allocated strings
-wchar_t *sqfs_str_wide(const char *utf8);
-char *sqfs_str_utf8(const wchar_t *wide);
+  // Unicode conversion, returning allocated strings
+  wchar_t *sqfs_str_wide(const char *utf8);
+  char *sqfs_str_utf8(const wchar_t *wide);
+  
+  #include <tchar.h>
+  int sqfs_main(void);
+  #define SQFS_MAIN \
+    int main(void) { return sqfs_main(); } \
+    int sqfs_main_real(int argc, _TCHAR *argv[])
+#else
+  #define SQFS_MAIN int main(int argc, char *argv[])
 #endif
 
 #ifdef __cplusplus
