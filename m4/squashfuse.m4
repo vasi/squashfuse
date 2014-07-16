@@ -131,9 +131,11 @@ AC_DEFUN([SQ_CHECK_TYPE_LE16],[
 #
 # Check if we have an off_t big enough for large files
 AC_DEFUN([SQ_CHECK_TYPE_OFF_T],[
-  AC_CHECK_SIZEOF([off_t])
-  AS_IF([test "$ac_cv_sizeof_off_t" -le 4],[
-    sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
+  AS_IF([test "x$sq_win32" = xyes],,[ # Windows uses a different sqfs_off_t
+    AC_CHECK_SIZEOF([off_t])
+    AS_IF([test "$ac_cv_sizeof_off_t" -le 4],[
+      sq_warn_offt="Your system has a small off_t, squashfuse will fail to handle very large files"
+    ])
   ])
 ])
 
@@ -156,4 +158,11 @@ AC_DEFUN([SQ_CHECK_EMBED_DATA],[
     SQ_EMBED_FILE="$sq_embed_file"
     AC_SUBST([SQ_EMBED_FILE])
   ])
+])
+
+# SQ_CHECK_WIN
+#
+# Check if we're compiling in Windows API mode
+AC_DEFUN([SQ_CHECK_WIN],[
+  AC_CHECK_DECL([_WIN32],[sq_win32=yes])
 ])

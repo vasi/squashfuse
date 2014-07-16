@@ -27,7 +27,7 @@
 
 #include "config.h"
 #ifdef _WIN32
-  #include <win32.h>
+  #include "win/win32.h"
 #endif
 
 #include <stdbool.h>

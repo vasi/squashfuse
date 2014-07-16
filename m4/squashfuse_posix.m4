@@ -146,8 +146,10 @@ AC_DEFUN([SQ_CHECK_DECL_PREAD],[
     [AC_DEFINE(HAVE_PREAD,1,[Define if pread() is available])])
 ])
 
-AC_DEFUN([SQ_CHECK_DECL_S_IFSOCK],
-  [SQ_CHECK_NONSTD(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])])
+AC_DEFUN([SQ_CHECK_DECL_S_IFSOCK],[
+  AS_IF([test "x$sq_win32" = xyes],,[
+    SQ_CHECK_NONSTD(S_IFSOCK,[#include <sys/stat.h>],[mode_t m = S_IFSOCK;])])
+])
 
 AC_DEFUN([SQ_CHECK_DECL_ENOATTR],[
 AC_CHECK_HEADERS([attr/xattr.h],,,[#include <sys/types.h>])

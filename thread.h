@@ -32,7 +32,6 @@
 #include <stdbool.h>
 
 #if _WIN32
-  #include "win32.h"
   typedef CRITICAL_SECTION sqfs_mutex;
   typedef CONDITION_VARIABLE sqfs_cond_var;
 #elif HAVE_PTHREAD

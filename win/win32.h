@@ -38,18 +38,22 @@
 
 #define STDIN_FILENO 0
 
-#define S_IFIFO 0010000
-#define S_IFBLK 0060000
 #define S_IFLNK 0120000
 #define S_IFSOCK 0140000
-#define S_ISDIR(_m) (((_m) & S_IFMT) == S_IFDIR)
-#define S_ISREG(_m) (((_m) & S_IFMT) == S_IFREG)
 #define S_ISLNK(_m) (((_m) & S_IFMT) == S_IFLNK)
+
 typedef unsigned short sqfs_mode_t;
 typedef uint32_t sqfs_id_t; /* Internal uids/gids are 32-bits */
 
-typedef SSIZE_T ssize_t;
 typedef DWORD64 sqfs_off_t;
-
 typedef LPCTSTR sqfs_host_path;
+
+#ifndef __MINGW32__
+  #define S_IFIFO 0010000
+  #define S_IFBLK 0060000
+  #define S_ISDIR(_m) (((_m) & S_IFMT) == S_IFDIR)
+  #define S_ISREG(_m) (((_m) & S_IFMT) == S_IFREG)
+  typedef SSIZE_T ssize_t;
+#endif
+
 #endif

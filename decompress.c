@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#if _WIN32
+#if _MSC_VER
   #include "win_decompress.c.inc"
 #endif
 

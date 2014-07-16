@@ -22,6 +22,7 @@ libsquashfuse_la_SOURCES =    \
   common.h          \
   squashfs_fs.h     \
   squashfuse.h      \
+  win/win32.h       \
   array.c       array.h       \
   block.c       block.h       \
   cache.c       cache.h       \
@@ -44,7 +45,7 @@ libsquashfuse_la_SOURCES =    \
   nonstd-stat.c      \
   nonstd-vsnprintf.c \
   nonstd-internal.h  \
-  nonstd.h  
+  nonstd.h
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS) $(PTHREAD_CFLAGS)
 
