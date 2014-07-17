@@ -429,14 +429,14 @@ static NTSTATUS sqfs_dk_op_unmount(PDOKAN_FILE_INFO fi) {
 
 static void sqfs_dk_die(const wchar_t *msg) {
   if (msg)
-    fwprintf(stderr, L"%s\n", msg);
+    fwprintf(stderr, L"%ls\n", msg);
   exit(EXIT_FAILURE);
 }
 
 static void sqfs_dk_usage(wchar_t *progname) {
   PathStripPath(progname);
   fwprintf(stderr, L"squashfuse (c) 2012 Dave Vasilevsky\n\n");
-  fwprintf(stderr, L"Usage: %s [options] ARCHIVE MOUNPOINT\n\n", progname);
+  fwprintf(stderr, L"Usage: %ls [options] ARCHIVE MOUNPOINT\n\n", progname);
   fwprintf(stderr, L"Options:\n");
   fwprintf(stderr, L"  /d   Print debug messages\n");
   fwprintf(stderr, L"  /e   Escape illegal characters in filenames\n");
