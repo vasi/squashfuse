@@ -130,15 +130,14 @@ sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
     
   /* Find out the size */
   va_copy(ap2, ap);
-  size = sqfs_dynstring_size(s);
-  sqfs_array_at(s, size, &start);
-  printed = sqfs_vsnprintf(start, 1, fmt, ap);
+  printed = sqfs_vsnprintf(NULL, 0, fmt, ap);
   if (printed == -1) {
     err = SQFS_ERR;
     goto done;
   }
   
   /* Actually print it */
+  size = sqfs_dynstring_size(s);
   if ((err = sqfs_array_grow(s, printed, NULL)))
     goto done;
   sqfs_array_at(s, size, &start);
