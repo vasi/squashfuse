@@ -135,7 +135,7 @@ sqfs_err sqfs_open_image(sqfs *fs, sqfs_host_path image) {
 void sqfs_print(FILE *file, const char *str) {
   #if _WIN32 && UNICODE
     wchar_t *w = sqfs_str_wide(str);
-    fwprintf(file, L"%s", w);
+    fwprintf(file, L"%ls", w);
     free(w);
   #else
     fprintf(file, "%s", str); 
