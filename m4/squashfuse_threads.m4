@@ -31,11 +31,36 @@ AC_DEFUN([SQ_THREADS],[
 
   AS_IF([test "x$enable_threads" = xno],,[
     sq_found_threads=no
-    SQ_PTHREADS([sq_found_threads=yes])
+    SQ_WINTHREADS([sq_found_threads=yes])
+    AS_IF([test "x$sq_found_threads" = xyes],,
+      [SQ_PTHREADS([sq_found_threads=yes])])
     
     AS_IF([test "x$sq_found_threads$enable_threads" = xnoyes],
       [AC_MSG_FAILURE([Can't find threading support])])
     enable_threads="$sq_found_threads"
+  ])
+])
+
+# SQ_WINTHREADS([IF-FOUND], [IF-NOT-FOUND])
+#
+# Try to find Windows thread support. On success, modify CPPFLAGS as necessary
+AC_DEFUN([SQ_WINTHREADS],[
+  sq_winthreads_cppflags="-D_WIN32_WINNT=0x0600"
+  AC_CACHE_CHECK([Windows threads], [sq_cv_winthreads],[
+    sq_cv_winthreads='not available'
+    
+    SQ_SAVE_FLAGS
+    CPPFLAGS="$CPPFLAGS $sq_winthreads_cppflags"
+    AC_LINK_IFELSE([
+      AC_LANG_PROGRAM([[#include <windows.h>]],
+        [[InitializeConditionVariable((CONDITION_VARIABLE*)0)]])
+      ],[sq_cv_winthreads=yes])
+    SQ_RESTORE_FLAGS
+  ])
+  
+  AS_IF([test "x$sq_cv_winthreads" = "xnot available"],[$2],[
+    CPPFLAGS="$CPPFLAGS $sq_winthreads_cppflags"
+    $1
   ])
 ])
 
