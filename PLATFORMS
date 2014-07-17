@@ -164,16 +164,29 @@ brackets, eg: [0.1]
   + Versions: unknown
   + Tested on: Windows 7 / x64 [0.2]
   + Requirements:
-    - A compiler. I've tested with Visual Studio 2013 Express
+    - A compiler:
+      - Visual Studio 2013 Express is free, and works with dokanx
+      - The open-source mingw, mingw-w64 and cygwin environments work with
+        the squashfuse_ls demo, but apparently not dokanx
     - dokanx: https://github.com/BenjaminKim/dokanx
-      It's rather complicated to get dokanx properly installed, see my notes
-      in win/dokanx.txt
-  + Configure: No need to run ./configure, just use the Visual Studio solution
-    file.
+      - Only necessary if building the dokanx frontend, not for squashfuse_ls
+      - It's rather complicated to get dokanx properly installed, see my notes
+        in win/dokanx.txt
+  + Packages:
+    - mingw: msys-base, mingw32-base, mingw32-pthreads-win32 (dev),
+        mingw32-libz (dev), mingw32-liblzma (dev)
+    - mingw-w64: The win-builds version has everything included
+    - cygwin: gcc-core make zlib-devel liblzma-devel liblzo2-develgcc
+  + Configure
+    - Visual Studio: just use the solution file squashfuse.sln
+    - mingw: Use --disable-fuse
+    - mingw-w64: Use --disable-fuse --with-decompressors=/opt/windows_32
+    - cygwin: Use --disable-fuse
   + Usage: Run at the cmd prompt something like:
       squashfuse_dokanx myarchive.squashfs m:\
-  + Notes: For Unicode output of squashfuse_ls, you may need to setup a
-    different console font
+  + Notes
+    - For Unicode output of squashfuse_ls, you may need to setup a
+      different console font, eg: Courier New.
 
 * RTEMS
   + Only squashfuse_ls, there's no FUSE
