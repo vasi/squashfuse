@@ -1,5 +1,5 @@
-#include <dokan.h>
 #include "squashfuse.h"
+#include <dokan.h>
 
 #include <shlwapi.h>
 #include <stack>
