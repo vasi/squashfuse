@@ -36,10 +36,11 @@
 
 #ifdef _WIN32
   #include <io.h>
-  #define lseek _lseeki64
+  #define xlseek _lseeki64
   #define OFLAGS O_BINARY
 #else
   #include <unistd.h>
+  #define xlseek lseek
   #define OFLAGS 0
 #endif
 
@@ -171,7 +172,7 @@ static ssize_t sqfs_input_posix_pread(sqfs_input *in, void *buf, size_t count,
   ip->errnum = errno;
 #else
   sqfs_mutex_lock(&ip->mutex);
-  if (lseek(ip->fd, off, SEEK_SET) == -1)
+  if (xlseek(ip->fd, off, SEEK_SET) == -1)
     ret = -1;
   else
     ret = read(ip->fd, buf, (DWORD)count);
