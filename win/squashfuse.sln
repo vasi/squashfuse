@@ -15,12 +15,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "squashfuse_dokanx", "squash
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201} = {2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "squashfuse_pfm", "squashfuse_pfm\squashfuse_pfm.vcxproj", "{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201} = {2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
 		Dokan Debug|Win32 = Dokan Debug|Win32
 		Dokan Debug|x64 = Dokan Debug|x64
+		PFM Debug|Win32 = PFM Debug|Win32
+		PFM Debug|x64 = PFM Debug|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
 	EndGlobalSection
@@ -33,6 +40,10 @@ Global
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|Win32.Build.0 = Debug|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|x64.ActiveCfg = Debug|x64
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Dokan Debug|x64.Build.0 = Debug|x64
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.PFM Debug|Win32.ActiveCfg = Debug|Win32
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.PFM Debug|Win32.Build.0 = Debug|Win32
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.PFM Debug|x64.ActiveCfg = Debug|x64
+		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.PFM Debug|x64.Build.0 = Debug|x64
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|Win32.ActiveCfg = Release|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|Win32.Build.0 = Release|Win32
 		{45D30A63-AAB9-4A37-976D-E0DBE1972431}.Release|x64.ActiveCfg = Release|x64
@@ -45,6 +56,10 @@ Global
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|Win32.Build.0 = Debug|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|x64.ActiveCfg = Debug|x64
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Dokan Debug|x64.Build.0 = Debug|x64
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.PFM Debug|Win32.ActiveCfg = Debug|Win32
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.PFM Debug|Win32.Build.0 = Debug|Win32
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.PFM Debug|x64.ActiveCfg = Debug|x64
+		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.PFM Debug|x64.Build.0 = Debug|x64
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|Win32.ActiveCfg = Release|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|Win32.Build.0 = Release|Win32
 		{2DB1CEC0-9985-44DC-AE3B-DEF77CC71201}.Release|x64.ActiveCfg = Release|x64
@@ -54,8 +69,19 @@ Global
 		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|Win32.ActiveCfg = Debug|Win32
 		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|Win32.Build.0 = Debug|Win32
 		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Dokan Debug|x64.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.PFM Debug|Win32.ActiveCfg = Debug|Win32
+		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.PFM Debug|x64.ActiveCfg = Debug|Win32
 		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Release|Win32.ActiveCfg = Release|Win32
 		{65FCBCE8-CA1A-4D37-8319-8A913B8B4C07}.Release|x64.ActiveCfg = Release|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Debug|x64.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Dokan Debug|Win32.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Dokan Debug|x64.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.PFM Debug|Win32.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.PFM Debug|Win32.Build.0 = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.PFM Debug|x64.ActiveCfg = Debug|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Release|Win32.ActiveCfg = Release|Win32
+		{D5F3BB3A-4D11-4F0C-B218-B6A991F28315}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -191,8 +191,7 @@ char *sqfs_str_utf8(const wchar_t *wide) {
 }
 
 /* Wrapper for main, to handle wide chars */
-extern int sqfs_main_real(int argc, _TCHAR *argv[]);
-int sqfs_main(void) {
+int sqfs_main(int (*fp)(int argc, _TCHAR *argv[])) {
   int argc;
   LPWSTR cli, *wargv;
   
@@ -200,7 +199,7 @@ int sqfs_main(void) {
   wargv = CommandLineToArgvW(cli, &argc);
   
   #if UNICODE
-    return sqfs_main_real(argc, wargv);
+    return fp(argc, wargv);
   #else
     {
       _TCHAR **argv;
@@ -210,7 +209,7 @@ int sqfs_main(void) {
         argv[i] = sqfs_str_utf8(wargv[i]);
       }
       LocalFree(wargv);
-      return sqfs_main_real(argc, argv);
+      return fp(argc, argv);
     }
   #endif
 }

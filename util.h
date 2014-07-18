@@ -52,10 +52,10 @@ void sqfs_print_init(void);
   char *sqfs_str_utf8(const wchar_t *wide);
   
   #include <tchar.h>
-  int sqfs_main(void);
-  int sqfs_main_real(int argc, _TCHAR *argv[]);
   #define SQFS_MAIN \
-    int main(void) { return sqfs_main(); } \
+    int sqfs_main(int (*fp)(int argc, _TCHAR *argv[])); \
+    int sqfs_main_real(int argc, _TCHAR *argv[]); \
+    int main(void) { return sqfs_main(&sqfs_main_real); } \
     int sqfs_main_real(int argc, _TCHAR *argv[])
 #else
   #define SQFS_MAIN int main(int argc, char *argv[])
