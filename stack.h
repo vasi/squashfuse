@@ -43,10 +43,14 @@ void sqfs_stack_destroy(sqfs_stack *s);
 
 sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout);
 bool sqfs_stack_pop(sqfs_stack *s);
+void sqfs_stack_clear(sqfs_stack *s);
 
 size_t sqfs_stack_size(const sqfs_stack *s);
 sqfs_err sqfs_stack_at(const sqfs_stack *s, size_t i, void *vout);
 sqfs_err sqfs_stack_top(const sqfs_stack *s, void *vout);
+
+/* Copy to another stack. Assumes items can be safely memory copied */
+sqfs_err sqfs_stack_copy(const sqfs_stack *src, sqfs_stack *dst);
 
 #ifdef __cplusplus
 }

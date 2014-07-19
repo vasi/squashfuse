@@ -85,6 +85,11 @@ sqfs_err sqfs_array_append(sqfs_array *a, void *vout);
 /* Append several items, copying them into the array */
 sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count);
 
+/* Copy to another array.
+   Assumes items can be safely memory copied.
+   The destination should be in a non-created state. */
+sqfs_err sqfs_array_copy(const sqfs_array *src, sqfs_array *dst);
+
 #ifdef __cplusplus
 }
 #endif

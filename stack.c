@@ -61,3 +61,11 @@ sqfs_err sqfs_stack_at(const sqfs_stack *s, size_t i, void *vout) {
 sqfs_err sqfs_stack_top(const sqfs_stack *s, void *vout) {
   return sqfs_array_last(s, vout);
 }
+
+void sqfs_stack_clear(sqfs_stack *s) {
+  sqfs_array_shrink(s, sqfs_array_size(s));
+}
+
+sqfs_err sqfs_stack_copy(const sqfs_stack *src, sqfs_stack *dst) {
+  return sqfs_array_copy(src, dst);
+}

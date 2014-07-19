@@ -195,3 +195,21 @@ sqfs_err sqfs_array_concat(sqfs_array *a, const void *items, size_t count) {
   memcpy(vout, items, count * a->value_size);
   return SQFS_OK;
 }
+
+sqfs_err sqfs_array_copy(const sqfs_array *src, sqfs_array *dst) {
+  size_t bytes;
+  if (dst->items)
+    return SQFS_ERR; /* destination in created state */
+  
+  bytes = src->capacity * src->value_size;
+  dst->items = malloc(bytes);
+  if (!dst->items)
+    return SQFS_ERR;
+  memcpy(dst->items, src->items, bytes);
+  
+  dst->value_size = src->value_size;
+  dst->size = src->size;
+  dst->capacity = src->capacity;
+  dst->freer = src->freer;
+  return SQFS_OK;
+}
