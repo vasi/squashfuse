@@ -46,6 +46,9 @@ void sqfs_print(FILE *f, const char *str);
 /* Initialize printing */
 void sqfs_print_init(void);
 
+/* Find the next pathname component. Returns NULL when done. */
+const char *sqfs_path_next(const char **path, size_t *len);
+
 #if _WIN32
   /* Unicode conversion, returning allocated strings */
   wchar_t *sqfs_str_wide(const char *utf8);

@@ -152,6 +152,19 @@ void sqfs_print_init(void) {
 #endif
 }
 
+const char *sqfs_path_next(const char **path, size_t *len) {
+  const char *ret = *path;
+  if (!**path)
+    return NULL;
+  
+  while (**path && **path != '/')
+    ++*path;
+  *len = *path - ret;
+  while (**path && **path == '/')
+    ++*path;
+  return ret;
+}
+
 #if _WIN32
 wchar_t *sqfs_str_wide(const char *utf8) {
   size_t size, size2;

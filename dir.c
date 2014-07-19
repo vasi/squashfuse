@@ -27,6 +27,7 @@
 #include "fs.h"
 #include "nonstd.h"
 #include "swap.h"
+#include "util.h"
 
 #include <string.h>
 #include <sys/stat.h>
@@ -284,29 +285,19 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
   sqfs_err err;
   sqfs_name buf;
   sqfs_dir_entry entry;
-  
-  *found = false;
   sqfs_dentry_init(&entry, buf);
   
-  while (*path) {
-    const char *name;
+  while (true) {
     size_t size;
-    bool dfound;
-    
-    /* Find next path component */
-    while (*path == '/') /* skip leading slashes */
-      ++path;
-    
-    name = path;
-    while (*path && *path != '/')
-      ++path;
-    size = path - name;
-    if (size == 0) /* we're done */
+    const char *name = sqfs_path_next(&path, &size);
+    if (!name) /* end of path */
       break;
+    if (size == 0)
+      continue;
     
-    if ((err = sqfs_dir_lookup(fs, inode, name, size, &entry, &dfound)))
+    if ((err = sqfs_dir_lookup(fs, inode, name, size, &entry, found)))
       return err;
-    if (!dfound)
+    if (!*found)
       return SQFS_OK; /* not found */
     
     if ((err = sqfs_inode_get(fs, inode, sqfs_dentry_inode(&entry))))
