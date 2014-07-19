@@ -48,11 +48,12 @@ bool sqfs_list_empty(sqfs_list *list);
 /* Shift the first item out, return NULL if empty. Caller should free the
    item when done. */
 void *sqfs_list_shift(sqfs_list *list);
+void *sqfs_list_first(sqfs_list *list);
 
 /* `item' should be allocated, free-able with free() */
 sqfs_err sqfs_list_append(sqfs_list *list, void *item);
 
-/* Splice a list into the beginning of an existing list. Destroys the source
+/* Splice a list into the beginning of an existing list. Clears the source
    list. */
 sqfs_err sqfs_list_splice_start(sqfs_list *src, sqfs_list *dst);
 

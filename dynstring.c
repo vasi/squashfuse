@@ -42,6 +42,15 @@ char *sqfs_strdup(const char *s) {
   return ret;
 }
 
+char *sqfs_strndup(const char *s, size_t len) {
+  char *z = memchr(s, '\0', len);
+  size_t asz = z ? (z - s + 1) : (len + 1);
+  char *ret = (char*)malloc(asz);
+  if (ret)
+    strncpy(ret, s, asz);
+  return ret;
+}
+
 char *sqfs_asprintf(const char *fmt, ...) {
   va_list ap;
   sqfs_err err;

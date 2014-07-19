@@ -35,6 +35,7 @@ libsquashfuse_la_SOURCES =    \
   hash.c        hash.h        \
   input.c       input.h       \
   list.c        list.h        \
+  resolve.c     resolve.h     \
   stack.c       stack.h       \
   swap.c        swap.h        \
   table.c       table.h       \

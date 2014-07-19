@@ -66,6 +66,12 @@ void *sqfs_list_shift(sqfs_list *list) {
   return ret;
 }
 
+void *sqfs_list_first(sqfs_list *list) {
+  if (list->first)
+    return list->first->item;
+  return NULL;
+}
+
 sqfs_err sqfs_list_append(sqfs_list *list, void *item) {
   sqfs_list_node *node = malloc(sizeof(sqfs_list_node));
   if (!node)

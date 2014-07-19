@@ -22,48 +22,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_DYNSTRING_H
-#define SQFS_DYNSTRING_H
+#ifndef SQFS_RESOLVE_H
+#define SQFS_RESOLVE_H
 
-#include "array.h"
+#include "common.h"
 
-#include <stdarg.h>
+#include "fs.h"
+#include "list.h"
+#include "stack.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Utility function */
-char *sqfs_strdup(const char *s);
-char *sqfs_strndup(const char *s, size_t len);
-char *sqfs_asprintf(const char *fmt, ...);
+/* Resolve paths including symbolic links */
+typedef struct {
+  sqfs *fs;
+  sqfs_inode root;
+  sqfs_stack levels;     /* inodes */
+  sqfs_list components;  /* strings */
+} sqfs_resolver;
 
-/* A dynamically expanding string wrapper */
-typedef sqfs_array sqfs_dynstring;
+void sqfs_resolver_init(sqfs_resolver *res);
+sqfs_err sqfs_resolver_create(sqfs_resolver *res, sqfs *fs);
+void sqfs_resolver_destroy(sqfs_resolver *res);
 
-void sqfs_dynstring_init(sqfs_dynstring *s);
+/* Reset to initial state */
+sqfs_err sqfs_resolver_reset(sqfs_resolver *res);
 
-sqfs_err sqfs_dynstring_create(sqfs_dynstring *s, size_t initial);
-void sqfs_dynstring_destroy(sqfs_dynstring *s);
+/* Add a path component to end of current path */
+sqfs_err sqfs_resolver_append_name(sqfs_resolver *res, const char *name);
 
-size_t sqfs_dynstring_size(const sqfs_dynstring *s);
+/* Add a complete path to beginning of current path */
+sqfs_err sqfs_resolver_prepend_path(sqfs_resolver *res, const char *path);
 
-/* Get the contents as a C-string */
-char *sqfs_dynstring_string(sqfs_dynstring *s);
+/* Perform a resolution operation */
+sqfs_err sqfs_resolver_resolve(sqfs_resolver *res, sqfs_inode *inode,
+  bool *found);
 
-sqfs_err sqfs_dynstring_shrink(sqfs_dynstring *s, size_t shrink);
-sqfs_err sqfs_dynstring_concat(sqfs_dynstring *s, const char *cat);
-sqfs_err sqfs_dynstring_concat_size(sqfs_dynstring *s, const char *cat,
-  size_t size);
-
-/* Print into the dynstring */
-sqfs_err sqfs_dynstring_format(sqfs_dynstring *s, const char *fmt, ...);
-sqfs_err sqfs_dynstring_vformat(sqfs_dynstring *s, const char *fmt,
-  va_list ap);
-
-/* Return the contents as a char* and destroy the dynstring. The return
-   value must be deallocated by the caller */
-char *sqfs_dynstring_detach(sqfs_dynstring *s);
+/* Copy the current resolver state */
+sqfs_err sqfs_resolver_copy(const sqfs_resolver *src, sqfs_resolver *dst);
 
 #ifdef __cplusplus
 }
