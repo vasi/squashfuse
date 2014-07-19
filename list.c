@@ -22,24 +22,70 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_SQUASHFUSE_H
-#define SQFS_SQUASHFUSE_H
+#include "list.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "stdlib.h"
 
-#include "dir.h"
-#include "file.h"
-#include "fs.h"
-#include "resolve.h"
-#include "thread.h"
-#include "traverse.h"
-#include "util.h"
-#include "xattr.h"
+struct sqfs_list_node {
+  sqfs_list_node *next;
+  void *item;
+};
 
-#ifdef __cplusplus
+void sqfs_list_create(sqfs_list *list) {
+  list->first = NULL;
+  list->last = NULL;
 }
-#endif
 
-#endif
+void sqfs_list_clear(sqfs_list *list) {
+  sqfs_list_node *n, *next;
+  for (n = list->first; n; n = next) {
+    next = n->next;
+    free(n->item);
+    free(n);
+  }
+  sqfs_list_create(list);
+}
+
+bool sqfs_list_empty(sqfs_list *list) {
+  return list->first != NULL;
+}
+
+void *sqfs_list_shift(sqfs_list *list) {
+  sqfs_list_node *node;
+  void *ret;
+  
+  node = list->first;
+  if (!node)
+    return NULL;
+  ret = node->item;
+  
+  list->first = node->next;
+  if (!list->first)
+    list->last = NULL;
+  free(node);
+  return ret;
+}
+
+sqfs_err sqfs_list_append(sqfs_list *list, void *item) {
+  sqfs_list_node *node = malloc(sizeof(sqfs_list_node));
+  if (!node)
+    return SQFS_ERR;
+  node->item = item;
+  node->next = NULL;
+  
+  if (list->last)
+    list->last->next = node;
+  else
+    list->first = node;
+  list->last = node;
+  return SQFS_OK;
+}
+
+sqfs_err sqfs_list_splice_start(sqfs_list *src, sqfs_list *dst) {
+  if (src->first) {
+    src->last->next = dst->first;
+    dst->first = src->first;
+    sqfs_list_create(src);
+  }
+  return SQFS_OK;
+}

@@ -22,21 +22,39 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_SQUASHFUSE_H
-#define SQFS_SQUASHFUSE_H
+#ifndef SQFS_LIST_H
+#define SQFS_LIST_H
+
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "dir.h"
-#include "file.h"
-#include "fs.h"
-#include "resolve.h"
-#include "thread.h"
-#include "traverse.h"
-#include "util.h"
-#include "xattr.h"
+struct sqfs_list_node;
+typedef struct sqfs_list_node sqfs_list_node;
+
+/* Singly-linked list */
+typedef struct {
+  sqfs_list_node *first, *last;
+} sqfs_list;
+
+void sqfs_list_create(sqfs_list *list);
+void sqfs_list_clear(sqfs_list *list);
+
+/* Check if we're empty */
+bool sqfs_list_empty(sqfs_list *list);
+
+/* Shift the first item out, return NULL if empty. Caller should free the
+   item when done. */
+void *sqfs_list_shift(sqfs_list *list);
+
+/* `item' should be allocated, free-able with free() */
+sqfs_err sqfs_list_append(sqfs_list *list, void *item);
+
+/* Splice a list into the beginning of an existing list. Destroys the source
+   list. */
+sqfs_err sqfs_list_splice_start(sqfs_list *src, sqfs_list *dst);
 
 #ifdef __cplusplus
 }
