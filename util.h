@@ -36,6 +36,6 @@ sqfs_err sqfs_fd_open(const char *path, sqfs_fd_t *fd, bool print);
 void sqfs_fd_close(sqfs_fd_t fd);
 
 /* Open a filesystem and print errors to stderr. */
-sqfs_err sqfs_open_image(sqfs *fs, const char *image);
+sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset);
 
 #endif

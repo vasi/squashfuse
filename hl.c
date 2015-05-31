@@ -246,7 +246,7 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
 	} else {
 		memset(hl, 0, sizeof(*hl));
 	
-		if (sqfs_open_image(&hl->fs, path) == SQFS_OK) {
+		if (sqfs_open_image(&hl->fs, path, 0) == SQFS_OK) {
 			if (sqfs_inode_get(&hl->fs, &hl->root, sqfs_inode_root(&hl->fs)))
 				fprintf(stderr, "Can't find the root of this filesystem!\n");
 			else
