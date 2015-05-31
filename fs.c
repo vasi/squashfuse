@@ -208,7 +208,7 @@ sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block) {
 	if (!entry) {
 		sqfs_err err = SQFS_OK;
 		entry = sqfs_cache_add(&fs->md_cache, *pos);
-		fprintf(stderr, "MD BLOCK: %ld\n", (long long)*pos);
+		fprintf(stderr, "MD BLOCK: %lld\n", (long long)*pos);
 		err = sqfs_md_block_read(fs, *pos,
 			&entry->data_size, &entry->block);
 		if (err)

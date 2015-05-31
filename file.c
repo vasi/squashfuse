@@ -56,7 +56,7 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 	if (err)
 		return err;
 	
-	err = sqfs_data_cache(fs, &fs->frag_cache, frag.start_block,
+	err = sqfs_data_cache(fs, &fs->frag_cache, frag.start_block + fs->file_offset,
 		frag.size, block);
 	if (err)
 		return SQFS_ERR;
@@ -82,7 +82,7 @@ void sqfs_blocklist_init(sqfs *fs, sqfs_inode *inode, sqfs_blocklist *bl) {
 	bl->cur = inode->next;
 	bl->started = false;
 	bl->pos = 0;
-	bl->block = inode->xtra.reg.start_block;
+	bl->block = inode->xtra.reg.start_block + fs->file_offset;
 	bl->input_size = 0;
 }
 
