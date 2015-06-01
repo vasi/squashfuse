@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 #define PROGNAME "squashfuse_ls"
@@ -51,12 +52,17 @@ int main(int argc, char *argv[]) {
 	sqfs_traverse trv;
 	sqfs fs;
 	char *image;
+	size_t offset = 0;
 
 	if (argc != 2)
 		usage();
 	image = argv[1];
 
-	if ((err = sqfs_open_image(&fs, image, 0)))
+	if (strcmp(image, "./offset.sfs") == 0){
+		offset = 3000;
+	}
+
+	if ((err = sqfs_open_image(&fs, image, offset)))
 		exit(ERR_OPEN);
 	
 	if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))

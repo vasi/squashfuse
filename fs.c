@@ -64,20 +64,12 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
 		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);
 
-	//bytes_used = 3405, 
-
 	fs->sb.id_table_start += fs->file_offset;
-
 	fs->sb.inode_table_start += fs->file_offset;
 	fs->sb.directory_table_start += fs->file_offset;
-
 	fs->sb.fragment_table_start += fs->file_offset;
 	fs->sb.lookup_table_start += fs->file_offset;
 
-	//fs->sb.bytes_used += fs->file_offset;
-	//fs->sb.xattr_id_table_start += fs->file_offset;
-	//fs->xattr_info.xattr_table_start += fs->file_offset;
-	
 	if (fs->sb.s_magic != SQUASHFS_MAGIC) {
 		if (fs->sb.s_magic != SQFS_MAGIC_SWAP)
 			return SQFS_BADFORMAT;
@@ -208,7 +200,7 @@ sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block) {
 	if (!entry) {
 		sqfs_err err = SQFS_OK;
 		entry = sqfs_cache_add(&fs->md_cache, *pos);
-		fprintf(stderr, "MD BLOCK: %lld\n", (long long)*pos);
+		/* fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos); */
 		err = sqfs_md_block_read(fs, *pos,
 			&entry->data_size, &entry->block);
 		if (err)

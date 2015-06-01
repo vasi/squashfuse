@@ -241,9 +241,7 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
 	sqfs_hl *hl;
 	size_t offset = 0;
 
-	if (strcmp(path, "./win.sfs") == 0){
-		offset = 0;
-	}else{
+	if (strcmp(path, "./offset.sfs") == 0){
 		offset = 3000;
 	}
 	

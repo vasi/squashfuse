@@ -365,9 +365,7 @@ static sqfs_ll *sqfs_ll_open(const char *path) {
 	sqfs_ll *ll;
 	size_t offset = 0;
 
-	if (strcmp(path, "./win.sfs") == 0){
-		offset = 0;
-	}else{
+	if (strcmp(path, "./offset.sfs") == 0){
 		offset = 3000;
 	}
 	
