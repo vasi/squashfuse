@@ -53,12 +53,13 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
-	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
+	fs->offset = offset;
+	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), fs->offset) != sizeof(fs->sb))
 		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);
 	
@@ -74,12 +75,12 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
 	if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
 		return SQFS_BADCOMP;
 	
-	err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start,
+	err = sqfs_table_init(&fs->id_table, fd, fs->sb.id_table_start + fs->offset,
 		sizeof(uint32_t), fs->sb.no_ids);
-	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start,
+	err |= sqfs_table_init(&fs->frag_table, fd, fs->sb.fragment_table_start + fs->offset,
 		sizeof(struct squashfs_fragment_entry), fs->sb.fragments);
 	if (sqfs_export_ok(fs)) {
-		err |= sqfs_table_init(&fs->export_table, fd, fs->sb.lookup_table_start,
+		err |= sqfs_table_init(&fs->export_table, fd, fs->sb.lookup_table_start + fs->offset,
 			sizeof(uint64_t), fs->sb.inodes);
 	}
 	err |= sqfs_xattr_init(fs);
@@ -126,7 +127,7 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
 	if (!((*block)->data = malloc(size)))
 		goto error;
 	
-	if (sqfs_pread(fs->fd, (*block)->data, size, pos) != size)
+	if (sqfs_pread(fs->fd, (*block)->data, size, pos + fs->offset) != size)
 		goto error;
 
 	if (compressed) {
@@ -163,7 +164,7 @@ sqfs_err sqfs_md_block_read(sqfs *fs, sqfs_off_t pos, size_t *data_size,
 	
 	*data_size = 0;
 	
-	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos) != sizeof(hdr))
+	if (sqfs_pread(fs->fd, &hdr, sizeof(hdr), pos + fs->offset) != sizeof(hdr))
 		return SQFS_ERR;
 	pos += sizeof(hdr);
 	*data_size += sizeof(hdr);

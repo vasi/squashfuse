@@ -47,6 +47,7 @@ typedef struct {
 	char *progname;
 	const char *image;
 	int mountpoint;
+	size_t offset;
 } sqfs_opts;
 int sqfs_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);

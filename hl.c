@@ -242,7 +242,7 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
 	return real;
 }
 
-static sqfs_hl *sqfs_hl_open(const char *path) {
+static sqfs_hl *sqfs_hl_open(const char *path, size_t offset) {
 	sqfs_hl *hl;
 	
 	hl = malloc(sizeof(*hl));
@@ -250,8 +250,7 @@ static sqfs_hl *sqfs_hl_open(const char *path) {
 		perror("Can't allocate memory");
 	} else {
 		memset(hl, 0, sizeof(*hl));
-	
-		if (sqfs_open_image(&hl->fs, path) == SQFS_OK) {
+		if (sqfs_open_image(&hl->fs, path, offset) == SQFS_OK) {
 			if (sqfs_inode_get(&hl->fs, &hl->root, sqfs_inode_root(&hl->fs)))
 				fprintf(stderr, "Can't find the root of this filesystem!\n");
 			else
@@ -270,6 +269,11 @@ int main(int argc, char *argv[]) {
 	sqfs_hl *hl;
 	int ret;
 	
+	struct fuse_opt fuse_opts[] = {
+		FUSE_OPT_KEY("--offset=", 1),
+		FUSE_OPT_END
+	};
+
 	struct fuse_operations sqfs_hl_ops;
 	memset(&sqfs_hl_ops, 0, sizeof(sqfs_hl_ops));
 	sqfs_hl_ops.init			= sqfs_hl_op_init;
@@ -293,12 +297,13 @@ int main(int argc, char *argv[]) {
 	opts.progname = argv[0];
 	opts.image = NULL;
 	opts.mountpoint = 0;
-	if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
+	opts.offset = 0;
+	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 	if (!opts.image)
 		sqfs_usage(argv[0], true);
 	
-	hl = sqfs_hl_open(opts.image);
+	hl = sqfs_hl_open(opts.image, opts.offset);
 	if (!hl)
 		return -1;
 	

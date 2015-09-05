@@ -59,13 +59,13 @@ sqfs_err sqfs_xattr_init(sqfs *fs) {
 		return SQFS_OK;
 	
 	bread = sqfs_pread(fs->fd, &fs->xattr_info, sizeof(fs->xattr_info),
-		start);
+		start + fs->offset);
 	if (bread != sizeof(fs->xattr_info))
 		return SQFS_ERR;
 	sqfs_swapin_xattr_id_table(&fs->xattr_info);
 	
 	return sqfs_table_init(&fs->xattr_table, fs->fd,
-		start + sizeof(fs->xattr_info), sizeof(struct squashfs_xattr_id),
+		start + sizeof(fs->xattr_info) + fs->offset, sizeof(struct squashfs_xattr_id),
 		fs->xattr_info.xattr_ids);
 }
 

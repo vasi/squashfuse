@@ -367,7 +367,7 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
-static sqfs_ll *sqfs_ll_open(const char *path) {
+static sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
 	sqfs_ll *ll;
 	
 	ll = malloc(sizeof(*ll));
@@ -375,8 +375,8 @@ static sqfs_ll *sqfs_ll_open(const char *path) {
 		perror("Can't allocate memory");
 	} else {
 		memset(ll, 0, sizeof(*ll));
-	
-		if (sqfs_open_image(&ll->fs, path) == SQFS_OK) {
+		ll->fs.offset = offset;
+		if (sqfs_open_image(&ll->fs, path, offset) == SQFS_OK) {
 			if (sqfs_ll_init(ll))
 				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else
@@ -398,6 +398,10 @@ int main(int argc, char *argv[]) {
 	
 	int err;
 	sqfs_ll *ll;
+	struct fuse_opt fuse_opts[] = {
+		FUSE_OPT_KEY("--offset=", 1),
+		FUSE_OPT_END
+	};
 	
 	struct fuse_lowlevel_ops sqfs_ll_ops;
 	memset(&sqfs_ll_ops, 0, sizeof(sqfs_ll_ops));
@@ -423,7 +427,8 @@ int main(int argc, char *argv[]) {
 	opts.progname = argv[0];
 	opts.image = NULL;
 	opts.mountpoint = 0;
-	if (fuse_opt_parse(&args, &opts, NULL, sqfs_opt_proc) == -1)
+	opts.offset = 0;
+	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 
 	if (fuse_parse_cmdline(&args, &mountpoint, &mt, &fg) == -1)
@@ -432,7 +437,7 @@ int main(int argc, char *argv[]) {
 		sqfs_usage(argv[0], true);
 	
 	/* OPEN FS */
-	err = !(ll = sqfs_ll_open(opts.image));
+	err = !(ll = sqfs_ll_open(opts.image, opts.offset));
 	
 	/* STARTUP FUSE */
 	if (!err) {
