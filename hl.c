@@ -28,6 +28,7 @@
 #include "nonstd.h"
 
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -270,7 +271,7 @@ int main(int argc, char *argv[]) {
 	int ret;
 	
 	struct fuse_opt fuse_opts[] = {
-		FUSE_OPT_KEY("--offset=", 1),
+		{"offset=%u", offsetof(sqfs_opts, offset), 0},
 		FUSE_OPT_END
 	};
 

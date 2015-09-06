@@ -123,14 +123,6 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
 	} else if (key == FUSE_OPT_KEY_OPT) {
 		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
 			sqfs_usage(opts->progname, true);
-	} else if (key == 1) {
-		errno = 0;
-		opts->offset = strtoul(arg + 9, NULL, 10);
-		if (!isdigit(arg[9]) || errno != 0) {
-			fprintf(stderr, "Invalid --offset\n");
-			return -1;
-		}
-		return 0;
 	}
 	return 1; /* Keep */
 }
