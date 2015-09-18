@@ -74,6 +74,11 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 	free(lli);
 }
 
+static void sqfs_ll_op_create(fuse_req_t req, fuse_ino_t parent, const char *name,
+			      mode_t mode, struct fuse_file_info *fi) {
+	fuse_reply_err(req, EROFS);
+}
+
 static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_ll_i*)(intptr_t)fi->fh);
@@ -402,6 +407,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ll_ops.readdir		= sqfs_ll_op_readdir;
 	sqfs_ll_ops.lookup		= sqfs_ll_op_lookup;
 	sqfs_ll_ops.open		= sqfs_ll_op_open;
+	sqfs_ll_ops.create		= sqfs_ll_op_create;
 	sqfs_ll_ops.release		= sqfs_ll_op_release;
 	sqfs_ll_ops.read		= sqfs_ll_op_read;
 	sqfs_ll_ops.readlink	= sqfs_ll_op_readlink;
