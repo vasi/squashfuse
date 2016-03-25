@@ -161,6 +161,7 @@ static int sqfs_hl_op_open(const char *path, struct fuse_file_info *fi) {
 	}
 	
 	fi->fh = (intptr_t)inode;
+	fi->keep_cache = 1;
 	return 0;
 }
 
