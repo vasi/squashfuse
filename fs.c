@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <stdio.h>
 
 
 #define DATA_CACHED_BLKS 1
@@ -53,15 +54,22 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd) {
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
-	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), 0) != sizeof(fs->sb))
+	fs->file_offset = offset;
+	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), fs->file_offset) != sizeof(fs->sb))
 		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);
-	
+
+	fs->sb.id_table_start += fs->file_offset;
+	fs->sb.inode_table_start += fs->file_offset;
+	fs->sb.directory_table_start += fs->file_offset;
+	fs->sb.fragment_table_start += fs->file_offset;
+	fs->sb.lookup_table_start += fs->file_offset;
+
 	if (fs->sb.s_magic != SQUASHFS_MAGIC) {
 		if (fs->sb.s_magic != SQFS_MAGIC_SWAP)
 			return SQFS_BADFORMAT;
@@ -239,7 +247,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		
 		take = block->size - cur->offset;
 		if (take > size)
-			take = size;		
+			take = size;
 		if (buf)
 			memcpy(buf, (char*)block->data + cur->offset, take);
 		/* BLOCK CACHED, DON'T DISPOSE */
@@ -335,13 +343,13 @@ static void sqfs_decode_dev(sqfs_inode *i, uint32_t rdev) {
 sqfs_err sqfs_inode_get(sqfs *fs, sqfs_inode *inode, sqfs_inode_id id) {
 	sqfs_md_cursor cur;
 	sqfs_err err = SQFS_OK;
-	
+
 	memset(inode, 0, sizeof(*inode));
 	inode->xattr = SQUASHFS_INVALID_XATTR;
 	
 	sqfs_md_cursor_inode(&cur, id, fs->sb.inode_table_start);
 	inode->next = cur;
-	
+
 	err = sqfs_md_read(fs, &cur, &inode->base, sizeof(inode->base));
 	if (err)
 		return err;

@@ -71,7 +71,7 @@ sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
 	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
 		off = pos % SQUASHFS_METADATA_SIZE;
 	
-	sqfs_off_t bpos = table->blocks[bnum];
+	sqfs_off_t bpos = table->blocks[bnum] + fs->file_offset;
 	if (sqfs_md_cache(fs, &bpos, &block))
 		return SQFS_ERR;
 	

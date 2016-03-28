@@ -143,7 +143,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 	sqfs_dir_entry entry;
 	bool found;
 	sqfs_inode inode;
-	
+
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
 	
@@ -364,6 +364,11 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 
 static sqfs_ll *sqfs_ll_open(const char *path) {
 	sqfs_ll *ll;
+	size_t offset = 0;
+
+	if (strcmp(path, "./offset.sfs") == 0){
+		offset = 3000;
+	}
 	
 	ll = malloc(sizeof(*ll));
 	if (!ll) {
@@ -371,7 +376,7 @@ static sqfs_ll *sqfs_ll_open(const char *path) {
 	} else {
 		memset(ll, 0, sizeof(*ll));
 	
-		if (sqfs_open_image(&ll->fs, path) == SQFS_OK) {
+		if (sqfs_open_image(&ll->fs, path, offset) == SQFS_OK) {
 			if (sqfs_ll_init(ll))
 				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else
