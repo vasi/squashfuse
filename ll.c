@@ -203,6 +203,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 		fuse_reply_err(req, EISDIR);
 	} else {
 		fi->fh = (intptr_t)inode;
+		fi->keep_cache = 1;
 		fuse_reply_open(req, fi);
 		return;
 	}
