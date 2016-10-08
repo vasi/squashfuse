@@ -109,6 +109,9 @@ detailed instructions:
    But if you'd rather install it, run `make install'. If you need root
    privileges, `sudo make install' may work.
 
+2e. Example: Ubuntu
+-------------------
+
 For example on Ubuntu 16.04:
 
 sudo apt-get -y install git autoconf libtool make gcc libtool libfuse-dev liblzma-dev
@@ -120,7 +123,8 @@ autoconf
 ./configure --with-xz=/usr/lib/
 make
 
-2d. Usage
+
+2e. Usage
 ---------
 You'll need a SquashFS archive to use squashfuse. If you don't already have
 one, you can create one using the `mksquashfs' utility from the squashfs-tools
