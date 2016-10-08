@@ -109,6 +109,16 @@ detailed instructions:
    But if you'd rather install it, run `make install'. If you need root
    privileges, `sudo make install' may work.
 
+For example on Ubuntu 16.04:
+
+sudo apt-get -y install git autoconf libtool make gcc libtool libfuse-dev liblzma-dev
+libtoolize --force
+aclocal
+autoheader
+automake --force-missing --add-missing
+autoconf
+./configure --with-xz=/usr/lib/
+make
 
 2d. Usage
 ---------
