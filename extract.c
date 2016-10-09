@@ -1,4 +1,5 @@
 #include "squashfuse.h"
+#include "fuseprivate.h"
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -7,6 +8,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "squashfs_fs.h"
+
 
 #define PROGNAME "squashfuse_extract"
 
@@ -41,6 +43,7 @@ int main(int argc, char *argv[]) {
     char *path_to_extract;
     char *prefix;
     char prefixed_path_to_extract[1024];
+    struct stat st;
     
     prefix = "squashfs-root/";
     
@@ -79,11 +82,26 @@ int main(int argc, char *argv[]) {
                     if(access(prefixed_path_to_extract, F_OK ) == -1 ) {
                         if (mkdir(prefixed_path_to_extract, 0777) == -1) {
                             perror("mkdir error");
-                            exit(EXIT_FAILURE);
+                            exit(1);
                         }
                     }
                 } else if(inode.base.inode_type == SQUASHFS_REG_TYPE){
                     fprintf(stderr, "Extract to: %s\n", prefixed_path_to_extract);
+                    if(sqfs_stat(&fs, &inode, &st) != 0)
+                        die("sqfs_stat error");
+                    printf("Permissions: ");
+                    printf( (S_ISDIR(st.st_mode)) ? "d" : "-");
+                    printf( (st.st_mode & S_IRUSR) ? "r" : "-");
+                    printf( (st.st_mode & S_IWUSR) ? "w" : "-");
+                    printf( (st.st_mode & S_IXUSR) ? "x" : "-");
+                    printf( (st.st_mode & S_IRGRP) ? "r" : "-");
+                    printf( (st.st_mode & S_IWGRP) ? "w" : "-");
+                    printf( (st.st_mode & S_IXGRP) ? "x" : "-");
+                    printf( (st.st_mode & S_IROTH) ? "r" : "-");
+                    printf( (st.st_mode & S_IWOTH) ? "w" : "-");
+                    printf( (st.st_mode & S_IXOTH) ? "x" : "-");
+                    printf("\n");
+        
                     // Read the file in chunks
                     off_t bytes_already_read = 0;
                     size_t bytes_at_a_time = 1024; 
@@ -102,6 +120,7 @@ int main(int argc, char *argv[]) {
                         bytes_already_read = bytes_already_read + bytes_at_a_time;
                     }
                     fclose(f);
+                    chmod (prefixed_path_to_extract, st.st_mode);
                 } else if(inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
                     size_t size = 1024;
                     char *buf = malloc(size);
