@@ -156,10 +156,12 @@ int main(int argc, char *argv[]) {
                 } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
                     size_t size = strlen(trv.path)+1;
                     char buf[size];
-                    sqfs_readlink(&fs, &inode, buf, &size);
+                    int ret = sqfs_readlink(&fs, &inode, buf, &size);
+                    if (ret != 0)
+                        die("sqfs_readlink error");
                     fprintf(stderr, "Symlink: %s to %s \n", prefixed_path_to_extract, buf);
                     unlink(prefixed_path_to_extract);
-                    int ret = symlink(buf, prefixed_path_to_extract);
+                    ret = symlink(buf, prefixed_path_to_extract);
                     if (ret != 0)
                         die("symlink error");
                 } else {
