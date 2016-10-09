@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
                     size_t bytes_at_a_time = 1024; 
                     FILE * f;
                     f = fopen (trv.path, "w+");
+                    if (f == NULL)
+                        die("fopen error");
                     while (bytes_already_read < inode.xtra.reg.file_size)
                     {
                         char *buf = malloc(bytes_at_a_time);
