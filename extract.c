@@ -39,6 +39,17 @@ int main(int argc, char *argv[]) {
     sqfs fs;
     char *image;
     char *path_to_extract;
+    char *prefix;
+    char prefixed_path_to_extract[1024];
+    
+    prefix = "squashfs-root/";
+    
+    if(access(prefix, F_OK ) == -1 ) {
+        if (mkdir(prefix, 0777) == -1) {
+            perror("mkdir error");
+            exit(EXIT_FAILURE);
+        }
+    }
     
     if (argc != 3)
         usage();
@@ -60,22 +71,24 @@ int main(int argc, char *argv[]) {
                     die("sqfs_inode_get error");
                 fprintf(stderr, "inode.base.inode_type: %i\n", inode.base.inode_type);
                 fprintf(stderr, "inode.xtra.reg.file_size: %lu\n", inode.xtra.reg.file_size);
+                strcpy(prefixed_path_to_extract, "");
+                strcat(strcat(prefixed_path_to_extract, prefix), trv.path);
                 if(inode.base.inode_type == SQUASHFS_DIR_TYPE){
                     fprintf(stderr, "inode.xtra.dir.parent_inode: %ui\n", inode.xtra.dir.parent_inode);
-                    fprintf(stderr, "mkdir: %s/\n", trv.path);
-                    if(access(trv.path, F_OK ) == -1 ) {
-                        if (mkdir(trv.path, 0777) == -1) {
+                    fprintf(stderr, "mkdir: %s/\n", prefixed_path_to_extract);
+                    if(access(prefixed_path_to_extract, F_OK ) == -1 ) {
+                        if (mkdir(prefixed_path_to_extract, 0777) == -1) {
                             perror("mkdir error");
                             exit(EXIT_FAILURE);
                         }
                     }
                 } else if(inode.base.inode_type == SQUASHFS_REG_TYPE){
-                    fprintf(stderr, "Extract to: %s\n", trv.path);
+                    fprintf(stderr, "Extract to: %s\n", prefixed_path_to_extract);
                     // Read the file in chunks
                     off_t bytes_already_read = 0;
                     size_t bytes_at_a_time = 1024; 
                     FILE * f;
-                    f = fopen (trv.path, "w+");
+                    f = fopen (prefixed_path_to_extract, "w+");
                     if (f == NULL)
                         die("fopen error");
                     while (bytes_already_read < inode.xtra.reg.file_size)
@@ -93,9 +106,9 @@ int main(int argc, char *argv[]) {
                     size_t size = 1024;
                     char *buf = malloc(size);
                     sqfs_readlink(&fs, &inode, buf, &size);
-                    fprintf(stderr, "Symlink: %s to %s \n", trv.path, buf);
-                    unlink(trv.path);
-                    int ret = symlink(buf, trv.path);
+                    fprintf(stderr, "Symlink: %s to %s \n", prefixed_path_to_extract, buf);
+                    unlink(prefixed_path_to_extract);
+                    int ret = symlink(buf, prefixed_path_to_extract);
                     if (ret != 0)
                         die("symlink error");
                     free(buf);
