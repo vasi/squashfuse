@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
         
                     // Read the file in chunks
                     off_t bytes_already_read = 0;
-                    size_t bytes_at_a_time = 1024; 
+                    size_t bytes_at_a_time = 64*1024; 
                     FILE * f;
                     f = fopen (prefixed_path_to_extract, "w+");
                     if (f == NULL)
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
                     fclose(f);
                     chmod (prefixed_path_to_extract, st.st_mode);
                 } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
-                    size_t size = 1024;
+                    size_t size = strlen(trv.path)+1;
                     char *buf = malloc(size);
                     sqfs_readlink(&fs, &inode, buf, &size);
                     fprintf(stderr, "Symlink: %s to %s \n", prefixed_path_to_extract, buf);
