@@ -90,7 +90,15 @@ int main(int argc, char *argv[]) {
                     }
                     fclose(f);
                 } else if(inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
-                    fprintf(stderr, "TODO: Implement symlink: ./%s\n", trv.path);
+                    size_t size = 1024;
+                    char *buf = malloc(size);
+                    sqfs_readlink(&fs, &inode, buf, &size);
+                    // fwrite(buf, 1, size, stdout);
+                    fprintf(stderr, "Symlink: %s to %s \n", trv.path, buf );
+                    int ret = symlink(buf, trv.path);
+                    if (ret != 0)
+                        die("symlink error");
+                    free(buf);
                 } else {
                     fprintf(stderr, "TODO: Implement inode.base.inode_type %i\n", inode.base.inode_type);
                 }
