@@ -16,7 +16,7 @@
 
 static void usage() {
     fprintf(stderr, "Usage: %s ARCHIVE PATH_TO_EXTRACT\n", PROGNAME);
-    fprintf(stderr, "       %s -a\n", PROGNAME);
+    fprintf(stderr, "       %s ARCHIVE -a\n", PROGNAME);
     exit(ERR_USAGE);
 }
 
