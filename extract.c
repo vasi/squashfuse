@@ -47,11 +47,18 @@ int main(int argc, char *argv[]) {
                 if (sqfs_inode_get(&fs, &inode, trv.entry.inode))
                     die("sqfs_inode_get error");
                 fprintf(stderr, "file_size: %lu\n", inode.xtra.reg.file_size);
-                char *buf = malloc(inode.xtra.reg.file_size);
-                if (sqfs_read_range(&fs, &inode, 0, &inode.xtra.reg.file_size, buf))
-                    die("sqfs_read_range error");
-                fwrite (buf, 1, inode.xtra.reg.file_size, stdout);
-                free(buf);
+                // Read the file in chunks
+                off_t bytes_already_read = 0;
+                size_t bytes_at_a_time = 1024;                
+                while ( bytes_already_read < inode.xtra.reg.file_size )
+                {
+                    char *buf = malloc(bytes_at_a_time);
+                    if (sqfs_read_range(&fs, &inode, bytes_already_read, &bytes_at_a_time, buf))
+                        die("sqfs_read_range error");
+                    fwrite (buf, 1, bytes_at_a_time, stdout);
+                    free(buf);                    
+                    bytes_already_read = bytes_already_read + bytes_at_a_time;
+                }
             }
         }
     }
