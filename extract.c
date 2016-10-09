@@ -58,10 +58,10 @@ int main(int argc, char *argv[]) {
                 sqfs_inode inode;
                 if (sqfs_inode_get(&fs, &inode, trv.entry.inode))
                     die("sqfs_inode_get error");
-                fprintf(stderr, "inode.base.inode_type: %lu\n", inode.base.inode_type);
+                fprintf(stderr, "inode.base.inode_type: %i\n", inode.base.inode_type);
                 fprintf(stderr, "inode.xtra.reg.file_size: %lu\n", inode.xtra.reg.file_size);
                 if(inode.base.inode_type == SQUASHFS_DIR_TYPE){
-                    fprintf(stderr, "inode.xtra.dir.parent_inode: %lu\n", inode.xtra.dir.parent_inode);
+                    fprintf(stderr, "inode.xtra.dir.parent_inode: %ui\n", inode.xtra.dir.parent_inode);
                     fprintf(stderr, "mkdir: %s/\n", trv.path);
                     if(access(trv.path, F_OK ) == -1 ) {
                         if (mkdir(trv.path, 0777) == -1) {
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
                     while (bytes_already_read < inode.xtra.reg.file_size)
                     {
                         char *buf = malloc(bytes_at_a_time);
-                        if (sqfs_read_range(&fs, &inode, bytes_already_read, &bytes_at_a_time, buf))
+                        if (sqfs_read_range(&fs, &inode, (sqfs_off_t) bytes_already_read, &bytes_at_a_time, buf))
                             die("sqfs_read_range error");
                         // fwrite(buf, 1, bytes_at_a_time, stdout);
                         fwrite(buf, 1, bytes_at_a_time, f);
@@ -93,8 +93,8 @@ int main(int argc, char *argv[]) {
                     size_t size = 1024;
                     char *buf = malloc(size);
                     sqfs_readlink(&fs, &inode, buf, &size);
-                    // fwrite(buf, 1, size, stdout);
-                    fprintf(stderr, "Symlink: %s to %s \n", trv.path, buf );
+                    fprintf(stderr, "Symlink: %s to %s \n", trv.path, buf);
+                    unlink(trv.path);
                     int ret = symlink(buf, trv.path);
                     if (ret != 0)
                         die("symlink error");
@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
                 } else {
                     fprintf(stderr, "TODO: Implement inode.base.inode_type %i\n", inode.base.inode_type);
                 }
-                
                 fprintf(stderr, "\n");
             }
         }
@@ -110,7 +109,6 @@ int main(int argc, char *argv[]) {
     if (err)
         die("sqfs_traverse_next error");
     sqfs_traverse_close(&trv);
-    
     sqfs_fd_close(fs.fd);
     return 0;
 }
