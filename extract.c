@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     
     prefix = "squashfs-root/";
     
-    if(access(prefix, F_OK ) == -1 ) {
+    if (access(prefix, F_OK ) == -1 ) {
         if (mkdir(prefix, 0777) == -1) {
             perror("mkdir error");
             exit(EXIT_FAILURE);
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
         die("sqfs_traverse_open error");
     while (sqfs_traverse_next(&trv, &err)) {
         if (!trv.dir_end) {
-            if((startsWith(path_to_extract, trv.path) != 0) || (strcmp("-a", path_to_extract) == 0)){
+            if ((startsWith(path_to_extract, trv.path) != 0) || (strcmp("-a", path_to_extract) == 0)){
                 fprintf(stderr, "trv.path: %s\n", trv.path);
                 fprintf(stderr, "sqfs_inode_id: %lu\n", trv.entry.inode);
                 sqfs_inode inode;
@@ -109,18 +109,18 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "inode.xtra.reg.file_size: %lu\n", inode.xtra.reg.file_size);
                 strcpy(prefixed_path_to_extract, "");
                 strcat(strcat(prefixed_path_to_extract, prefix), trv.path);
-                if(inode.base.inode_type == SQUASHFS_DIR_TYPE){
+                if (inode.base.inode_type == SQUASHFS_DIR_TYPE){
                     fprintf(stderr, "inode.xtra.dir.parent_inode: %ui\n", inode.xtra.dir.parent_inode);
                     fprintf(stderr, "mkdir: %s/\n", prefixed_path_to_extract);
-                    if(access(prefixed_path_to_extract, F_OK ) == -1 ) {
+                    if (access(prefixed_path_to_extract, F_OK ) == -1 ) {
                         if (mkdir(prefixed_path_to_extract, 0777) == -1) {
                             perror("mkdir error");
                             exit(1);
                         }
                     }
-                } else if(inode.base.inode_type == SQUASHFS_REG_TYPE){
+                } else if (inode.base.inode_type == SQUASHFS_REG_TYPE){
                     fprintf(stderr, "Extract to: %s\n", prefixed_path_to_extract);
-                    if(sqfs_stat(&fs, &inode, &st) != 0)
+                    if (sqfs_stat(&fs, &inode, &st) != 0)
                         die("sqfs_stat error");
                     printf("Permissions: ");
                     printf( (S_ISDIR(st.st_mode)) ? "d" : "-");
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
                     }
                     fclose(f);
                     chmod (prefixed_path_to_extract, st.st_mode);
-                } else if(inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
+                } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
                     size_t size = 1024;
                     char *buf = malloc(size);
                     sqfs_readlink(&fs, &inode, buf, &size);
