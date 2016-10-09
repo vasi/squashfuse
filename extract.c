@@ -144,12 +144,11 @@ int main(int argc, char *argv[]) {
                         die("fopen error");
                     while (bytes_already_read < inode.xtra.reg.file_size)
                     {
-                        char *buf = malloc(bytes_at_a_time);
+                        char buf[bytes_at_a_time];
                         if (sqfs_read_range(&fs, &inode, (sqfs_off_t) bytes_already_read, &bytes_at_a_time, buf))
                             die("sqfs_read_range error");
                         // fwrite(buf, 1, bytes_at_a_time, stdout);
-                        fwrite(buf, 1, bytes_at_a_time, f);
-                        free(buf);                    
+                        fwrite(buf, 1, bytes_at_a_time, f);                 
                         bytes_already_read = bytes_already_read + bytes_at_a_time;
                     }
                     fclose(f);
