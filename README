@@ -110,7 +110,22 @@ detailed instructions:
    privileges, `sudo make install' may work.
 
 
-2d. Usage
+2d. Example: Ubuntu
+-------------------
+
+For example on Ubuntu 16.04:
+
+sudo apt-get -y install git autoconf libtool make gcc libtool libfuse-dev liblzma-dev
+libtoolize --force
+aclocal
+autoheader
+automake --force-missing --add-missing
+autoconf
+./configure --with-xz=/usr/lib/
+make
+
+
+2e. Usage
 ---------
 You'll need a SquashFS archive to use squashfuse. If you don't already have
 one, you can create one using the `mksquashfs' utility from the squashfs-tools

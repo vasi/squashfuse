@@ -60,6 +60,12 @@ if SQ_WANT_DEMO
 noinst_PROGRAMS += squashfuse_ls
 squashfuse_ls_SOURCES = ls.c
 squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS)
+# Sample program squashfuse_extract
+noinst_PROGRAMS += squashfuse_extract
+squashfuse_extract_CPPFLAGS = $(FUSE_CPPFLAGS)
+squashfuse_extract_SOURCES = extract.c
+squashfuse_extract_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
+  $(FUSE_LIBS)
 endif
 
 # Handle generation of swap include files
