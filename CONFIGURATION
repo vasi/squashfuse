@@ -14,5 +14,6 @@ These are the most useful options to ./configure:
   --with-xz=PREFIX
   --with-lzo=PREFIX
   --with-lz4=PREFIX
+  --with-zstd=PREFIX
   
 More options are available in `./configure --help'
