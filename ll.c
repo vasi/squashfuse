@@ -368,7 +368,7 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
-static sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
+static sqfs_ll *sqfs_ll_open(const char *path, size_t offset, int uid, int gid) {
 	sqfs_ll *ll;
 	
 	ll = malloc(sizeof(*ll));
@@ -377,7 +377,7 @@ static sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
 	} else {
 		memset(ll, 0, sizeof(*ll));
 		ll->fs.offset = offset;
-		if (sqfs_open_image(&ll->fs, path, offset) == SQFS_OK) {
+		if (sqfs_open_image(&ll->fs, path, offset, uid, gid) == SQFS_OK) {
 			if (sqfs_ll_init(ll))
 				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else
@@ -401,6 +401,8 @@ int main(int argc, char *argv[]) {
 	sqfs_ll *ll;
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%u", offsetof(sqfs_opts, offset), 0},
+		{"uid=%s", offsetof(sqfs_opts, uid_str), 0},
+		{"gid=%s", offsetof(sqfs_opts, gid_str), 0},
 		FUSE_OPT_END
 	};
 	
@@ -429,6 +431,8 @@ int main(int argc, char *argv[]) {
 	opts.image = NULL;
 	opts.mountpoint = 0;
 	opts.offset = 0;
+	opts.uid_str = 0;
+	opts.gid_str = 0;
 	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 
@@ -436,9 +440,11 @@ int main(int argc, char *argv[]) {
 		sqfs_usage(argv[0], true);
 	if (mountpoint == NULL)
 		sqfs_usage(argv[0], true);
+	if (sqfs_get_ids(&opts))
+	    return -1;
 	
 	/* OPEN FS */
-	err = !(ll = sqfs_ll_open(opts.image, opts.offset));
+	err = !(ll = sqfs_ll_open(opts.image, opts.offset, opts.uid, opts.gid));
 	
 	/* STARTUP FUSE */
 	if (!err) {

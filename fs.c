@@ -53,12 +53,14 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, int uid, int gid) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
 	fs->fd = fd;
 	fs->offset = offset;
+	fs->uid = uid;
+	fs->gid = gid;
 	if (sqfs_pread(fd, &fs->sb, sizeof(fs->sb), fs->offset) != sizeof(fs->sb))
 		return SQFS_BADFORMAT;
 	sqfs_swapin_super_block(&fs->sb);

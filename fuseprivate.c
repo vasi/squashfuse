@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "nonstd.h"
 
@@ -57,9 +59,9 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
 	err = sqfs_id_get(fs, inode->base.uid, &id);
 	if (err)
 		return err;
-	st->st_uid = id;
+	st->st_uid = fs->uid >= 0 ? fs->uid : id;
 	err = sqfs_id_get(fs, inode->base.guid, &id);
-	st->st_gid = id;
+	st->st_gid = fs->gid >= 0 ? fs->gid : id;
 	if (err)
 		return err;
 	
@@ -126,3 +128,63 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
 	}
 	return 1; /* Keep */
 }
+
+bool all_digits(const char *s)
+{
+    while (*s)
+    {
+	if (!isdigit(*s))
+	    return false;
+	s++;
+    }
+    return true;
+}
+
+sqfs_err sqfs_get_ids(sqfs_opts *opts)
+{
+    int uid = -1;
+    int gid = -1;
+    sqfs_err rc = SQFS_OK;
+
+    if (opts->uid_str == 0)
+	;
+    else if (all_digits(opts->uid_str))
+    {
+	uid = atoi(opts->uid_str);
+    }
+    else
+    {
+	struct passwd *pwd = getpwnam(opts->uid_str);
+	if (pwd)
+	    uid = pwd->pw_uid;
+	else
+	{
+	    fprintf(stderr, "failed to read uid for '%s'\n", opts->uid_str);
+	    rc = SQFS_ERR;
+	}
+    }
+
+    if (opts->gid_str == 0)
+	;
+    else if (all_digits(opts->gid_str))
+    {
+	gid = atoi(opts->gid_str);
+    }
+    else
+    {
+	struct group *grp = getgrnam(opts->gid_str);
+	if (grp)
+	    gid = grp->gr_gid;
+	else
+	{
+	    fprintf(stderr, "failed to read gid for '%s'\n", opts->gid_str);
+	    rc = SQFS_ERR;
+	}
+    }
+    
+    opts->uid = uid;
+    opts->gid = gid;
+
+    return rc;
+}
+    
