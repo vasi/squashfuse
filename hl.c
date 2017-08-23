@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
 	int ret;
 	
 	struct fuse_opt fuse_opts[] = {
-		{"offset=%u", offsetof(sqfs_opts, offset), 0},
+		{"offset=%zu", offsetof(sqfs_opts, offset), 0},
 		FUSE_OPT_END
 	};
 
