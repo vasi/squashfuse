@@ -1,3 +1,8 @@
+0.1.101
+
+  * zstd support
+  * minor bug fixes
+
 0.1.100
 
   * minor bugfixes around symlink handling
