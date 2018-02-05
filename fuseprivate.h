@@ -48,8 +48,14 @@ typedef struct {
 	const char *image;
 	int mountpoint;
 	size_t offset;
+	int uid;
+	int gid;
+	const char *uid_str;
+	const char *gid_str;
 } sqfs_opts;
 int sqfs_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);
+
+sqfs_err sqfs_get_ids(sqfs_opts *opts);
 
 #endif
