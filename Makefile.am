@@ -13,7 +13,7 @@ EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win
 bin_PROGRAMS =
 noinst_PROGRAMS =
 
-noinst_LTLIBRARIES = libsquashfuse.la
+lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
 
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
@@ -40,7 +40,6 @@ squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 
-noinst_LTLIBRARIES += libfuseprivate.la
 dist_man_MANS += squashfuse.1
 endif
 
@@ -52,7 +51,6 @@ squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 
-noinst_LTLIBRARIES += libfuseprivate.la
 endif
 
 if SQ_WANT_DEMO
