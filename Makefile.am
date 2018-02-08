@@ -14,6 +14,7 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 
 lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
+include_HEADERS = squashfuse.h squashfs_fs.h
 
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
