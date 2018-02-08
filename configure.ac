@@ -8,6 +8,9 @@ AM_SILENT_RULES(yes)
 AM_PROG_AR
 LT_INIT
 
+PKG_PROG_PKG_CONFIG
+PKG_INSTALLDIR
+
 # Compiler
 AC_PROG_AWK
 AC_PROG_SED
@@ -62,7 +65,7 @@ AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile squashfuse.pc])
 AC_OUTPUT
 
 AS_ECHO()
