@@ -33,13 +33,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+#include <unistd.h>
 
 static const double SQFS_TIMEOUT = DBL_MAX;
+
+/* See comment near alarm_tick for details of how idle timeouts are
+   managed. */
+
+/* timeout, in seconds, after which we will automatically unmount */
+static unsigned int idle_timeout_secs = 0;
+/* last access timestamp */
+static time_t last_access = 0;
+/* count of files and directories currently open.  drecement after
+ * last_access for correctness. */
+static unsigned int open_refcount = 0;
+/* same as lib/fuse_signals.c */
+static struct fuse_session *fuse_instance = NULL;
 
 static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i lli;
 	struct stat st;
+	last_access = time(NULL);
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -54,6 +70,7 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i *lli;
+	last_access = time(NULL);
 	
 	fi->fh = (intptr_t)NULL;
 	
@@ -68,6 +85,7 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 			fuse_reply_err(req, ENOTDIR);
 		} else {
 			fi->fh = (intptr_t)lli;
+			++open_refcount;
 			fuse_reply_open(req, fi);
 			return;
 		}
@@ -77,11 +95,14 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_op_create(fuse_req_t req, fuse_ino_t parent, const char *name,
 			      mode_t mode, struct fuse_file_info *fi) {
+	last_access = time(NULL);
 	fuse_reply_err(req, EROFS);
 }
 
 static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
+	last_access = time(NULL);
+	--open_refcount;
 	free((sqfs_ll_i*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); /* yes, this is necessary */
 }
@@ -110,6 +131,7 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
 	int err = 0;
 	
+	last_access = time(NULL);
 	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
 		err = EINVAL;
 	if (!err && !(bufpos = buf = malloc(size)))
@@ -150,6 +172,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 	bool found;
 	sqfs_inode inode;
 	
+	last_access = time(NULL);
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
 	
@@ -191,6 +214,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	sqfs_inode *inode;
 	sqfs_ll *ll;
 	
+	last_access = time(NULL);
 	if (fi->flags & (O_WRONLY | O_RDWR)) {
 		fuse_reply_err(req, EROFS);
 		return;
@@ -210,6 +234,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	} else {
 		fi->fh = (intptr_t)inode;
 		fi->keep_cache = 1;
+		++open_refcount;
 		fuse_reply_open(req, fi);
 		return;
 	}
@@ -220,6 +245,8 @@ static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
+	last_access = time(NULL);
+	--open_refcount;
 	fuse_reply_err(req, 0);
 }
 
@@ -236,6 +263,7 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 		return;
 	}
 	
+	last_access = time(NULL);
 	osize = size;
 	err = sqfs_read_range(&ll->fs, inode, off, &osize, buf);
 	if (err) {
@@ -252,6 +280,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	char *dst;
 	size_t size;
 	sqfs_ll_i lli;
+	last_access = time(NULL);
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -275,6 +304,7 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	char *buf;
 	int ferr;
 	
+	last_access = time(NULL);
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 
@@ -312,6 +342,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 	}
 #endif
 	
+	last_access = time(NULL);
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -333,6 +364,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 		unsigned long nlookup) {
 	sqfs_ll_i lli;
+	last_access = time(NULL);
 	sqfs_ll_iget(req, &lli, SQFS_FUSE_INODE_NONE);
 	lli.ll->ino_forget(lli.ll, ino, nlookup);
 	fuse_reply_none(req);
@@ -368,6 +400,53 @@ static void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint) {
 	#endif
 }
 
+/* Idle unmount timeout management is based on signal handling from
+   fuse (see set_one_signal_handler and exit_handler in libfuse's
+   lib/fuse_signals.c.
+
+   When an idle timeout is set, we use a one second alarm to check if
+   no activity has taken place within the idle window, as tracked by
+   last_access.  We also maintain an open/opendir refcount so that
+   directories and files can be held open and unaccessed without
+   triggering the idle timeout.
+ */
+
+static void alarm_tick(int sig) {
+	if (!fuse_instance || idle_timeout_secs == 0) {
+		return;
+	}
+
+	if (open_refcount == 0 && time(NULL) - last_access > idle_timeout_secs) {
+		fuse_session_exit(fuse_instance);
+		return;
+	}
+	alarm(1);  /* always reset our alarm */
+}
+
+static void setup_idle_timeout(struct fuse_session *se, unsigned int timeout_secs) {
+	last_access = time(NULL);
+	idle_timeout_secs = timeout_secs;
+
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = alarm_tick;
+	sigemptyset(&(sa.sa_mask));
+	sa.sa_flags = 0;
+
+	fuse_instance = se;
+	if (sigaction(SIGALRM, &sa, NULL) == -1) {
+		perror("fuse: cannot get old signal handler");
+		return;
+	}
+
+	alarm(1);
+}
+
+static void teardown_idle_timeout() {
+	alarm(0);
+	fuse_instance = NULL;
+}
+
 static sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
 	sqfs_ll *ll;
 	
@@ -401,6 +480,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ll *ll;
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%u", offsetof(sqfs_opts, offset), 0},
+		{"timeout=%u", offsetof(sqfs_opts, idle_timeout_secs), 0},
 		FUSE_OPT_END
 	};
 	
@@ -450,9 +530,13 @@ int main(int argc, char *argv[]) {
 			if (se != NULL) {
 				if (sqfs_ll_daemonize(fg) != -1) {
 					if (fuse_set_signal_handlers(se) != -1) {
+						if (opts.idle_timeout_secs) {
+							setup_idle_timeout(se, opts.idle_timeout_secs);
+						}
 						fuse_session_add_chan(se, ch.ch);
 						/* FIXME: multithreading */
 						err = fuse_session_loop(se);
+						teardown_idle_timeout();
 						fuse_remove_signal_handlers(se);
 						#if HAVE_DECL_FUSE_SESSION_REMOVE_CHAN
 							fuse_session_remove_chan(ch.ch);
