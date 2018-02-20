@@ -16,6 +16,9 @@ noinst_PROGRAMS =
 lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
 include_HEADERS = squashfuse.h squashfs_fs.h
 
+pkgconfigdir = @pkgconfigdir@
+pkgconfig_DATA 	= squashfuse.pc
+
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
 	decompress.c xattr.c hash.c stack.c traverse.c util.c \
