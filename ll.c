@@ -47,7 +47,7 @@ static unsigned int idle_timeout_secs = 0;
 static time_t last_access = 0;
 /* count of files and directories currently open.  drecement after
  * last_access for correctness. */
-static unsigned int open_refcount = 0;
+static sig_atomic_t open_refcount = 0;
 /* same as lib/fuse_signals.c */
 static struct fuse_session *fuse_instance = NULL;
 
