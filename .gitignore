@@ -2,6 +2,7 @@
 squashfuse
 squashfuse_ll
 squashfuse_ls
+squashfuse_extract
 *.dSYM
 *.o
 *.lo
