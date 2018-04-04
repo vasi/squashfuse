@@ -80,6 +80,21 @@ void *sqfs_cache_add(sqfs_cache *cache, sqfs_cache_idx idx) {
 	return sqfs_cache_entry(cache, i);
 }
 
+/* sqfs_cache_add can be called but the caller can fail to fill it (IO
+ * error, etc).  sqfs_cache_invalidate invalidates the cache entry.
+ * It does not call dispose; it merely marks the entry as reusable
+ * since it is never fully initialized.
+ */
+void sqfs_cache_invalidate(sqfs_cache *cache, sqfs_cache_idx idx) {
+	size_t i;
+	for (i = 0; i < cache->count; ++i) {
+		if (cache->idxs[i] == idx) {
+			cache->idxs[i] = SQFS_CACHE_IDX_INVALID;
+			return;
+		}
+	}
+}
+
 static void sqfs_block_cache_dispose(void *data) {
 	sqfs_block_cache_entry *entry = (sqfs_block_cache_entry*)data;
 	sqfs_block_dispose(entry->block);

@@ -1,4 +1,4 @@
-COMPRESSION_LIBS = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS)
+COMPRESSION_LIBS = $(ZLIB_LIBS) $(XZ_LIBS) $(LZO_LIBS) $(LZ4_LIBS) $(ZSTD_LIBS)
 
 ACLOCAL_AMFLAGS = -I m4 --install
 
@@ -13,7 +13,11 @@ EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win
 bin_PROGRAMS =
 noinst_PROGRAMS =
 
-noinst_LTLIBRARIES = libsquashfuse.la
+lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
+include_HEADERS = squashfuse.h squashfs_fs.h
+
+pkgconfigdir = @pkgconfigdir@
+pkgconfig_DATA 	= squashfuse.pc
 
 # Main library: libsquashfuse
 libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
@@ -23,7 +27,7 @@ libsquashfuse_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
 	dir.h file.h decompress.h xattr.h squashfuse.h hash.h stack.h traverse.h \
 	util.h fs.h
 libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
-	$(LZ4_CPPFLAGS)
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS)
 libsquashfuse_la_LIBADD =
 
 # Helper for FUSE clients: libfuseprivate
@@ -40,7 +44,6 @@ squashfuse_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 
-noinst_LTLIBRARIES += libfuseprivate.la
 dist_man_MANS += squashfuse.1
 endif
 
@@ -52,7 +55,6 @@ squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
 squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 
-noinst_LTLIBRARIES += libfuseprivate.la
 endif
 
 if SQ_WANT_DEMO
