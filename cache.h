@@ -54,6 +54,7 @@ void sqfs_cache_destroy(sqfs_cache *cache);
 
 void *sqfs_cache_get(sqfs_cache *cache, sqfs_cache_idx idx);
 void *sqfs_cache_add(sqfs_cache *cache, sqfs_cache_idx idx);
+void sqfs_cache_invalidate(sqfs_cache *cache, sqfs_cache_idx idx);
 
 
 typedef struct {
