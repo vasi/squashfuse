@@ -509,6 +509,7 @@ int main(int argc, char *argv[]) {
 	opts.image = NULL;
 	opts.mountpoint = 0;
 	opts.offset = 0;
+	opts.idle_timeout_secs = 0;
 	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true);
 
