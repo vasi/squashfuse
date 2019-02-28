@@ -177,7 +177,7 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 			take = (size_t)(*size);
 		if (block) {
 			memcpy(buf, (char*)block->data + data_off + read_off, take);
-			/* BLOCK CACHED, DON'T DISPOSE */
+			sqfs_block_dispose(block);
 		} else {
 			memset(buf, 0, take);
 		}
@@ -226,7 +226,7 @@ sqfs_err sqfs_blockidx_init(sqfs_cache *cache) {
 }
 
 sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
-		sqfs_blockidx_entry **out) {
+		sqfs_blockidx_entry **out, sqfs_blockidx_entry **cachep) {
 	size_t blocks;	/* Number of blocks in the file */
 	size_t md_size; /* Amount of metadata necessary to hold the blocksizes */
 	size_t count; 	/* Number of block-index entries necessary */
@@ -234,10 +234,6 @@ sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 	sqfs_blockidx_entry *blockidx;
 	sqfs_blocklist bl;
 	
-	/* For the cache */
-	sqfs_cache_idx idx;
-	sqfs_blockidx_entry **cachep;
-
 	size_t i = 0;
 	bool first = true;
 	
@@ -270,8 +266,6 @@ sqfs_err sqfs_blockidx_add(sqfs *fs, sqfs_inode *inode,
 		}
 	}
 
-	idx = inode->base.inode_number + 1; /* zero means invalid */
-	cachep = sqfs_cache_add(&fs->blockidx, idx);
 	*out = *cachep = blockidx;
 	return SQFS_OK;
 }
@@ -299,12 +293,16 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 	
 	/* Get the index, creating it if necessary */
 	idx = inode->base.inode_number + 1; /* zero means invalid index */
-	if ((bp = sqfs_cache_get(&fs->blockidx, idx))) {
+	bp = sqfs_cache_get(&fs->blockidx, idx);
+	if (sqfs_cache_entry_valid(&fs->blockidx, bp)) {
 		blockidx = *bp;
 	} else {
-		sqfs_err err = sqfs_blockidx_add(fs, inode, &blockidx);
-		if (err)
+		sqfs_err err = sqfs_blockidx_add(fs, inode, &blockidx, bp);
+		if (err) {
+			sqfs_cache_put(&fs->blockidx, bp);
 			return err;
+		}
+		sqfs_cache_entry_mark_valid(&fs->blockidx, bp);
 	}
 	
 	skipped = (metablock * SQUASHFS_METADATA_SIZE / sizeof(sqfs_blocklist_entry))
@@ -316,6 +314,9 @@ sqfs_err sqfs_blockidx_blocklist(sqfs *fs, sqfs_inode *inode,
 	bl->remain -= skipped;
 	bl->pos = (uint64_t)skipped * fs->sb.block_size;
 	bl->block = blockidx->data_block;
+
+	sqfs_cache_put(&fs->blockidx, bp);
+
 	return SQFS_OK;
 }
 
