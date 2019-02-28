@@ -27,7 +27,12 @@
 
 #include "squashfuse.h"
 
+#if FUSE_USE_VERSION >= 30
+#include <fuse3/fuse.h>
+#include <fuse3/fuse_lowlevel.h>
+#else
 #include <fuse.h>
+#endif
 
 #include <sys/stat.h>
 

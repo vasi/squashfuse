@@ -143,12 +143,23 @@ AC_DEFUN([SQ_FIND_FUSE],[
 			[AC_MSG_FAILURE([Can't find FUSE in specified directories])])
 	])
 	
-	# pkgconfig
+	# Use pkgconfig to look for fuse3.
 	AS_IF([test "x$sq_fuse_found" = xyes],,[
 		SQ_SAVE_FLAGS
+		SQ_PKG([fuse3],[fuse3 >= 3.2],
+			[ AC_DEFINE([FUSE_USE_VERSION], [32], [Version of FUSE API to use])
+              SQ_TRY_FUSE(,[sq_fuse_found=yes],
+	        [AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
+			[:])
+		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
+	])
+	# Use pkgconfig to look for fuse2.
+	AS_IF([test "x$sq_fuse_found" = xyes],,[
+        AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
+		SQ_SAVE_FLAGS
 		SQ_PKG([fuse],[fuse >= 2.5],
-			[SQ_TRY_FUSE(,[sq_fuse_found=yes],
-				[AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
+            [SQ_TRY_FUSE(,[sq_fuse_found=yes],
+	        [AC_MSG_FAILURE([Can't find FUSE with pkgconfig])])],
 			[:])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
 	])
@@ -198,9 +209,9 @@ AC_DEFUN([SQ_FUSE_API_LOWLEVEL],[
 		CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
 	
 		sq_fuse_lowlevel_found=yes
-		AC_CHECK_DECL([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no],
+		AC_CHECK_DECL([fuse_session_loop],,[sq_fuse_lowlevel_found=no],
 			[#include <fuse_lowlevel.h>])
-		AC_CHECK_FUNC([fuse_lowlevel_new],,[sq_fuse_lowlevel_found=no])
+		AC_CHECK_FUNC([fuse_session_loop],,[sq_fuse_lowlevel_found=no])
 	
 		SQ_RESTORE_FLAGS
 		
