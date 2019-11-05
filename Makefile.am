@@ -14,7 +14,11 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 
 lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
-include_HEADERS = squashfuse.h squashfs_fs.h
+
+pkgincludedir = @includedir@/squashfuse
+pkginclude_HEADERS = squashfuse.h squashfs_fs.h \
+	cache.h common.h config.h decompress.h dir.h file.h fs.h stack.h table.h \
+	traverse.h util.h xattr.h
 
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA 	= squashfuse.pc
