@@ -65,6 +65,68 @@ static sqfs_err sqfs_decompressor_xz(void *in, size_t insz,
 	return SQFS_OK;
 }
 #define CAN_DECOMPRESS_XZ 1
+
+// The following implementation was adapted from  squashfs-tools
+// https://github.com/plougher/squashfs-tools.git
+
+#define LZMA_PROPS_SIZE 5
+#define LZMA_UNCOMP_SIZE 8
+#define LZMA_HEADER_SIZE (LZMA_PROPS_SIZE + LZMA_UNCOMP_SIZE)
+#define MEMLIMIT (32 * 1024 * 1024)
+
+static sqfs_err sqfs_decompressor_lzma(void *in, size_t insz,
+		void *out, size_t *outsz) {
+
+	lzma_stream strm = LZMA_STREAM_INIT;
+	int uncompressed_size = 0, res;
+	unsigned char lzma_header[LZMA_HEADER_SIZE];
+
+	res = lzma_alone_decoder(&strm, MEMLIMIT);
+	if(res != LZMA_OK) {
+		lzma_end(&strm);
+		return SQFS_ERR;
+	}
+
+	memcpy(lzma_header, in, LZMA_HEADER_SIZE);
+	uncompressed_size = lzma_header[LZMA_PROPS_SIZE] |
+		(lzma_header[LZMA_PROPS_SIZE + 1] << 8) |
+		(lzma_header[LZMA_PROPS_SIZE + 2] << 16) |
+		(lzma_header[LZMA_PROPS_SIZE + 3] << 24);
+
+	if(uncompressed_size > *outsz) {
+		lzma_end(&strm);
+		return SQFS_ERR;
+	}
+
+	memset(lzma_header + LZMA_PROPS_SIZE, 255, LZMA_UNCOMP_SIZE);
+
+	strm.next_out = out;
+	strm.avail_out = *outsz;
+	strm.next_in = lzma_header;
+	strm.avail_in = LZMA_HEADER_SIZE;
+
+	res = lzma_code(&strm, LZMA_RUN);
+
+	if(res != LZMA_OK || strm.avail_in != 0) {
+		lzma_end(&strm);
+		return SQFS_ERR;
+	}
+
+	strm.next_in = in + LZMA_HEADER_SIZE;
+	strm.avail_in = insz - LZMA_HEADER_SIZE;
+
+	res = lzma_code(&strm, LZMA_FINISH);
+	lzma_end(&strm);
+
+	if(res == LZMA_STREAM_END || (res == LZMA_OK &&
+		strm.total_out >= uncompressed_size && strm.avail_in == 0)) {
+		*outsz = uncompressed_size;
+		return SQFS_OK;
+	}
+
+	return SQFS_ERR;
+}
+#define CAN_DECOMPRESS_LZMA 1
 #endif
 
 
@@ -119,6 +181,9 @@ sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 #ifdef CAN_DECOMPRESS_XZ
 		case XZ_COMPRESSION: return &sqfs_decompressor_xz;
 #endif
+#ifdef CAN_DECOMPRESS_LZMA
+		case LZMA_COMPRESSION: return &sqfs_decompressor_lzma;
+#endif
 #ifdef CAN_DECOMPRESS_LZO
 		case LZO_COMPRESSION: return &sqfs_decompressor_lzo;
 #endif
@@ -150,6 +215,9 @@ void sqfs_compression_supported(sqfs_compression_type *types) {
 #endif
 #ifdef CAN_DECOMPRESS_XZ
 	types[i++] = XZ_COMPRESSION;
+#endif
+#ifdef CAN_DECOMPRESS_LZMA
+	types[i++] = LZMA_COMPRESSION;
 #endif
 #ifdef CAN_DECOMPRESS_ZLIB
 	types[i++] = ZLIB_COMPRESSION;
