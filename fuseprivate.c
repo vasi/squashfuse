@@ -64,11 +64,15 @@ void sqfs_usage(char *progname, bool fuse_usage) {
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
 		progname ? progname : PACKAGE_NAME);
 	if (fuse_usage) {
+#if FUSE_USE_VERSION >= 30
+		fuse_cmdline_help();
+#else
 		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 		fuse_opt_add_arg(&args, ""); /* progname */
 		fuse_opt_add_arg(&args, "-ho");
 		fprintf(stderr, "\n");
 		fuse_parse_cmdline(&args, NULL, NULL, NULL);
+#endif
 	}
 	exit(-2);
 }
