@@ -2,6 +2,7 @@ AC_INIT([squashfuse], [0.1.103], [dave@vasilevsky.ca])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_BUILD
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AM_SILENT_RULES(yes)
@@ -60,6 +61,17 @@ AC_ARG_ENABLE([demo],
 	AS_HELP_STRING([--disable-demo], [disable library demo]),,
 	[enable_demo=yes])
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
+
+# The 'make check' tests are only known to work on linux.
+case "${build_os}" in
+    linux*)
+        enable_tests=yes
+        ;;
+    *)
+        enable_tests=no
+        ;;
+esac
+AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
