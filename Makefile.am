@@ -76,6 +76,12 @@ endif
 
 if WANT_TESTS
 TESTS = tests/ll-smoke.sh
+if WANT_GTEST_TESTS
+check_PROGRAMS = endiantest
+endiantest_SOURCES=tests/endiantest.cpp
+endiantest_LDFLAGS=-lgtest
+TESTS += endiantest
+endif
 endif
 
 # Handle generation of swap include files

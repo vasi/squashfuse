@@ -53,6 +53,8 @@ AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
 		[Define if <linux/types.h> defines the type __le16])
 ],,[#include <linux/types.h>])
+AC_CHECK_HEADERS([asm/byteorder.h])
+AC_C_INLINE
 
 
 # Other options
@@ -62,15 +64,21 @@ AC_ARG_ENABLE([demo],
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
 # The 'make check' tests are only known to work on linux.
+enable_tests=no
+enable_gtest_tests=no
 case "${build_os}" in
     linux*)
         enable_tests=yes
-        ;;
-    *)
-        enable_tests=no
+        # Some tests wield google test framework, which is in C++.
+        # Check if we can wield those tests.
+        AC_PROG_CXX
+        AC_LANG_PUSH([C++])
+        AC_CHECK_HEADERS([gtest/gtest.h], [enable_gtest_tests=yes])
+        AC_LANG_POP([C++])
         ;;
 esac
 AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
+AM_CONDITIONAL([WANT_GTEST_TESTS], [test "x$enable_gtest_tests" = xyes])
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
