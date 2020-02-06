@@ -52,13 +52,13 @@ head -c 100000000 /dev/urandom >"$WORKDIR/source/rand3"
 head -c 87 /dev/zero >"$WORKDIR/source/z1 with spaces"
 
 for comp in $compressors; do
-    echo "Building $comp squashfs image,.,"
+    echo "Building $comp squashfs image..."
     mksquashfs "$WORKDIR/source" "$WORKDIR/squashfs.image" -comp $comp -no-progress
 
     mkdir -p "$WORKDIR/mount"
 
     echo "Mounting squashfs image..."
-    $SFLL -f  "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
+    $SFLL -f $SFLL_EXTRA_ARGS "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
     # Wait up to 5 seconds to be mounted. TSAN builds can take some time to mount.
     for _ in $(seq 5); do
     if sq_is_mountpoint "$WORKDIR/mount"; then
@@ -119,7 +119,7 @@ for comp in $compressors; do
     # Only test timeouts once, it takes a long time
     if [ -z "$did_timeout" ]; then
         echo "Remounting with idle unmount option..."
-        $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
+        $SFLL $SFLL_EXTRA_ARGS -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
         if ! sq_is_mountpoint "$WORKDIR/mount"; then
             echo "Not mounted?"
             exit 1
