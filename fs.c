@@ -34,8 +34,13 @@
 #include <sys/stat.h>
 
 
-#define DATA_CACHED_BLKS 1
-#define FRAG_CACHED_BLKS 3
+#ifdef SQFS_MULTITHREADED
+# define DATA_CACHED_BLKS 48
+# define FRAG_CACHED_BLKS 48
+#else
+# define DATA_CACHED_BLKS 1
+# define FRAG_CACHED_BLKS 3
+#endif
 
 void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 		int *max_minor) {

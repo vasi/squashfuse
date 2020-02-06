@@ -142,8 +142,22 @@ int main(int argc, char *argv[]) {
 					if (opts.idle_timeout_secs) {
 						setup_idle_timeout(ch.session, opts.idle_timeout_secs);
 					}
-					/* FIXME: multithreading */
-					err = fuse_session_loop(ch.session);
+#ifdef SQFS_MULTITHREADED
+# if FUSE_USE_VERSION >= 30
+                    if (!fuse_cmdline_opts.singlethread) {
+                        struct fuse_loop_config config;
+                        config.clone_fd = 1;
+                        config.max_idle_threads = 10;
+                        err = fuse_session_loop_mt(ch.session, &config);
+                    }
+# else /* FUSE_USE_VERSION < 30 */
+		    if (fuse_cmdline_opts.mt) {
+			err = fuse_session_loop_mt(ch.session);
+		    }
+# endif /* FUSE_USE_VERSION */
+                    else
+#endif
+					    err = fuse_session_loop(ch.session);
 					teardown_idle_timeout();
 					fuse_remove_signal_handlers(ch.session);
 				}

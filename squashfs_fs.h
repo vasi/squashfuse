@@ -105,7 +105,11 @@
 
 
 /* cached data constants for filesystem */
-#define SQUASHFS_CACHED_BLKS		8
+#ifdef SQFS_MULTITHREADED
+# define SQUASHFS_CACHED_BLKS		128
+#else
+# define SQUASHFS_CACHED_BLKS		8
+#endif
 
 #define SQUASHFS_MAX_FILE_SIZE_LOG	64
 

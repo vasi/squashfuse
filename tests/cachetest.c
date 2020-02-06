@@ -36,6 +36,7 @@ int test_cache_miss(void) {
                               TestStructDispose), SQFS_OK);
     entry = (TestStruct *)sqfs_cache_get(&cache, 1);
     EXPECT_EQ(sqfs_cache_entry_valid(&cache, entry), 0);
+    sqfs_cache_put(&cache, entry);
     sqfs_cache_destroy(&cache);
 
     return errors == 0;
