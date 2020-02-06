@@ -77,10 +77,13 @@ endif
 if WANT_TESTS
 TESTS = tests/ll-smoke.sh
 if WANT_GTEST_TESTS
-check_PROGRAMS = endiantest
+check_PROGRAMS = endiantest cachetest
 endiantest_SOURCES=tests/endiantest.cpp
 endiantest_LDFLAGS=-lgtest
-TESTS += endiantest
+cachetest_SOURCES=tests/cachetest.cpp
+cachetest_LDFLAGS=-lgtest
+cachetest_LDADD=libsquashfuse.la $(COMPRESSION_LIBS)
+TESTS += endiantest cachetest
 endif
 endif
 
