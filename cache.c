@@ -24,6 +24,9 @@
  */
 
 #include "config.h"
+
+#ifndef SQFS_MULTITHREADED
+
 #include "cache.h"
 
 #include "fs.h"
@@ -140,3 +143,4 @@ void sqfs_cache_entry_mark_valid(sqfs_cache *cache, void *e) {
 void sqfs_cache_put(const sqfs_cache *cache, const void *e) {
 	// nada, we have no locking in single-threaded implementation.
 }
+#endif /* SQFS_MULTITHREADED */
