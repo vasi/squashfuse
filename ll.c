@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 #include <unistd.h>
 
 static const double SQFS_TIMEOUT = DBL_MAX;
@@ -44,7 +45,7 @@ static const double SQFS_TIMEOUT = DBL_MAX;
 /* timeout, in seconds, after which we will automatically unmount */
 static unsigned int idle_timeout_secs = 0;
 /* last access timestamp */
-static time_t last_access = 0;
+static time_t last_access;
 /* count of files and directories currently open.  drecement after
  * last_access for correctness. */
 static sig_atomic_t open_refcount = 0;
@@ -52,17 +53,18 @@ static sig_atomic_t open_refcount = 0;
 static struct fuse_session *fuse_instance = NULL;
 
 static void update_access_time(void) {
-#ifdef SQFS_MULTITHREADED
 	/* We only need to track access time if we have an idle timeout,
 	 * don't bother with expensive operations if idle_timeout is 0.
 	 */
 	if (idle_timeout_secs) {
-		time_t now = time(NULL);
-		__atomic_store_n(&last_access, now, __ATOMIC_RELEASE);
-	}
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+#ifdef SQFS_MULTITHREADED
+		__atomic_store_n(&last_access, now.tv_sec, __ATOMIC_RELEASE);
 #else
-	last_access = time(NULL);
+		last_access = now.tv_sec;
 #endif
+	}
 }
 
 static void update_open_refcount(int delta) {
@@ -521,10 +523,13 @@ static void alarm_tick(int sig) {
 		return;
 	}
 
-	if (get_open_refcount() == 0 &&
-		time(NULL) - get_access_time() > idle_timeout_secs) {
-		fuse_session_exit(fuse_instance);
-		return;
+	if (get_open_refcount() == 0) {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        if (now.tv_sec - get_access_time() > idle_timeout_secs) {
+            fuse_session_exit(fuse_instance);
+            return;
+        }
 	}
 	alarm(1);  /* always reset our alarm */
 }
