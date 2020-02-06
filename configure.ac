@@ -1,10 +1,11 @@
-AC_INIT([squashfuse], [0.1.103], [dave@vasilevsky.ca])
+AC_INIT([squashfuse], [0.1.104fb1], [kvigor@fb.com])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+AC_USE_SYSTEM_EXTENSIONS
 AM_SILENT_RULES(yes)
 AM_PROG_AR
 LT_INIT
@@ -18,10 +19,8 @@ AC_PROG_SED
 AC_PROG_CPP
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
-SQ_PROG_CPP_POSIX_2001
 SQ_PROG_CC_WALL
 
-AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 
 # Non-POSIX declarations
 SQ_CHECK_DECL_MAKEDEV
@@ -83,6 +82,13 @@ AM_CONDITIONAL([WANT_GTEST_TESTS], [test "x$enable_gtest_tests" = xyes])
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
+AC_ARG_ENABLE([multithreading],
+ 	AS_HELP_STRING([--enable-multithreading], [enable multi-threaded low-level FUSE driver]),
+	[
+    AC_CHECK_LIB([pthread], [pthread_mutex_lock], [], AC_MSG_ERROR([libpthread is required for multithreaded build]))
+    AC_DEFINE(SQFS_MULTITHREADED, 1, [Enable multi-threaded low-level FUSE driver])
+    ])
+AM_CONDITIONAL([MULTITHREADED], [test x$enable_multithreading = xyes])
 
 AC_CONFIG_FILES([Makefile squashfuse.pc])
 AC_OUTPUT

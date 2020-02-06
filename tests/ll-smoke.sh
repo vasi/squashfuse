@@ -32,13 +32,13 @@ head -c 17K /dev/urandom >"$WORKDIR/source/rand2"
 head -c 100M /dev/urandom >"$WORKDIR/source/rand3"
 head -c 87 /dev/zero >"$WORKDIR/source/z1 with spaces"
 
-echo "Building squashfs image,.,"
+echo "Building squashfs image..."
 mksquashfs "$WORKDIR/source" "$WORKDIR/squashfs.image" -comp zstd -no-progress
 
 mkdir -p "$WORKDIR/mount"
 
 echo "Mounting squashfs image..."
-$SFLL -f  "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
+$SFLL -f  $SFLL_EXTRA_ARGS "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
 # Wait up to 5 seconds to be mounted. TSAN builds can take some time to mount.
 for _ in $(seq 5); do
   if grep -q "$WORKDIR/mount" /proc/mounts; then
@@ -97,7 +97,7 @@ echo "Unmounting..."
 fusermount3 -u "$WORKDIR/mount"
 
 echo "Remounting with idle unmount option..."
-$SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
+$SFLL $SFLL_EXTRA_ARGS -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
 if ! grep -q "$WORKDIR/mount" /proc/mounts; then
     echo "Not mounted?"
     exit 1

@@ -69,14 +69,14 @@ typedef struct {
 
 /* Increment the refcount on the block. */
 static inline void sqfs_block_ref(sqfs_block *block) {
-	__atomic_add_fetch(&block->refcount, 1, __ATOMIC_RELEASE);
+	__atomic_add_fetch(&block->refcount, 1, __ATOMIC_RELAXED);
 }
 
 /* decrement the refcount on the block, return non-zero if we held the last
  * reference.
  */
 static inline int sqfs_block_deref(sqfs_block *block) {
-	return __atomic_sub_fetch(&block->refcount, 1, __ATOMIC_ACQUIRE) == 0;
+	return __atomic_sub_fetch(&block->refcount, 1, __ATOMIC_ACQ_REL) == 0;
 }
 
 #endif

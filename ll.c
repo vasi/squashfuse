@@ -51,11 +51,49 @@ static sig_atomic_t open_refcount = 0;
 /* same as lib/fuse_signals.c */
 static struct fuse_session *fuse_instance = NULL;
 
+static void update_access_time(void) {
+#ifdef SQFS_MULTITHREADED
+	/* We only need to track access time if we have an idle timeout,
+	 * don't bother with expensive operations if idle_timeout is 0.
+	 */
+	if (idle_timeout_secs) {
+		time_t now = time(NULL);
+		__atomic_store_n(&last_access, now, __ATOMIC_RELEASE);
+	}
+#else
+	last_access = time(NULL);
+#endif
+}
+
+static void update_open_refcount(int delta) {
+#ifdef SQFS_MULTITHREADED
+	__atomic_fetch_add(&open_refcount, delta, __ATOMIC_RELEASE);
+#else
+	open_refcount += delta;
+#endif
+}
+
+static inline time_t get_access_time(void) {
+#ifdef SQFS_MULTITHREADED
+	return __atomic_load_n(&last_access, __ATOMIC_ACQUIRE);
+#else
+	return last_access;
+#endif
+}
+
+static inline sig_atomic_t get_open_refcount(void) {
+#ifdef SQFS_MULTITHREADED
+	return __atomic_load_n(&open_refcount, __ATOMIC_ACQUIRE);
+#else
+	return open_refcount;
+#endif
+}
+
 static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i lli;
 	struct stat st;
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -70,7 +108,7 @@ static void sqfs_ll_op_getattr(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i *lli;
-	last_access = time(NULL);
+	update_access_time();
 	
 	fi->fh = (intptr_t)NULL;
 	
@@ -85,7 +123,7 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 			fuse_reply_err(req, ENOTDIR);
 		} else {
 			fi->fh = (intptr_t)lli;
-			++open_refcount;
+			update_open_refcount(1);
 			fuse_reply_open(req, fi);
 			return;
 		}
@@ -95,14 +133,14 @@ static void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 
 static void sqfs_ll_op_create(fuse_req_t req, fuse_ino_t parent, const char *name,
 			      mode_t mode, struct fuse_file_info *fi) {
-	last_access = time(NULL);
+	update_access_time();
 	fuse_reply_err(req, EROFS);
 }
 
 static void sqfs_ll_op_releasedir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
-	last_access = time(NULL);
-	--open_refcount;
+	update_access_time();
+	update_open_refcount(-1);
 	free((sqfs_ll_i*)(intptr_t)fi->fh);
 	fuse_reply_err(req, 0); /* yes, this is necessary */
 }
@@ -131,7 +169,7 @@ static void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
 	int err = 0;
 	
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
 		err = EINVAL;
 	if (!err && !(bufpos = buf = malloc(size)))
@@ -172,7 +210,7 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 	bool found;
 	sqfs_inode inode;
 	
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_ll_iget(req, &lli, parent))
 		return;
 	
@@ -214,7 +252,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	sqfs_inode *inode;
 	sqfs_ll *ll;
 	
-	last_access = time(NULL);
+	update_access_time();
 	if (fi->flags & (O_WRONLY | O_RDWR)) {
 		fuse_reply_err(req, EROFS);
 		return;
@@ -234,7 +272,7 @@ static void sqfs_ll_op_open(fuse_req_t req, fuse_ino_t ino,
 	} else {
 		fi->fh = (intptr_t)inode;
 		fi->keep_cache = 1;
-		++open_refcount;
+		update_open_refcount(1);
 		fuse_reply_open(req, fi);
 		return;
 	}
@@ -245,8 +283,8 @@ static void sqfs_ll_op_release(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	free((sqfs_inode*)(intptr_t)fi->fh);
 	fi->fh = 0;
-	last_access = time(NULL);
-	--open_refcount;
+	update_access_time();
+	update_open_refcount(-1);
 	fuse_reply_err(req, 0);
 }
 
@@ -263,7 +301,7 @@ static void sqfs_ll_op_read(fuse_req_t req, fuse_ino_t ino,
 		return;
 	}
 	
-	last_access = time(NULL);
+	update_access_time();
 	osize = size;
 	err = sqfs_read_range(&ll->fs, inode, off, &osize, buf);
 	if (err) {
@@ -280,7 +318,7 @@ static void sqfs_ll_op_readlink(fuse_req_t req, fuse_ino_t ino) {
 	char *dst;
 	size_t size;
 	sqfs_ll_i lli;
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -304,7 +342,7 @@ static void sqfs_ll_op_listxattr(fuse_req_t req, fuse_ino_t ino, size_t size) {
 	char *buf;
 	int ferr;
 	
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 
@@ -342,7 +380,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 	}
 #endif
 	
-	last_access = time(NULL);
+	update_access_time();
 	if (sqfs_ll_iget(req, &lli, ino))
 		return;
 	
@@ -364,7 +402,7 @@ static void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 		unsigned long nlookup) {
 	sqfs_ll_i lli;
-	last_access = time(NULL);
+	update_access_time();
 	sqfs_ll_iget(req, &lli, SQFS_FUSE_INODE_NONE);
 	lli.ll->ino_forget(lli.ll, ino, nlookup);
 	fuse_reply_none(req);
@@ -475,7 +513,8 @@ static void alarm_tick(int sig) {
 		return;
 	}
 
-	if (open_refcount == 0 && time(NULL) - last_access > idle_timeout_secs) {
+	if (get_open_refcount() == 0 &&
+		time(NULL) - get_access_time() > idle_timeout_secs) {
 		fuse_session_exit(fuse_instance);
 		return;
 	}
@@ -483,8 +522,8 @@ static void alarm_tick(int sig) {
 }
 
 static void setup_idle_timeout(struct fuse_session *se, unsigned int timeout_secs) {
-	last_access = time(NULL);
 	idle_timeout_secs = timeout_secs;
+	update_access_time();
 
 	struct sigaction sa;
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -608,9 +647,17 @@ int main(int argc, char *argv[]) {
 				if (fuse_set_signal_handlers(ch.session) != -1) {
 					if (opts.idle_timeout_secs) {
 						setup_idle_timeout(ch.session, opts.idle_timeout_secs);
-					}
-					/* FIXME: multithreading */
-					err = fuse_session_loop(ch.session);
+                    }
+#ifdef SQFS_MULTITHREADED
+                    if (!fuse_cmdline_opts.singlethread) {
+                        struct fuse_loop_config config;
+                        config.clone_fd = 1;
+                        config.max_idle_threads = 10;
+                        err = fuse_session_loop_mt(ch.session, &config);
+                    }
+                    else
+#endif
+                        err = fuse_session_loop(ch.session);
 					teardown_idle_timeout();
 					fuse_remove_signal_handlers(ch.session);
 				}
