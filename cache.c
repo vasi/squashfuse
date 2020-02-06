@@ -22,85 +22,121 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "config.h"
 #include "cache.h"
 
 #include "fs.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
+typedef struct sqfs_cache_internal {
+	uint8_t *buf;
+
+	sqfs_cache_dispose dispose;
+
+	size_t size, count;
+	size_t next; /* next block to evict */
+} sqfs_cache_internal;
+
+typedef struct {
+	int valid;
+	sqfs_cache_idx idx;
+} sqfs_cache_entry_hdr;
+
 sqfs_err sqfs_cache_init(sqfs_cache *cache, size_t size, size_t count,
-		sqfs_cache_dispose dispose) {
-	cache->size = size;
-	cache->count = count;
-	cache->dispose = dispose;
-	cache->next = 0;
-	
-	cache->idxs = calloc(count, sizeof(sqfs_cache_idx));
-	cache->buf = calloc(count, size);
-	if (cache->idxs && cache->buf)
+			 sqfs_cache_dispose dispose) {
+
+	sqfs_cache_internal *c = malloc(sizeof(sqfs_cache_internal));
+	if (!c) {
+		return SQFS_ERR;
+	}
+
+	c->size = size + sizeof(sqfs_cache_entry_hdr);
+	c->count = count;
+	c->dispose = dispose;
+	c->next = 0;
+
+	c->buf = calloc(count, c->size);
+
+	if (c->buf) {
+		*cache = c;
 		return SQFS_OK;
-	
-	sqfs_cache_destroy(cache);
+	}
+
+	sqfs_cache_destroy(&c);
 	return SQFS_ERR;
 }
 
-static void *sqfs_cache_entry(sqfs_cache *cache, size_t i) {
-	return cache->buf + i * cache->size;
+static sqfs_cache_entry_hdr *sqfs_cache_entry_header(
+						     sqfs_cache_internal* cache,
+						     size_t i) {
+	return (sqfs_cache_entry_hdr *)(cache->buf + i * cache->size);
+}
+
+static void* sqfs_cache_entry(sqfs_cache_internal* cache, size_t i) {
+	return (void *)(sqfs_cache_entry_header(cache, i) + 1);
 }
 
 void sqfs_cache_destroy(sqfs_cache *cache) {
-	if (cache->buf && cache->idxs) {
-		size_t i;
-		for (i = 0; i < cache->count; ++i) {
-			if (cache->idxs[i] != SQFS_CACHE_IDX_INVALID)
-				cache->dispose(sqfs_cache_entry(cache, i));
+	if (cache && *cache) {
+		sqfs_cache_internal *c = *cache;
+		if (c->buf) {
+			size_t i;
+			for (i = 0; i < c->count; ++i) {
+				sqfs_cache_entry_hdr *hdr =
+					sqfs_cache_entry_header(c, i);
+				if (hdr->valid) {
+					c->dispose((void *)(hdr + 1));
+				}
+			}
 		}
+		free(c->buf);
+		free(c);
+		*cache = NULL;
 	}
-	free(cache->buf);
-	free(cache->idxs);
 }
 
 void *sqfs_cache_get(sqfs_cache *cache, sqfs_cache_idx idx) {
 	size_t i;
-	for (i = 0; i < cache->count; ++i) {
-		if (cache->idxs[i] == idx)
-			return sqfs_cache_entry(cache, i);
-	}
-	return NULL;
-}
+	sqfs_cache_internal *c = *cache;
+	sqfs_cache_entry_hdr *hdr;
 
-void *sqfs_cache_add(sqfs_cache *cache, sqfs_cache_idx idx) {
-	size_t i = (cache->next++);
-	cache->next %= cache->count;
-	
-	if (cache->idxs[i] != SQFS_CACHE_IDX_INVALID)
-		cache->dispose(sqfs_cache_entry(cache, i));
-	
-	cache->idxs[i] = idx;
-	return sqfs_cache_entry(cache, i);
-}
-
-/* sqfs_cache_add can be called but the caller can fail to fill it (IO
- * error, etc).  sqfs_cache_invalidate invalidates the cache entry.
- * It does not call dispose; it merely marks the entry as reusable
- * since it is never fully initialized.
- */
-void sqfs_cache_invalidate(sqfs_cache *cache, sqfs_cache_idx idx) {
-	size_t i;
-	for (i = 0; i < cache->count; ++i) {
-		if (cache->idxs[i] == idx) {
-			cache->idxs[i] = SQFS_CACHE_IDX_INVALID;
-			return;
+	for (i = 0; i < c->count; ++i) {
+		hdr = sqfs_cache_entry_header(c, i);
+		if (hdr->idx == idx) {
+			assert(hdr->valid);
+			return sqfs_cache_entry(c, i);
 		}
 	}
+
+	/* No existing entry; free one if necessary, allocate a new one. */
+	i = (c->next++);
+	c->next %= c->count;
+
+	hdr = sqfs_cache_entry_header(c, i);
+	if (hdr->valid) {
+		/* evict */
+		c->dispose((void *)(hdr + 1));
+		hdr->valid = 0;
+	}
+
+	hdr->idx = idx;
+	return (void *)(hdr + 1);
 }
 
-static void sqfs_block_cache_dispose(void *data) {
-	sqfs_block_cache_entry *entry = (sqfs_block_cache_entry*)data;
-	sqfs_block_dispose(entry->block);
+int sqfs_cache_entry_valid(const sqfs_cache *cache, const void *e) {
+	sqfs_cache_entry_hdr *hdr = ((sqfs_cache_entry_hdr *)e) - 1;
+	return hdr->valid;
 }
 
-sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count) {
-	return sqfs_cache_init(cache, sizeof(sqfs_block_cache_entry), count,
-		&sqfs_block_cache_dispose);
+void sqfs_cache_entry_mark_valid(sqfs_cache *cache, void *e) {
+	sqfs_cache_entry_hdr *hdr = ((sqfs_cache_entry_hdr *)e) - 1;
+	assert(hdr->valid == 0);
+	hdr->valid = 1;
+}
+
+void sqfs_cache_put(const sqfs_cache *cache, const void *e) {
+	// nada, we have no locking in single-threaded implementation.
 }

@@ -82,6 +82,10 @@ endif
 TESTS =
 if SQ_FUSE_TESTS
 TESTS += tests/ll-smoke.sh
+check_PROGRAMS = cachetest
+cachetest_SOURCES=tests/cachetest.c
+cachetest_LDADD=libsquashfuse.la $(COMPRESSION_LIBS)
+TESTS += cachetest
 endif
 if SQ_DEMO_TESTS
 TESTS += tests/ls.sh
