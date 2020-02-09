@@ -24,6 +24,7 @@
  */
 #include "squashfuse.h"
 #include "fuseprivate.h"
+#include "stat.h"
 
 #include "nonstd.h"
 

@@ -222,6 +222,7 @@ AC_DEFUN([SQ_FUSE_RESULT],[
 	])
 	AM_CONDITIONAL([SQ_WANT_HIGHLEVEL], [test "x$enable_high_level" = xyes])
 	AM_CONDITIONAL([SQ_WANT_LOWLEVEL], [test "x$enable_low_level" = xyes])
+	AM_CONDITIONAL([SQ_WANT_FUSE], [test "x$enable_high_level$enable_low_level" != xnono])
 ])
 
 # SQ_FUSE_API_VERSION

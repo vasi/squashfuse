@@ -13,7 +13,7 @@ EXTRA_DIST = gen_swap.sh autogen.sh LICENSE CONFIGURATION PLATFORMS NEWS win
 bin_PROGRAMS =
 noinst_PROGRAMS =
 
-lib_LTLIBRARIES = libsquashfuse.la libfuseprivate.la
+lib_LTLIBRARIES = libsquashfuse.la
 
 pkgincludedir = @includedir@/squashfuse
 pkginclude_HEADERS = squashfuse.h squashfs_fs.h \
@@ -34,11 +34,14 @@ libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS)
 libsquashfuse_la_LIBADD =
 
+if SQ_WANT_FUSE
 # Helper for FUSE clients: libfuseprivate
 libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
-	fuseprivate.h
+	fuseprivate.h stat.h stat.c
 libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 libfuseprivate_la_LIBADD =
+lib_LTLIBRARIES += libfuseprivate.la
+endif
 
 # High-level squashfuse
 if SQ_WANT_HIGHLEVEL
@@ -69,8 +72,8 @@ squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS)
 # Sample program squashfuse_extract
 noinst_PROGRAMS += squashfuse_extract
 squashfuse_extract_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_extract_SOURCES = extract.c
-squashfuse_extract_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
+squashfuse_extract_SOURCES = extract.c stat.h stat.c nonstd-makedev.c 
+squashfuse_extract_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 endif
 
