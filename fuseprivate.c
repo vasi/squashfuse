@@ -92,3 +92,19 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
 	}
 	return 1; /* Keep */
 }
+
+int sqfs_statfs(sqfs *sq, struct statvfs *st) {
+	struct squashfs_super_block *sb = &sq->sb;
+
+	st->f_bsize = sb->block_size;
+	st->f_frsize = sb->block_size;
+	st->f_blocks = ((sb->bytes_used - 1) >> sb->block_log) + 1;
+	st->f_bfree = 0;
+	st->f_bavail = 0;
+	st->f_files = sb->inodes;
+	st->f_ffree = 0;
+	st->f_favail = 0;
+	st->f_namemax = SQUASHFS_NAME_LEN;
+
+	return 0;
+}

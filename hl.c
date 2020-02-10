@@ -244,6 +244,12 @@ static int sqfs_hl_op_getxattr(const char *path, const char *name,
 	return real;
 }
 
+static int sqfs_hl_op_statfs(const char *path, struct statvfs *st) {
+	sqfs_hl *hl = fuse_get_context()->private_data;
+	return sqfs_statfs(&hl->fs, st);
+}
+
+
 static sqfs_hl *sqfs_hl_open(const char *path, size_t offset) {
 	sqfs_hl *hl;
 	
@@ -291,6 +297,7 @@ int main(int argc, char *argv[]) {
 	sqfs_hl_ops.readlink	= sqfs_hl_op_readlink;
 	sqfs_hl_ops.listxattr	= sqfs_hl_op_listxattr;
 	sqfs_hl_ops.getxattr	= sqfs_hl_op_getxattr;
+	sqfs_hl_ops.statfs    = sqfs_hl_op_statfs;
   
 	args.argc = argc;
 	args.argv = argv;

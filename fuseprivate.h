@@ -48,4 +48,7 @@ typedef struct {
 int sqfs_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);
 
+/* Get filesystem super block info */
+int sqfs_statfs(sqfs *sq, struct statvfs *st);
+
 #endif

@@ -371,6 +371,19 @@ static void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 	fuse_reply_none(req);
 }
 
+static void stfs_ll_op_statfs(fuse_req_t req, fuse_ino_t ino) {
+	sqfs_ll *ll;
+	struct statvfs st;
+	int err;
+
+	ll = fuse_req_userdata(req);
+	err = sqfs_statfs(&ll->fs, &st);
+	if (err == 0) {
+		fuse_reply_statfs(req, &st);
+	} else {
+		fuse_reply_err(req, err);
+	}
+}
 
 /* Helpers to abstract out FUSE 2.5 vs 2.6+ differences */
 
@@ -500,6 +513,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ll_ops.listxattr	= sqfs_ll_op_listxattr;
 	sqfs_ll_ops.getxattr	= sqfs_ll_op_getxattr;
 	sqfs_ll_ops.forget		= sqfs_ll_op_forget;
+	sqfs_ll_ops.statfs    = stfs_ll_op_statfs;
    
 	/* PARSE ARGS */
 	args.argc = argc;
