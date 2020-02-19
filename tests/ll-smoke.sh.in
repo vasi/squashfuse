@@ -12,18 +12,39 @@ set -e
 
 WORKDIR=$(mktemp -d)
 
+function sq_umount {
+    case @build_os@ in
+        linux*)
+            @sq_fusermount@ -u $1
+            ;;
+        darwin*)
+            umount $1
+            ;;
+    esac
+}
+
+function sq_is_mountpoint {
+    mount | grep -q "$1"
+}
+
 function cleanup {
     set +e # Don't care about errors here.
     if [ -n "$WORKDIR" ]; then
         if [ -n "$SQ_SAVE_LOGS" ]; then
             cp "$WORKDIR/squashfs_ll.log" "$SQ_SAVE_LOGS" || true
         fi
-        if grep -q "$WORKDIR/mount" /proc/mounts; then
-            @sq_fusermount@ -u "$WORKDIR/mount"
+        if sq_is_mountpoint "$WORKDIR/mount"; then
+            sq_umount "$WORKDIR/mount"
         fi
         rm -rf "$WORKDIR"
     fi
 }
+
+case @build_os@ in
+    linux*)
+        test_timeout=yes
+        ;;
+esac
 
 # Find compressors we can use
 touch "$WORKDIR/comp_input"
@@ -41,9 +62,9 @@ fi
 
 echo "Generating random test files..."
 mkdir -p "$WORKDIR/source"
-head -c 64M /dev/urandom >"$WORKDIR/source/rand1"
-head -c 17K /dev/urandom >"$WORKDIR/source/rand2"
-head -c 100M /dev/urandom >"$WORKDIR/source/rand3"
+head -c 64000000 /dev/urandom >"$WORKDIR/source/rand1"
+head -c 17000 /dev/urandom >"$WORKDIR/source/rand2"
+head -c 100000000 /dev/urandom >"$WORKDIR/source/rand3"
 head -c 87 /dev/zero >"$WORKDIR/source/z1 with spaces"
 
 for comp in $compressors; do
@@ -56,13 +77,13 @@ for comp in $compressors; do
     $SFLL -f  "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
     # Wait up to 5 seconds to be mounted. TSAN builds can take some time to mount.
     for _ in $(seq 5); do
-    if grep -q "$WORKDIR/mount" /proc/mounts; then
+    if sq_is_mountpoint "$WORKDIR/mount"; then
         break
     fi
     sleep 1
     done
 
-    if ! grep -q "$WORKDIR/mount" /proc/mounts; then
+    if ! sq_is_mountpoint "$WORKDIR/mount"; then
         echo "Image did not mount after 5 seconds."
         cp "$WORKDIR/squashfs_ll.log" /tmp/squashfs_ll.smoke.log
         echo "There may be clues in /tmp/squashfs_ll.smoke.log"
@@ -87,7 +108,7 @@ for comp in $compressors; do
     echo "Parallel md5sum..."
     md5sum "$WORKDIR"/mount/* >"$WORKDIR/md5sums"
     split -l1 "$WORKDIR/md5sums" "$WORKDIR/sumpiece"
-    echo "$WORKDIR"/sumpiece* | xargs -P0 -n1 md5sum -c
+    echo "$WORKDIR"/sumpiece* | xargs -P4 -n1 md5sum -c
 
     echo "Lookup tests..."
     # Look for non-existent files to exercise failed lookup path.
@@ -101,27 +122,27 @@ for comp in $compressors; do
         exit 1
     fi
 
-    SRCSZ=$(stat -c "%s" "$WORKDIR/source/rand1")
-    MNTSZ=$(stat -c "%s" "$WORKDIR/mount/rand1")
+    SRCSZ=$(wc -c < "$WORKDIR/source/rand1")
+    MNTSZ=$(wc -c < "$WORKDIR/mount/rand1")
     if [ "$SRCSZ" != "$MNTSZ" ]; then
         echo "Bogus size $MNTSZ != $SRCSZ"
         exit 1
     fi
 
     echo "Unmounting..."
-    @sq_fusermount@ -u "$WORKDIR/mount"
+    sq_umount "$WORKDIR/mount"
 
     # Only test timeouts once, it takes a long time
-    if [ -z "$did_timeout" ]; then
+    if [ -n "$test_timeout" -a -z "$did_timeout" ]; then
         echo "Remounting with idle unmount option..."
         $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
-        if ! grep -q "$WORKDIR/mount" /proc/mounts; then
+        if ! sq_is_mountpoint "$WORKDIR/mount"; then
             echo "Not mounted?"
             exit 1
         fi
         echo "Waiting up to $(( IDLE_TIMEOUT + 5 )) seconds for idle unmount..."
         sleep $(( IDLE_TIMEOUT + 5 ))
-        if grep -q "$WORKDIR/mount" /proc/mounts; then
+        if sq_is_mountpoint "$WORKDIR/mount"; then
             echo "FS did not idle unmount in timely way."
             exit 1
         fi
