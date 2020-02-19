@@ -431,7 +431,9 @@ static void alarm_tick(int sig) {
 	}
 
 	if (open_refcount == 0 && time(NULL) - last_access > idle_timeout_secs) {
-		fuse_session_exit(fuse_instance);
+		/* Safely shutting down fuse in a cross-platform way is a dark art!
+		   But just about any platform should stop on SIGINT, so do that */
+		kill(getpid(), SIGINT);
 		return;
 	}
 	alarm(1);  /* always reset our alarm */

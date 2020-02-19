@@ -2,6 +2,7 @@ AC_INIT([squashfuse], [0.1.103], [dave@vasilevsky.ca])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
+AC_CANONICAL_BUILD
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
 AM_SILENT_RULES(yes)
@@ -30,11 +31,11 @@ SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
 # Decompression
-SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h])
-SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
-SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
-SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h])
-SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h])
+SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],[gzip])
+SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma],[xz])
+SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],[lzo])
+SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],[lz4])
+SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],[zstd])
 AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
@@ -61,9 +62,22 @@ AC_ARG_ENABLE([demo],
 	[enable_demo=yes])
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
+# The 'make check' tests are only known to work on linux.
+AC_CHECK_PROGS([sq_fusermount],[fusermount3 fusermount],[no])
+AS_CASE([$build_os],
+        [linux*],AS_IF([test "x$sq_fusermount" != xno],[enable_tests=yes],[enable_tests=no]),
+        [darwin*],[enable_tests=yes],
+        [enable_tests=no])
+AC_CHECK_PROG([sq_mksquashfs],[mksquashfs],[yes],[no])
+AS_IF([test "x$sq_mksquashfs" = xno],[enable_tests=no])
+AC_CHECK_PROG([sq_md5sum],[md5sum],[yes],[no])
+AS_IF([test "x$sq_md5sum" = xno],[enable_tests=no])
+AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
+AC_SUBST([sq_mksquashfs_compressors])
+AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
+
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
-
 
 AC_CONFIG_FILES([Makefile squashfuse.pc])
 AC_OUTPUT
@@ -73,4 +87,5 @@ AS_ECHO(["Compression support ....... :$sq_decompressors"])
 AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
 AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
 AS_ECHO(["Demo program .............. : $enable_demo"])
+AS_ECHO(["Tests ..................... : $enable_tests"])
 AS_ECHO()

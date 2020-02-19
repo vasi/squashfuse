@@ -77,6 +77,10 @@ squashfuse_extract_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 endif
 
+if WANT_TESTS
+TESTS = tests/ll-smoke.sh
+endif
+
 # Handle generation of swap include files
 CLEANFILES = swap.h.inc swap.c.inc
 EXTRA_DIST += swap.h.inc swap.c.inc
