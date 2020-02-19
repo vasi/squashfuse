@@ -31,11 +31,11 @@ SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
 # Decompression
-SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h])
-SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma])
-SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h])
-SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h])
-SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h])
+SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],[gzip])
+SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma],[xz])
+SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],[lzo])
+SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],[lz4])
+SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],[zstd])
 AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
@@ -73,6 +73,7 @@ case "${build_os}" in
 esac
 AC_CHECK_PROGS([sq_fusermount],[fusermount3 fusermount],[no])
 AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
+AC_SUBST([sq_mksquashfs_compressors])
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
