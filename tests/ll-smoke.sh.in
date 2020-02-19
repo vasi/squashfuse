@@ -15,8 +15,8 @@ WORKDIR=$(mktemp -d)
 function cleanup {
     set +e # Don't care about errors here.
     if [ -n "$WORKDIR" ]; then
-        if hostname | grep -q devvm; then
-            cp "$WORKDIR/squashfs_ll.log" /tmp/ll-smoke-last-log || true
+        if [ -n "$SQ_SAVE_LOGS" ]; then
+            cp "$WORKDIR/squashfs_ll.log" "$SQ_SAVE_LOGS" || true
         fi
         if grep -q "$WORKDIR/mount" /proc/mounts; then
             @sq_fusermount@ -u "$WORKDIR/mount"
