@@ -63,15 +63,13 @@ AC_ARG_ENABLE([demo],
 AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
 # The 'make check' tests are only known to work on linux.
-case "${build_os}" in
-    linux*)
-        enable_tests=yes
-        ;;
-    *)
-        enable_tests=no
-        ;;
-esac
+AS_CASE([$build_os],
+        [linux*], [enable_tests=yes],
+        [enable_tests=no])
+AC_CHECK_PROG([sq_mksquashfs],[mksquashfs],[yes],[no])
+AS_IF([test "x$sq_mksquashfs" = xno],[enable_tests=no])
 AC_CHECK_PROGS([sq_fusermount],[fusermount3 fusermount],[no])
+AS_IF([test "x$sq_fusermount" = xno],[enable_tests=no])
 AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
 AC_SUBST([sq_mksquashfs_compressors])
 
