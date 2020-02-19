@@ -71,6 +71,7 @@ case "${build_os}" in
         enable_tests=no
         ;;
 esac
+AC_CHECK_PROGS([sq_fusermount],[fusermount3 fusermount],[no])
 AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],

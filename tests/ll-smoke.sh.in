@@ -19,7 +19,7 @@ function cleanup {
             cp "$WORKDIR/squashfs_ll.log" /tmp/ll-smoke-last-log || true
         fi
         if grep -q "$WORKDIR/mount" /proc/mounts; then
-            fusermount3 -u "$WORKDIR/mount"
+            @sq_fusermount@ -u "$WORKDIR/mount"
         fi
         rm -rf "$WORKDIR"
     fi
@@ -94,7 +94,7 @@ if [ "$SRCSZ" != "$MNTSZ" ]; then
 fi
 
 echo "Unmounting..."
-fusermount3 -u "$WORKDIR/mount"
+@sq_fusermount@ -u "$WORKDIR/mount"
 
 echo "Remounting with idle unmount option..."
 $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
