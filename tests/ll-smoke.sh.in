@@ -40,12 +40,6 @@ function cleanup {
     fi
 }
 
-case @build_os@ in
-    linux*)
-        test_timeout=yes
-        ;;
-esac
-
 # Find compressors we can use
 touch "$WORKDIR/comp_input"
 compressors=
@@ -133,7 +127,7 @@ for comp in $compressors; do
     sq_umount "$WORKDIR/mount"
 
     # Only test timeouts once, it takes a long time
-    if [ -n "$test_timeout" -a -z "$did_timeout" ]; then
+    if [ -z "$did_timeout" ]; then
         echo "Remounting with idle unmount option..."
         $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
         if ! sq_is_mountpoint "$WORKDIR/mount"; then
