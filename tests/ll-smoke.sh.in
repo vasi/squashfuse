@@ -111,17 +111,22 @@ for comp in $compressors; do
     echo "Unmounting..."
     @sq_fusermount@ -u "$WORKDIR/mount"
 
-    echo "Remounting with idle unmount option..."
-    $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
-    if ! grep -q "$WORKDIR/mount" /proc/mounts; then
-        echo "Not mounted?"
-        exit 1
-    fi
-    echo "Waiting up to $(( IDLE_TIMEOUT + 5 )) seconds for idle unmount..."
-    sleep $(( IDLE_TIMEOUT + 5 ))
-    if grep -q "$WORKDIR/mount" /proc/mounts; then
-        echo "FS did not idle unmount in timely way."
-        exit 1
+    # Only test timeouts once, it takes a long time
+    if [ -z "$did_timeout" ]; then
+        echo "Remounting with idle unmount option..."
+        $SFLL -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
+        if ! grep -q "$WORKDIR/mount" /proc/mounts; then
+            echo "Not mounted?"
+            exit 1
+        fi
+        echo "Waiting up to $(( IDLE_TIMEOUT + 5 )) seconds for idle unmount..."
+        sleep $(( IDLE_TIMEOUT + 5 ))
+        if grep -q "$WORKDIR/mount" /proc/mounts; then
+            echo "FS did not idle unmount in timely way."
+            exit 1
+        fi
+
+        did_timeout=yes
     fi
 
     rm -f "$WORKDIR/squashfs.image"
