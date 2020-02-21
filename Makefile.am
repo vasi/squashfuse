@@ -14,6 +14,7 @@ bin_PROGRAMS =
 noinst_PROGRAMS =
 
 lib_LTLIBRARIES = libsquashfuse.la
+noinst_LTLIBRARIES =
 
 pkgincludedir = @includedir@/squashfuse
 pkginclude_HEADERS = squashfuse.h squashfs_fs.h \
@@ -40,7 +41,7 @@ libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
 	fuseprivate.h stat.h stat.c
 libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
 libfuseprivate_la_LIBADD =
-lib_LTLIBRARIES += libfuseprivate.la
+noinst_LTLIBRARIES += libfuseprivate.la
 endif
 
 # High-level squashfuse
