@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-source "tests/lib.sh"
+. "tests/lib.sh"
 
 # Very simple smoke test for squashfuse_ll. Make some random files.
 # assemble a squashfs image, mount it, compare the files.
@@ -14,7 +14,7 @@ set -e
 
 WORKDIR=$(mktemp -d)
 
-function sq_umount {
+sq_umount() {
     case @build_os@ in
         linux*)
             @sq_fusermount@ -u $1
@@ -25,11 +25,11 @@ function sq_umount {
     esac
 }
 
-function sq_is_mountpoint {
+sq_is_mountpoint() {
     mount | grep -q "$1"
 }
 
-function cleanup {
+cleanup() {
     set +e # Don't care about errors here.
     if [ -n "$WORKDIR" ]; then
         if [ -n "$SQ_SAVE_LOGS" ]; then
@@ -90,9 +90,9 @@ for comp in $compressors; do
     cmp "$WORKDIR/source/z1 with spaces" "$WORKDIR/mount/z1 with spaces"
 
     echo "Parallel md5sum..."
-    md5sum "$WORKDIR"/mount/* >"$WORKDIR/md5sums"
+    @sq_md5sum@ "$WORKDIR"/mount/* >"$WORKDIR/md5sums"
     split -l1 "$WORKDIR/md5sums" "$WORKDIR/sumpiece"
-    echo "$WORKDIR"/sumpiece* | xargs -P4 -n1 md5sum -c
+    echo "$WORKDIR"/sumpiece* | xargs -P4 -n1 @sq_md5sum@ -c
 
     echo "Lookup tests..."
     # Look for non-existent files to exercise failed lookup path.
@@ -124,8 +124,8 @@ for comp in $compressors; do
             echo "Not mounted?"
             exit 1
         fi
-        echo "Waiting up to $(( IDLE_TIMEOUT + 5 )) seconds for idle unmount..."
-        sleep $(( IDLE_TIMEOUT + 5 ))
+        echo "Waiting up to $(( IDLE_TIMEOUT + 10 )) seconds for idle unmount..."
+        sleep $(( IDLE_TIMEOUT + 10 ))
         if sq_is_mountpoint "$WORKDIR/mount"; then
             echo "FS did not idle unmount in timely way."
             exit 1

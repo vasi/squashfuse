@@ -37,6 +37,7 @@ addons:
       - libtool
       - pkg-config
       - fuse
+      - fio
       - libfuse-dev
       - zlib1g-dev
       - liblzo2-dev

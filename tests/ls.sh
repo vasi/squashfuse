@@ -1,13 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
-source "tests/lib.sh"
+. "tests/lib.sh"
 
 # trap cleanup EXIT
 set -e
 
 WORKDIR=$(mktemp -d)
 
-function cleanup {
+cleanup() {
     set +e # Don't care about errors here.
     if [ -n "$WORKDIR" ]; then
         rm -rf "$WORKDIR"
