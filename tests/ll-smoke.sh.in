@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "tests/lib.sh"
+
 # Very simple smoke test for squashfuse_ll. Make some random files.
 # assemble a squashfs image, mount it, compare the files.
 
@@ -40,19 +42,7 @@ function cleanup {
     fi
 }
 
-# Find compressors we can use
-touch "$WORKDIR/comp_input"
-compressors=
-for comp in @sq_mksquashfs_compressors@; do
-  if mksquashfs "$WORKDIR/comp_input" "$WORKDIR/comp_output" -comp $comp >/dev/null 2>/dev/null; then
-    compressors="$compressors $comp"
-  fi
-  rm -f "$WORKDIR/comp_output"
-done
-if [ -z "$compressors" ]; then
-  echo "No common compressor support between squashfuse and mksquashfs!"
-  exit 1
-fi
+find_compressors
 
 echo "Generating random test files..."
 mkdir -p "$WORKDIR/source"

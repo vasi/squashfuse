@@ -79,7 +79,7 @@ AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
-AC_CONFIG_FILES([Makefile squashfuse.pc])
+AC_CONFIG_FILES([Makefile squashfuse.pc tests/lib.sh])
 AC_OUTPUT
 
 AS_ECHO()

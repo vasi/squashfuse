@@ -1,0 +1,15 @@
+find_compressors() {
+  touch "$WORKDIR/comp_input"
+  compressors=
+  for comp in @sq_mksquashfs_compressors@; do
+    if mksquashfs "$WORKDIR/comp_input" "$WORKDIR/comp_output" -comp $comp >/dev/null 2>/dev/null; then
+      compressors="$compressors $comp"
+    fi
+    rm -f "$WORKDIR/comp_output"
+  done
+  if [ -z "$compressors" ]; then
+    echo "No common compressor support between squashfuse and mksquashfs!"
+    exit 1
+  fi
+  echo "Found compressors:$compressors"
+}

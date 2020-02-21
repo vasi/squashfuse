@@ -81,6 +81,7 @@ endif
 if WANT_TESTS
 TESTS = tests/ll-smoke.sh
 endif
+tests/ll-smoke.sh: tests/lib.sh
 
 # Handle generation of swap include files
 CLEANFILES = swap.h.inc swap.c.inc
