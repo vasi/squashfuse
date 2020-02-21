@@ -64,17 +64,25 @@ AM_CONDITIONAL([SQ_WANT_DEMO], [test "x$enable_demo" = xyes])
 
 # The 'make check' tests are only known to work on linux.
 AC_CHECK_PROGS([sq_fusermount],[fusermount3 fusermount],[no])
-AS_CASE([$build_os],
-        [linux*],AS_IF([test "x$sq_fusermount" != xno],[enable_tests=yes],[enable_tests=no]),
-        [darwin*],[enable_tests=yes],
-        [enable_tests=no])
 AC_CHECK_PROG([sq_mksquashfs],[mksquashfs],[yes],[no])
-AS_IF([test "x$sq_mksquashfs" = xno],[enable_tests=no])
 AC_CHECK_PROG([sq_md5sum],[md5sum],[yes],[no])
-AS_IF([test "x$sq_md5sum" = xno],[enable_tests=no])
-AM_CONDITIONAL([WANT_TESTS], [test "x$enable_tests" = xyes])
+
+AS_CASE(["${build_os}__$enable_low_level$sq_fusermount$sq_mksquashfs$sq_md5sum"],
+				[linux*__yesfusermount*yesyes],[sq_fuse_tests=yes],
+				[darwin*__yes*yesyes],[sq_fuse_tests=yes],
+				[sq_fuse_tests=no])
+AS_IF([test "x$sq_fuse_tests" = xyes],[sq_tests="$sq_tests FUSE"])
+AS_IF([test "x$sq_mksquashfs$enable_demo" = xyesyes],[
+	sq_demo_tests=yes
+	sq_tests="$sq_tests demo"
+])
+AM_CONDITIONAL([SQ_FUSE_TESTS], [test "x$sq_fuse_tests" = xyes])
+AM_CONDITIONAL([SQ_DEMO_TESTS], [test "x$sq_demo_tests" = xyes])
+AS_IF([test "x$sq_tests" = x], [sq_tests=" none"])
+
 AC_SUBST([sq_mksquashfs_compressors])
 AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
+
 
 AS_IF([test "x$enable_high_level$enable_low_level$enable_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
@@ -87,5 +95,5 @@ AS_ECHO(["Compression support ....... :$sq_decompressors"])
 AS_ECHO(["High-level FUSE driver .... : $enable_high_level"])
 AS_ECHO(["Low-level FUSE driver ..... : $enable_low_level"])
 AS_ECHO(["Demo program .............. : $enable_demo"])
-AS_ECHO(["Tests ..................... : $enable_tests"])
+AS_ECHO(["Tests ..................... :$sq_tests"])
 AS_ECHO()

@@ -65,6 +65,7 @@ squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
 
 endif
 
+
 if SQ_WANT_DEMO
 # Sample program squashfuse_ls
 noinst_PROGRAMS += squashfuse_ls
@@ -78,10 +79,15 @@ squashfuse_extract_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 endif
 
-if WANT_TESTS
-TESTS = tests/ll-smoke.sh
+TESTS =
+if SQ_FUSE_TESTS
+TESTS += tests/ll-smoke.sh
 endif
-tests/ll-smoke.sh: tests/lib.sh
+if SQ_DEMO_TESTS
+TESTS += tests/ls.sh
+endif
+tests/ll-smoke.sh tests/ls.sh: tests/lib.sh
+
 
 # Handle generation of swap include files
 CLEANFILES = swap.h.inc swap.c.inc
