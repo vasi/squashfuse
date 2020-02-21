@@ -1,0 +1,63 @@
+language: c
+compiler: gcc
+jobs:
+  - name: Ubuntu
+    os: linux
+    arch: amd64
+    dist: bionic
+  - name: macOS
+    os: osx
+    osx_image: xcode8.3 # old image that still supports kexts
+  - name: No FUSE
+    os: linux
+    arch: amd64
+    dist: bionic
+    env: DISABLE_FUSE="--disable-fuse"
+  - name: Older Ubuntu
+    os: linux
+    arch: amd64
+    dist: xenial
+  - name: ARM
+    os: linux
+    arch: arm64
+    dist: bionic
+  - name: Big-endian
+    os: linux
+    arch: s390x
+    dist: bionic
+env:
+  global:
+    - MAKEFLAGS="-j3"
+addons:
+  apt:
+    update: true
+    packages:
+      - automake
+      - autoconf
+      - libtool
+      - pkg-config
+      - fuse
+      - libfuse-dev
+      - zlib1g-dev
+      - liblzo2-dev
+      - liblzma-dev
+      - liblz4-dev
+      - libzstd-dev
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = osx ]; then ./ci/brew.sh; fi
+  # Install mksquashfs, for either zstd or macOS
+  - case "$TRAVIS_JOB_NAME$TRAVIS_OS_NAME" in
+      Ubuntu*|*osx)
+        ./ci/mksquashfs.sh
+      ;;
+    esac
+script:
+  - ./autogen.sh
+  - ./configure $DISABLE_FUSE
+  - make
+  - make check
+  - sudo make install
+after_script:
+  - cat config.log || true
+  - cat tests/*.log || true
+  - mksquashfs || true
