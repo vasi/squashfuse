@@ -31,11 +31,11 @@ SQ_CHECK_DECL_S_IFSOCK
 SQ_CHECK_DECL_ENOATTR([:])
 
 # Decompression
-SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],[gzip])
+SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],,[gzip])
 SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma],[xz])
-SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],[lzo])
-SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],[lz4])
-SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],[zstd])
+SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],,[lzo])
+SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],,[lz4])
+SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],,[zstd])
 AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 

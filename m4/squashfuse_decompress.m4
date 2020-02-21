@@ -21,7 +21,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# SQ_CHECK_DECOMPRESS(NAME, LIBRARY, FUNCTION, HEADER, [PKGCONFIG])
+# SQ_CHECK_DECOMPRESS(NAME, LIBRARY, FUNCTION, HEADER, PKGCONFIG, MKSQUASHFS_NAME)
 #
 # Check for a decompression library with the given library name, function and
 # header. If given pkg-config package name, also look using pkg-config.
@@ -57,7 +57,7 @@ AC_DEFUN([SQ_CHECK_DECOMPRESS],[
 		
 		AS_IF([test "x$sq_dec_ok" = xyes],[
 			sq_decompressors="$sq_decompressors $1"
-			sq_mksquashfs_compressors="$sq_mksquashfs_compressors $5"
+			sq_mksquashfs_compressors="$sq_mksquashfs_compressors $6"
 		],[
 			AS_IF([test "x$sq_specified" = xyes],
 				[AC_MSG_FAILURE([Asked for ]$1[, but it can't be found])])
