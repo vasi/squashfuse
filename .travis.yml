@@ -25,6 +25,8 @@ jobs:
     os: linux
     arch: s390x
     dist: bionic
+  - name: Windows
+    os: windows
 env:
   global:
     - MAKEFLAGS="-j3"
@@ -46,6 +48,7 @@ addons:
       - libzstd-dev
 before_install:
   - if [ "$TRAVIS_OS_NAME" = osx ]; then ./ci/brew.sh; fi
+  - if [ "$TRAVIS_OS_NAME" = windows ]; then choco install -y squashfs; fi
   # Install mksquashfs, for either zstd or macOS
   - case "$TRAVIS_JOB_NAME$TRAVIS_OS_NAME" in
       Ubuntu*|*osx)
@@ -53,11 +56,12 @@ before_install:
       ;;
     esac
 script:
-  - ./autogen.sh
-  - ./configure $DISABLE_FUSE
-  - make
-  - make check
-  - sudo make install
+  - if [ "$TRAVIS_OS_NAME" != windows ]; then ./autogen.sh; fi
+  - if [ "$TRAVIS_OS_NAME" != windows ]; then ./configure $DISABLE_FUSE; fi
+  - if [ "$TRAVIS_OS_NAME" != windows ]; then make; fi
+  - if [ "$TRAVIS_OS_NAME" != windows ]; then make check; fi
+  - if [ "$TRAVIS_OS_NAME" != windows ]; then sudo make install; fi
+  - if [ "$TRAVIS_OS_NAME" = windows ]; then ./ci/win.sh; fi
 after_script:
   - cat config.log || true
   - cat tests/*.log || true
