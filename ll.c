@@ -496,7 +496,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ll *ll;
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%zu", offsetof(sqfs_opts, offset), 0},
-		{"timeout=%zu", offsetof(sqfs_opts, idle_timeout_secs), 0},
+		{"timeout=%u", offsetof(sqfs_opts, idle_timeout_secs), 0},
 		FUSE_OPT_END
 	};
 	
