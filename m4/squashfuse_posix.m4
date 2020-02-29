@@ -34,12 +34,18 @@ sq_msg="definition needed by $1"
 AS_VAR_SET_IF([sq_cache],[
 	AC_CACHE_CHECK([$sq_msg], [sq_cache])
 ],[
+	AS_VAR_SET([sq_cache],[unknown])
 	AC_MSG_NOTICE([checking for $sq_msg])
 	for sq_def in none _DARWIN_C_SOURCE _NETBSD_SOURCE _XOPEN_SOURCE \
 		_BSD_SOURCE _GNU_SOURCE _POSIX_C_SOURCE
 	do
-		AS_IF([test "x$sq_def" = "x_POSIX_C_SOURCE"],[op=undef],[op=define])
-		AS_IF([test "x$sq_def" = "x_XOPEN_SOURCE"],[val=500],[val=1])
+		op=define
+		val=1
+		AS_IF([test "x$sq_def" = "x_POSIX_C_SOURCE"],[
+			op=undef
+			val=
+		])
+		AS_IF([test "x$sq_def" = "x_XOPEN_SOURCE"],[val=500])
 		AS_IF([test "x$sq_def" = "xnone"],[
 			sq_prolog=
 			AC_MSG_CHECKING([if $1 works without changes])
