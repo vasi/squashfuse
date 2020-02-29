@@ -12,6 +12,6 @@ freebsd_12_task:
     - sysctl vfs.usermount=1
   build_script:
     - ./autogen.sh
-    - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure
+    - CPPFLAGS="-I/usr/local/include -Werror" LDFLAGS=-L/usr/local/lib ./configure
     - make
     - make check
