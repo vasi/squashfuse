@@ -19,7 +19,7 @@ sq_umount() {
         linux*)
             @sq_fusermount@ -u $1
             ;;
-        darwin*)
+        *)
             umount $1
             ;;
     esac

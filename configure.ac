@@ -70,6 +70,7 @@ AC_CHECK_PROGS([sq_md5sum],[md5sum gmd5sum],[no])
 AS_CASE(["${build_os}__$enable_low_level$sq_fusermount$sq_mksquashfs$sq_md5sum"],
 				[linux*__yesfusermount*yes*md5sum],[sq_fuse_tests=yes],
 				[darwin*__yes*yes*md5sum],[sq_fuse_tests=yes],
+				[freebsd*__yes*yes*md5sum],[sq_fuse_tests=yes],
 				[sq_fuse_tests=no])
 AS_IF([test "x$sq_fuse_tests" = xyes],[sq_tests="$sq_tests FUSE"])
 AS_IF([test "x$sq_mksquashfs$enable_demo" = xyesyes],[
