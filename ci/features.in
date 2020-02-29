@@ -1,0 +1,5 @@
+Decompressors:@sq_decompressors@
+High-level: @sq_high_level@
+Low-level: @sq_low_level@
+Demo: @sq_demo@
+Tests:@sq_tests@

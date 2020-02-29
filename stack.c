@@ -98,7 +98,7 @@ sqfs_err sqfs_stack_push(sqfs_stack *s, void *vout) {
 }
 
 bool sqfs_stack_pop(sqfs_stack *s) {
-	void *v;
+	void *v = NULL;
 	
 	if (s->size == 0)
 		return false;
