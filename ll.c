@@ -461,7 +461,7 @@ static sqfs_err sqfs_ll_mount(
 	}
 #endif
 
-	ch->session = fuse_lowlevel_new(&args,
+	ch->session = fuse_lowlevel_new(args,
 			ops, sizeof(*ops), userdata);
 	if (!ch->session) {
 		sqfs_ll_unmount(ch, mountpoint);
