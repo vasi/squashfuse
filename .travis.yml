@@ -5,28 +5,31 @@ jobs:
     os: linux
     arch: amd64
     dist: bionic
-    env: BUILD_MKSQUASHFS=yes
+    env: BUILD_MKSQUASHFS=yes CHECK_FEATURES=all
   - name: macOS
     os: osx
     osx_image: xcode8.3 # old image that still supports kexts
-    env: BUILD_MKSQUASHFS=yes
+    env: BUILD_MKSQUASHFS=yes CHECK_FEATURES=zlib
   - name: No FUSE
     os: linux
     arch: amd64
     dist: bionic
-    env: DISABLE_FUSE="--disable-fuse"
+    env: DISABLE_FUSE="--disable-fuse" CHECK_FEATURES=demo
   - name: Older Ubuntu
     os: linux
     arch: amd64
     dist: xenial
+    env: CHECK_FEATURES=all
   - name: ARM
     os: linux
     arch: arm64
     dist: bionic
+    env: CHECK_FEATURES=all
   - name: Big-endian
     os: linux
     arch: s390x
     dist: bionic
+    env: CHECK_FEATURES=all
   - name: Windows
     os: windows
 env:
@@ -58,6 +61,7 @@ script:
   - if [ "$TRAVIS_OS_NAME" != windows ]; then CPPFLAGS="-Werror" ./configure $DISABLE_FUSE; fi
   - if [ "$TRAVIS_OS_NAME" != windows ]; then make; fi
   - if [ "$TRAVIS_OS_NAME" != windows ]; then make check; fi
+  - if [ "x$CHECK_FEATURES" != x ]; then diff -u ci/expected-features/$CHECK_FEATURES ci/features; fi
   - if [ "$TRAVIS_OS_NAME" != windows ]; then sudo make install; fi
   - if [ "$TRAVIS_OS_NAME" = windows ]; then ./ci/win.sh; fi
 after_script:

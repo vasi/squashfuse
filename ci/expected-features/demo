@@ -1,0 +1,5 @@
+Decompressors: ZLIB XZ LZO LZ4 ZSTD
+High-level: no
+Low-level: no
+Demo: yes
+Tests: demo

@@ -1,0 +1,5 @@
+Decompressors: ZLIB
+High-level: yes
+Low-level: yes
+Demo: yes
+Tests: FUSE demo
