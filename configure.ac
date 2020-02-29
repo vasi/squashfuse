@@ -2,6 +2,11 @@ AC_INIT([squashfuse], [0.1.103], [dave@vasilevsky.ca])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
+AH_TOP([
+#ifndef SQFS_CONFIG_H
+#define SQFS_CONFIG_H
+])
+AH_BOTTOM([#endif])
 AC_CANONICAL_BUILD
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
