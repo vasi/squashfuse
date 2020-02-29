@@ -5,8 +5,13 @@ freebsd_12_task:
   freebsd_instance:
     image: freebsd-12-1-release-amd64
   install_script:
-    - pkg install -y autoconf automake fusefs-libs libtool pkgconf
+    - pkg install -y autoconf automake libtool pkgconf fusefs-libs
+    - pkg install -y lzo2 liblz4 zstd
+    - pkg install -y squashfs-tools coreutils
+    - kldload fuse
+    - sysctl vfs.usermount=1
   build_script:
-    - sh autogen.sh
-    - ./configure
+    - ./autogen.sh
+    - CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib ./configure
     - make
+    - make check
