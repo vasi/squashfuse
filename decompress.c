@@ -25,6 +25,7 @@
 #include "decompress.h"
 
 #include "squashfs_fs.h"
+#include "swap.h"
 
 #include <string.h>
 
@@ -78,22 +79,20 @@ static sqfs_err sqfs_decompressor_lzma(void *in, size_t insz,
 		void *out, size_t *outsz) {
 
 	lzma_stream strm = LZMA_STREAM_INIT;
-	int uncompressed_size = 0, res;
+	uint32_t uncompressed_size = 0, res;
 	unsigned char lzma_header[LZMA_HEADER_SIZE];
 
 	res = lzma_alone_decoder(&strm, MEMLIMIT);
-	if(res != LZMA_OK) {
+	if (res != LZMA_OK) {
 		lzma_end(&strm);
 		return SQFS_ERR;
 	}
 
 	memcpy(lzma_header, in, LZMA_HEADER_SIZE);
-	uncompressed_size = lzma_header[LZMA_PROPS_SIZE] |
-		(lzma_header[LZMA_PROPS_SIZE + 1] << 8) |
-		(lzma_header[LZMA_PROPS_SIZE + 2] << 16) |
-		(lzma_header[LZMA_PROPS_SIZE + 3] << 24);
+	uncompressed_size = *((uint32_t*)(lzma_header + LZMA_PROPS_SIZE));
+	sqfs_swapin32(&uncompressed_size);
 
-	if(uncompressed_size > *outsz) {
+	if (uncompressed_size > *outsz) {
 		lzma_end(&strm);
 		return SQFS_ERR;
 	}
@@ -107,18 +106,18 @@ static sqfs_err sqfs_decompressor_lzma(void *in, size_t insz,
 
 	res = lzma_code(&strm, LZMA_RUN);
 
-	if(res != LZMA_OK || strm.avail_in != 0) {
+	if (res != LZMA_OK || strm.avail_in != 0) {
 		lzma_end(&strm);
 		return SQFS_ERR;
 	}
 
-	strm.next_in = in + LZMA_HEADER_SIZE;
+	strm.next_in = (uint8_t *)in + LZMA_HEADER_SIZE;
 	strm.avail_in = insz - LZMA_HEADER_SIZE;
 
 	res = lzma_code(&strm, LZMA_FINISH);
 	lzma_end(&strm);
 
-	if(res == LZMA_STREAM_END || (res == LZMA_OK &&
+	if (res == LZMA_STREAM_END || (res == LZMA_OK &&
 		strm.total_out >= uncompressed_size && strm.avail_in == 0)) {
 		*outsz = uncompressed_size;
 		return SQFS_OK;
@@ -178,14 +177,14 @@ sqfs_decompressor sqfs_decompressor_get(sqfs_compression_type type) {
 #ifdef CAN_DECOMPRESS_ZLIB
 		case ZLIB_COMPRESSION: return &sqfs_decompressor_zlib;
 #endif
-#ifdef CAN_DECOMPRESS_XZ
-		case XZ_COMPRESSION: return &sqfs_decompressor_xz;
-#endif
 #ifdef CAN_DECOMPRESS_LZMA
 		case LZMA_COMPRESSION: return &sqfs_decompressor_lzma;
 #endif
 #ifdef CAN_DECOMPRESS_LZO
 		case LZO_COMPRESSION: return &sqfs_decompressor_lzo;
+#endif
+#ifdef CAN_DECOMPRESS_XZ
+		case XZ_COMPRESSION: return &sqfs_decompressor_xz;
 #endif
 #ifdef CAN_DECOMPRESS_LZ4
 		case LZ4_COMPRESSION: return &sqfs_decompressor_lz4;
@@ -210,17 +209,17 @@ char *sqfs_compression_name(sqfs_compression_type type) {
 void sqfs_compression_supported(sqfs_compression_type *types) {
 	size_t i = 0;
 	memset(types, SQFS_COMP_UNKNOWN, SQFS_COMP_MAX * sizeof(*types));
+#ifdef CAN_DECOMPRESS_ZLIB
+	types[i++] = ZLIB_COMPRESSION;
+#endif
+#ifdef CAN_DECOMPRESS_LZMA
+	types[i++] = LZMA_COMPRESSION;
+#endif
 #ifdef CAN_DECOMPRESS_LZO
 	types[i++] = LZO_COMPRESSION;
 #endif
 #ifdef CAN_DECOMPRESS_XZ
 	types[i++] = XZ_COMPRESSION;
-#endif
-#ifdef CAN_DECOMPRESS_LZMA
-	types[i++] = LZMA_COMPRESSION;
-#endif
-#ifdef CAN_DECOMPRESS_ZLIB
-	types[i++] = ZLIB_COMPRESSION;
 #endif
 #ifdef CAN_DECOMPRESS_LZ4
 	types[i++] = LZ4_COMPRESSION;
