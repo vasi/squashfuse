@@ -63,7 +63,8 @@ sqfs_err sqfs_dir_open(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
 		fs->sb.directory_table_start;
 	dir->cur.offset = inode->xtra.dir.offset;
 	dir->offset = 0;
-	dir->total = inode->xtra.dir.dir_size - 3;
+	dir->total = inode->xtra.dir.dir_size <= 3 ? 0 :
+                inode->xtra.dir.dir_size - 3;
 	
 	if (offset) {
 		/* Fast forward to the given offset */
