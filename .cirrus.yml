@@ -1,30 +1,35 @@
 env:
   CIRRUS_CLONE_DEPTH: 1
 
-freebsd_12_task:
-  freebsd_instance:
-    image: freebsd-12-1-release-amd64
-  install_script:
-    - pkg install -y autoconf automake libtool pkgconf fusefs-libs
-    - pkg install -y lzo2 liblz4 zstd
-    - pkg install -y squashfs-tools coreutils
-    - kldload fuse
-    - sysctl vfs.usermount=1
+task:
+  matrix:
+    - freebsd_instance:
+        image: freebsd-12-1-release-amd64
+      setup_script:
+        - pkg install -y autoconf automake libtool pkgconf fusefs-libs
+        - pkg install -y lzo2 liblz4 zstd
+        - pkg install -y squashfs-tools coreutils
+        - kldload fuse
+        - sysctl vfs.usermount=1
+      env:
+        CONFIGURE_CPPFLAGS: '-I/usr/local/include'
+        CONFIGURE_LDFLAGS: '-L/usr/local/lib' 
+    - osx_instance:
+        image: catalina-base
+      setup_script:
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install autoconf automake libtool pkgconfig squashfs coreutils
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew cask install osxfuse
   build_script:
     - ./autogen.sh
-    - CPPFLAGS="-I/usr/local/include -Werror" LDFLAGS=-L/usr/local/lib ./configure
+    - CPPFLAGS="$CONFIGURE_CPPFLAGS -Werror" LDFLAGS="$CONFIGURE_LDFLAGS" ./configure
     - make
-    - make check
-
-osx_task:
-  osx_instance:
-    image: catalina-base
-  install_script:
-    - HOMEBREW_NO_AUTO_UPDATE=1 brew install autoconf automake libtool pkgconfig squashfs coreutils
-    - HOMEBREW_NO_AUTO_UPDATE=1 brew cask install osxfuse
-    - ./autogen.sh
-    - ./configure
-    - make
+  test_script:
     - make check
     - diff -u ci/expected-features/all ci/features
+  install_script:
     - sudo make install
+  always:
+    after_script:
+    - cat config.log || true
+    - cat tests/*.log || true
+    - mksquashfs || true
