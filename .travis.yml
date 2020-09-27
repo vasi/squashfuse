@@ -6,10 +6,6 @@ jobs:
     arch: amd64
     dist: bionic
     env: BUILD_MKSQUASHFS=yes CHECK_FEATURES=all
-  - name: macOS
-    os: osx
-    osx_image: xcode8.3 # old image that still supports kexts
-    env: BUILD_MKSQUASHFS=yes CHECK_FEATURES=zlib
   - name: No FUSE
     os: linux
     arch: amd64
@@ -52,9 +48,8 @@ addons:
       - liblz4-dev
       - libzstd-dev
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = osx ]; then ./ci/brew.sh; fi
   - if [ "$TRAVIS_OS_NAME" = windows ]; then choco install -y squashfs; fi
-  # Install mksquashfs, for either zstd or macOS
+  # Install mksquashfs, for zstd
   - if [ "$BUILD_MKSQUASHFS" = yes ]; then ./ci/mksquashfs.sh; fi
 script:
   - if [ "$TRAVIS_OS_NAME" != windows ]; then ./autogen.sh; fi
