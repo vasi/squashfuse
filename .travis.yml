@@ -28,6 +28,11 @@ jobs:
     env: CHECK_FEATURES=all
   - name: Windows
     os: windows
+  - name: PowerPC
+    os: linux
+    arch: ppc64le
+    dist: bionic
+    env: CHECK_FEATURES=all  
 env:
   global:
     - MAKEFLAGS="-j3"
