@@ -1,4 +1,4 @@
-AC_INIT([squashfuse], [0.1.103], [dave@vasilevsky.ca])
+AC_INIT([squashfuse], [0.1.104], [dave@vasilevsky.ca])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
