@@ -15,15 +15,20 @@ task:
         CONFIGURE_CPPFLAGS: '-I/usr/local/include'
         CONFIGURE_LDFLAGS: '-L/usr/local/lib' 
     - osx_instance:
-        image: catalina-base
+        image: big-sur-base
       setup_script:
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install tmate
+        - install -d -m 0700 ~/.ssh
+        - echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+TT1aI3d0Kefbct51yWeYILQ1C4T6K5c7HmHj2Ve86yZU1XNwMUvr9r6Tdq2NZAePaoTnxF1DX6Y9S8LLoEA4HK0TZoDJ4817EeaKtLymKid4BSyfvwlJzEOd/e/dDxzT+Irwt+YGLjgzNRpTmXGOcYDXO6TF3lhEtwxUQpIEOPw2+3Lclj6+sW+ToilEitZnuE5hE2DUOxra1MNUzVc2lYxXPzQwkNob3ztM1gQDU7aTekWnvzzboOeFQnUtDeJFjf1KQnJqRSeIR86myfSH8UwKwrjnm6jkDU7jyKkxWrX4iIppVgs+AraXpMUh0aSLFzKeWqABBD56mPkHCB9sgwVLWCUUVusjttyWT26wMT0y+bV8sq/WNQj1HFGIStDJSbAE+Qoki98YyXaM+d02BW/aN16LNpkmmxC64zeHjvcQpyiUkHdeHhHv5BKDLgegqW/FygVLl3jAP3RRpIu9gCysKhPpP6KMHxRsBUoTK9Ac0Ym7ntlmuVXlhePZ5Hk= djvas@Pelee" >> ~/.ssh/authorized_keys
+        - chmod 0600 ~/.ssh/authorized_keys
         - HOMEBREW_NO_AUTO_UPDATE=1 brew install autoconf automake libtool pkgconfig squashfs coreutils
-        - HOMEBREW_NO_AUTO_UPDATE=1 brew cask install osxfuse
+        - HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask macfuse
   build_script:
     - ./autogen.sh
     - CPPFLAGS="$CONFIGURE_CPPFLAGS -Werror" LDFLAGS="$CONFIGURE_LDFLAGS" ./configure
     - make
   test_script:
+    - tmate -F -a ~/.ssh/authorized_keys
     - make check
     - diff -u ci/expected-features/all ci/features
   install_script:
