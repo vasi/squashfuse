@@ -4,7 +4,7 @@ env:
 task:
   matrix:
     - freebsd_instance:
-        image: freebsd-12-1-release-amd64
+        image_family: freebsd-12-2
       setup_script:
         - pkg install -y autoconf automake libtool pkgconf fusefs-libs
         - pkg install -y lzo2 liblz4 zstd
