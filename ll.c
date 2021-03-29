@@ -190,10 +190,18 @@ static void sqfs_ll_op_lookup(fuse_req_t req, fuse_ino_t parent,
 		return;
 	}
 	if (!found) {
-		fuse_reply_err(req, ENOENT);
+		/* Returning with zero inode indicates not found with
+		 * timeout, i.e. future lookups of this name will not generate
+		 * fuse requests.
+		 */
+		struct fuse_entry_param fentry;
+		memset(&fentry, 0, sizeof(fentry));
+		fentry.attr_timeout = fentry.entry_timeout = SQFS_TIMEOUT;
+		fentry.ino = 0;
+		fuse_reply_entry(req, &fentry);
 		return;
 	}
-	
+
 	if (sqfs_inode_get(&lli.ll->fs, &inode, sqfs_dentry_inode(&entry))) {
 		fuse_reply_err(req, ENOENT);
 	} else {
