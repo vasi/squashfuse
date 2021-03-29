@@ -606,7 +606,30 @@ int main(int argc, char *argv[]) {
 		sqfs_usage(argv[0], true);
 	if (fuse_cmdline_opts.mountpoint == NULL)
 		sqfs_usage(argv[0], true);
-	
+
+	/* fuse_daemonize() will unconditionally clobber fds 0-2.
+	 *
+	 * If we get one of these file descriptors in sqfs_ll_open,
+	 * we're going to have a bad time. Just make sure that all
+	 * these fds are open before opening the image file, that way
+	 * we must get a different fd.
+	 */
+	while (true) {
+	    int fd = open("/dev/null", O_RDONLY);
+	    if (fd == -1) {
+		/* Can't open /dev/null, how bizarre! However,
+		 * fuse_deamonize won't clobber fds if it can't
+		 * open /dev/null either, so we ought to be OK.
+		 */
+		break;
+	    }
+	    if (fd > 2) {
+		/* fds 0-2 are now guaranteed to be open. */
+		close(fd);
+		break;
+	    }
+	}
+
 	/* OPEN FS */
 	err = !(ll = sqfs_ll_open(opts.image, opts.offset));
 	
