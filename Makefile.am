@@ -82,6 +82,9 @@ endif
 TESTS =
 if SQ_FUSE_TESTS
 TESTS += tests/ll-smoke.sh
+check_PROGRAMS = endiantest
+endiantest_SOURCES = tests/endiantest.c
+TESTS += endiantest
 endif
 if SQ_DEMO_TESTS
 TESTS += tests/ls.sh

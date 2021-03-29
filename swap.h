@@ -26,16 +26,41 @@
 #define SQFS_SWAP_H
 
 #include "common.h"
+#include "squashfs_fs.h"
+#ifdef HAVE_ASM_BYTEORDER_H
+#include <asm/byteorder.h>
+#endif
 
 #define SQFS_MAGIC_SWAP 0x68737173
 
 void sqfs_swap16(uint16_t *n);
 
+#ifdef HAVE_ASM_BYTEORDER_H
+static inline void sqfs_swapin16(uint16_t *v) {
+    *v = __le16_to_cpu(*v);
+}
+static inline void sqfs_swapin32(uint32_t *v) {
+    *v = __le32_to_cpu(*v);
+}
+static inline void sqfs_swapin64(uint64_t *v) {
+    *v = __le64_to_cpu(*v);
+}
+#else
 void sqfs_swapin16(uint16_t *v);
 void sqfs_swapin32(uint32_t *v);
 void sqfs_swapin64(uint64_t *v);
+#endif
 
-#include "squashfs_fs.h"
+static inline void sqfs_swapin16_internal(__le16 *v) {
+	sqfs_swapin16((uint16_t*)v);
+}
+static inline void sqfs_swapin32_internal(__le32 *v) {
+	sqfs_swapin32((uint32_t*)v);
+}
+static inline void sqfs_swapin64_internal(__le64 *v) {
+	sqfs_swapin64((uint64_t*)v);
+}
+
 #include "swap.h.inc"
 
 #endif

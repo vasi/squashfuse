@@ -58,6 +58,9 @@ AC_CHECK_TYPE([__le16],[
 	AC_DEFINE([HAVE_LINUX_TYPES_LE16],1,
 		[Define if <linux/types.h> defines the type __le16])
 ],,[#include <linux/types.h>])
+AC_CHECK_HEADERS([asm/byteorder.h])
+AC_CHECK_HEADERS([endian.h machine/endian.h], [break])
+AC_C_INLINE
 
 
 # Other options
