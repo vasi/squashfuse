@@ -28,3 +28,16 @@ task:
     - cat config.log || true
     - cat tests/*.log || true
     - mksquashfs || true
+
+netbsd_task:
+  container:
+    image: madworx/netbsd:9.0-x86_64
+    kvm: true
+  build_script:
+    - install -d -m 0700 ~/.ssh
+    - echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDpuHX15YipuAWEqjqXlfSXS8nvED3F9jFgVnY6nnyLe9ChXCJVY/J26IMMmqL8ALUSkG1XD7JbCDLO4811pbHkOxzPIKD2Iml/lUGEafMOxdWh8AieDru538MSclEWyowC04hcDhpZ/Ninm+XnqJ08J0Z0Kks2KnGlG1u4DWAwX5fYyMueNGikzYXGys1bPHJRQG/J/P+B1S7D3jHYNFLjxR0rpNWuXl7g+pE2bkvuHyXFMllmpL1a1E+4DfcUrQV3Ud1MaSeC984sMgqB081GZaVyAhAbAu/KoybYGiDNmKZjTKoCm9WjJTN/eAUtC7BjMEa2J8EqGW+fD9p8wgDEP0pMTs5yNXwDiX8AN+nAfV8BK6xqsPvDglO6Mlj4JSg0SHX4nNhhOC3ckYFuYFx2KENB4frijzwZYHIYORZbFT18jwZEkEb/e7DQKpkmg9MYHu0COXZDIs03EALxFEgfBVDwAaJOu+b0zkixWn0IhtFJJPxa2AxfEQJuGBAQFN0= vasi@Dogali" >> ~/.ssh/authorized_keys
+    - chmod 0600 ~/.ssh/authorized_keys
+    - curl -L https://github.com/tmate-io/tmate/releases/download/2.4.0/tmate-2.4.0-static-linux-amd64.tar.xz  | tar xJO tmate-2.4.0-static-linux-amd64/tmate > /tmate
+    - chmod +x /tmate
+    - /tmate -F -a ~/.ssh/authorized_keys
+
