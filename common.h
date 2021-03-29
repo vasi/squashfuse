@@ -27,6 +27,7 @@
 
 #include "config.h"
 
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -59,7 +60,7 @@ typedef struct sqfs_inode sqfs_inode;
 typedef struct {
 	size_t size;
 	void *data;
-	int refcount;
+	atomic_int refcount;
 } sqfs_block;
 
 typedef struct {
@@ -69,14 +70,14 @@ typedef struct {
 
 /* Increment the refcount on the block. */
 static inline void sqfs_block_ref(sqfs_block *block) {
-	__atomic_add_fetch(&block->refcount, 1, __ATOMIC_RELAXED);
+	atomic_fetch_add_explicit(&block->refcount, 1, memory_order_relaxed);
 }
 
 /* decrement the refcount on the block, return non-zero if we held the last
  * reference.
  */
 static inline int sqfs_block_deref(sqfs_block *block) {
-	return __atomic_sub_fetch(&block->refcount, 1, __ATOMIC_ACQ_REL) == 0;
+	return atomic_fetch_sub_explicit(&block->refcount, 1, memory_order_acq_rel) == 1;
 }
 
 #endif
