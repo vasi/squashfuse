@@ -57,12 +57,20 @@ endif
 
 # Low-level squashfuse_ll, if supported
 if SQ_WANT_LOWLEVEL
-bin_PROGRAMS += squashfuse_ll
-squashfuse_ll_SOURCES = ll.c ll_inode.c nonstd-daemon.c ll.h
-squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_ll_LDADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
+lib_LTLIBRARIES += libsquashfuse_ll.la
+libsquashfuse_ll_la_SOURCES = ll.c ll_inode.c nonstd-daemon.c
+libsquashfuse_ll_la_CPPFLAGS = $(FUSE_CPPFLAGS)
+libsquashfuse_ll_la_LIBADD = libsquashfuse.la libfuseprivate.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 
+bin_PROGRAMS += squashfuse_ll
+squashfuse_ll_SOURCES = ll_main.c
+squashfuse_ll_CPPFLAGS = $(FUSE_CPPFLAGS)
+squashfuse_ll_LDADD = libsquashfuse.la libsquashfuse_ll.la $(COMPRESSION_LIBS) \
+  $(FUSE_LIBS)
+
+pkgconfig_DATA += squashfuse_ll.pc
+pkginclude_HEADERS += ll.h
 endif
 
 

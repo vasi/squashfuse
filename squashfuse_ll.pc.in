@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/squashfuse
+
+Name: squashfuse_ll
+Description: squashfuse low-level library to mount squashfs archives
+Version: @VERSION@
+
+Requires:
+Libs: -L${libdir} -lsquashfuse -lsquashfuse_ll
+Cflags: -I${includedir}
