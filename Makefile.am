@@ -66,6 +66,8 @@ if SQ_WANT_LOWLEVEL
 # convenience lib so we can link squashfuse_ll statically
 noinst_LTLIBRARIES += libsquashfuse_ll_convenience.la
 libsquashfuse_ll_convenience_la_SOURCES = ll.c ll_inode.c nonstd-daemon.c
+libsquashfuse_ll_convenience_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
 libsquashfuse_ll_convenience_la_LIBADD = libsquashfuse_convenience.la libfuseprivate.la
 
 # squashfuse_ll library we will install
