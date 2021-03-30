@@ -37,6 +37,8 @@ libsquashfuse_convenience_la_LIBADD = $(COMPRESSION_LIBS) $(FUSE_LIBS)
 # Main library: libsquashfuse
 lib_LTLIBRARIES += libsquashfuse.la
 libsquashfuse_la_SOURCES =
+libsquashfuse_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
 libsquashfuse_la_LIBADD = libsquashfuse_convenience.la
 
 if SQ_WANT_FUSE
@@ -44,7 +46,7 @@ if SQ_WANT_FUSE
 libfuseprivate_la_SOURCES = fuseprivate.c nonstd-makedev.c nonstd-enoattr.c \
 	fuseprivate.h stat.h stat.c
 libfuseprivate_la_CPPFLAGS = $(FUSE_CPPFLAGS)
-libfuseprivate_la_LIBADD =
+libfuseprivate_la_LIBADD = $(COMPRESSION_LIBS) $(FUSE_LIBS)
 noinst_LTLIBRARIES += libfuseprivate.la
 endif
 
@@ -52,7 +54,9 @@ endif
 if SQ_WANT_HIGHLEVEL
 bin_PROGRAMS += squashfuse
 squashfuse_SOURCES = hl.c
-squashfuse_LDADD = libsquashfuse_convenience.la libfuseprivate.la
+squashfuse_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
+squashfuse_LDADD = libsquashfuse_convenience.la libfuseprivate.la $(COMPRESSION_LIBS) $(FUSE_LIBS)
 dist_man_MANS += squashfuse.1
 endif
 
@@ -67,12 +71,16 @@ libsquashfuse_ll_convenience_la_LIBADD = libsquashfuse_convenience.la libfusepri
 # squashfuse_ll library we will install
 lib_LTLIBRARIES += libsquashfuse_ll.la
 libsquashfuse_ll_la_SOURCES =
-libsquashfuse_ll_la_LIBADD = libsquashfuse_ll_convenience.la
+libsquashfuse_ll_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
+libsquashfuse_ll_la_LIBADD = libsquashfuse_ll_convenience.la $(COMPRESSION_LIBS) $(FUSE_LIBS)
 
 # squashfuse_ll binary that's statically linked against internal libs
 bin_PROGRAMS += squashfuse_ll
 squashfuse_ll_SOURCES = ll_main.c
-squashfuse_ll_LDADD = libsquashfuse_ll_convenience.la
+squashfuse_ll_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
+	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
+squashfuse_ll_LDADD = libsquashfuse_ll_convenience.la $(COMPRESSION_LIBS) $(FUSE_LIBS)
 
 pkgconfig_DATA += squashfuse_ll.pc
 pkginclude_HEADERS += ll.h
