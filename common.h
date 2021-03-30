@@ -32,12 +32,23 @@
 #include <sys/types.h>
 
 #ifdef _WIN32
-	#include <win32.h>
+# include <win32.h>
+# include <intrin.h>
+# define atomic_inc_relaxed(ptr) \
+	_InterlockedIncrement(ptr)
+# define atomic_dec_acqrel(ptr) \
+	_InterlockedDecrement(ptr)
 #else
 	typedef mode_t sqfs_mode_t;
 	typedef uid_t sqfs_id_t;
 	typedef off_t sqfs_off_t;
 	typedef int sqfs_fd_t;
+
+# define atomic_inc_relaxed(ptr) \
+	__atomic_add_fetch(&block->refcount, 1, __ATOMIC_RELAXED)
+# define atomic_dec_acqrel(ptr) \
+	__atomic_sub_fetch(&block->refcount, 1, __ATOMIC_ACQ_REL)
+
 #endif
 
 typedef enum {
@@ -59,11 +70,24 @@ typedef struct sqfs_inode sqfs_inode;
 typedef struct {
 	size_t size;
 	void *data;
+	long refcount;
 } sqfs_block;
 
 typedef struct {
 	sqfs_off_t block;
 	size_t offset;
 } sqfs_md_cursor;
+
+/* Increment the refcount on the block. */
+static inline void sqfs_block_ref(sqfs_block *block) {
+	atomic_inc_relaxed(&block->refcount);
+}
+
+/* decrement the refcount on the block, return non-zero if we held the last
+ * reference.
+ */
+static inline int sqfs_block_deref(sqfs_block *block) {
+	return atomic_dec_acqrel(&block->refcount) == 0;
+}
 
 #endif

@@ -97,6 +97,11 @@ sqfs_compression_type sqfs_compression(sqfs *fs);
 void sqfs_md_header(uint16_t hdr, bool *compressed, uint16_t *size);
 void sqfs_data_header(uint32_t hdr, bool *compressed, uint32_t *size);
 
+typedef struct {
+	sqfs_block *block;
+	size_t data_size;
+} sqfs_block_cache_entry;
+sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count);
 sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed, uint32_t size,
 	size_t outsize, sqfs_block **block);
 void sqfs_block_dispose(sqfs_block *block);

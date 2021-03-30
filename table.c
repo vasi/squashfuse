@@ -76,6 +76,6 @@ sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
 		return SQFS_ERR;
 	
 	memcpy(buf, (char*)(block->data) + off, table->each);
-	/* BLOCK CACHED, DON'T DISPOSE */
+	sqfs_block_dispose(block);
 	return SQFS_OK;
 }
