@@ -30,7 +30,7 @@ jobs:
     os: windows
 env:
   global:
-    - MAKEFLAGS="-j3"
+    - MAKEFLAGS="-j3 V=1"
 addons:
   apt:
     update: true
