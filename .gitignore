@@ -21,7 +21,7 @@ build-aux
 configure
 libtool
 stamp-h1
-squashfuse.pc
+*.pc
 
 win/Debug
 win/Release
