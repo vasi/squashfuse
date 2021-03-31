@@ -128,7 +128,6 @@ typedef struct {
 #endif
 } sqfs_ll_chan;
 
-#if FUSE_USE_VERSION >= 30
 sqfs_err sqfs_ll_mount(
 		sqfs_ll_chan *ch,
 		const char *mountpoint,
@@ -138,20 +137,6 @@ sqfs_err sqfs_ll_mount(
         void *userdata);
 
 void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint);
-
-#else /* FUSE_USE_VERSION >= 30 */
-
-void sqfs_ll_unmount(sqfs_ll_chan *ch, const char *mountpoint);
-
-sqfs_err sqfs_ll_mount(
-		sqfs_ll_chan *ch,
-		const char *mountpoint,
-		struct fuse_args *args,
-		struct fuse_lowlevel_ops *ops,
-		size_t ops_size,
-		void *userdata);
-
-#endif /* FUSE_USE_VERSION >= 30 */
 
 void alarm_tick(int sig);
 
