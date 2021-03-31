@@ -100,7 +100,7 @@ AC_SUBST([sq_high_level])
 AC_SUBST([sq_low_level])
 AC_SUBST([sq_demo])
 AC_SUBST([sq_tests])
-AC_CONFIG_FILES([Makefile squashfuse.pc tests/lib.sh ci/features])
+AC_CONFIG_FILES([Makefile squashfuse.pc squashfuse_ll.pc tests/lib.sh ci/features])
 AC_OUTPUT
 
 AS_ECHO()

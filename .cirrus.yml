@@ -17,7 +17,7 @@ task:
   build_script:
     - ./autogen.sh
     - CPPFLAGS="$CONFIGURE_CPPFLAGS -Werror" LDFLAGS="$CONFIGURE_LDFLAGS" ./configure
-    - make
+    - make V=1
   test_script:
     - make check
     - diff -u ci/expected-features/all ci/features
