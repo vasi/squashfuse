@@ -97,7 +97,7 @@ squashfuse_ls_LDADD = libsquashfuse.la $(COMPRESSION_LIBS)
 # Sample program squashfuse_extract
 noinst_PROGRAMS += squashfuse_extract
 squashfuse_extract_CPPFLAGS = $(FUSE_CPPFLAGS)
-squashfuse_extract_SOURCES = extract.c stat.h stat.c nonstd-makedev.c 
+squashfuse_extract_SOURCES = extract.c stat.h stat.c nonstd-makedev.c nonstd-symlink.c
 squashfuse_extract_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) \
   $(FUSE_LIBS)
 endif

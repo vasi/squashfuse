@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Dave Vasilevsky <dave@vasilevsky.ca>
+ * Copyright (c) 2021 Dave Vasilevsky <dave@vasilevsky.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SQFS_STD_H
-#define SQFS_STD_H
+#include "config.h"
 
-#include "common.h"
+#define SQFEATURE NONSTD_SYMLINK_DEF
+#include "nonstd-internal.h"
 
-/* Non-standard functions that we need */
+#include <unistd.h>
 
-dev_t sqfs_makedev(int maj, int min);
-
-ssize_t sqfs_pread(sqfs_fd_t fd, void *buf, size_t count, sqfs_off_t off);
-
-int sqfs_enoattr();
-
-int sqfs_symlink(const char *target, const char *linkpath);
-
-#endif
+int sqfs_symlink(const char *target, const char *linkpath) {
+	return symlink(target, linkpath);
+}

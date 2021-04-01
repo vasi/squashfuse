@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
                         die("sqfs_readlink error");
                     fprintf(stderr, "Symlink: %s to %s \n", prefixed_path_to_extract, buf);
                     unlink(prefixed_path_to_extract);
-                    ret = symlink(buf, prefixed_path_to_extract);
+                    ret = sqfs_symlink(buf, prefixed_path_to_extract);
                     if (ret != 0)
                         die("symlink error");
                 } else {
