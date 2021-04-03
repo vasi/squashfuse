@@ -1,21 +1,6 @@
 language: c
 compiler: gcc
 jobs:
-  - name: Ubuntu
-    os: linux
-    arch: amd64
-    dist: bionic
-    env: BUILD_MKSQUASHFS=yes CHECK_FEATURES=all
-  - name: No FUSE
-    os: linux
-    arch: amd64
-    dist: bionic
-    env: DISABLE_FUSE="--disable-fuse" CHECK_FEATURES=demo
-  - name: Older Ubuntu
-    os: linux
-    arch: amd64
-    dist: xenial
-    env: CHECK_FEATURES=all
   - name: ARM
     os: linux
     arch: arm64
@@ -45,16 +30,13 @@ addons:
       - liblzma-dev
       - liblz4-dev
       - libzstd-dev
-before_install:
-  # Install mksquashfs, for zstd
-  - if [ "$BUILD_MKSQUASHFS" = yes ]; then ./ci/mksquashfs.sh; fi
 script:
   - ./autogen.sh
   - CPPFLAGS="-Werror" ./configure $DISABLE_FUSE
   - make
   - make check
   - diff -u ci/expected-features/$CHECK_FEATURES ci/features
-  - make install
+  - sudo make install
 after_script:
   - cat config.log || true
   - cat tests/*.log || true
