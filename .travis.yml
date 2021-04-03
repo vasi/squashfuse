@@ -26,8 +26,6 @@ jobs:
     arch: s390x
     dist: bionic
     env: CHECK_FEATURES=all
-  - name: Windows
-    os: windows
 env:
   global:
     - MAKEFLAGS="-j3 V=1"
@@ -48,17 +46,15 @@ addons:
       - liblz4-dev
       - libzstd-dev
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = windows ]; then choco install -y squashfs; fi
   # Install mksquashfs, for zstd
   - if [ "$BUILD_MKSQUASHFS" = yes ]; then ./ci/mksquashfs.sh; fi
 script:
-  - if [ "$TRAVIS_OS_NAME" != windows ]; then ./autogen.sh; fi
-  - if [ "$TRAVIS_OS_NAME" != windows ]; then CPPFLAGS="-Werror" ./configure $DISABLE_FUSE; fi
-  - if [ "$TRAVIS_OS_NAME" != windows ]; then make; fi
-  - if [ "$TRAVIS_OS_NAME" != windows ]; then make check; fi
-  - if [ "x$CHECK_FEATURES" != x ]; then diff -u ci/expected-features/$CHECK_FEATURES ci/features; fi
-  - if [ "$TRAVIS_OS_NAME" != windows ]; then sudo make install; fi
-  - if [ "$TRAVIS_OS_NAME" = windows ]; then ./ci/win.sh; fi
+  - ./autogen.sh
+  - CPPFLAGS="-Werror" ./configure $DISABLE_FUSE
+  - make
+  - make check
+  - diff -u ci/expected-features/$CHECK_FEATURES ci/features
+  - make install
 after_script:
   - cat config.log || true
   - cat tests/*.log || true

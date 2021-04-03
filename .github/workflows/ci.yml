@@ -39,3 +39,31 @@ jobs:
             mksquashfs.log
             ci/features
         if: always()
+  windows:
+    runs-on: windows-2019
+    steps:
+      - name: install chocolatey dependencies
+        shell: powershell
+        run: choco install -y squashfs 
+      - name: setup msbuild
+        uses: microsoft/setup-msbuild@v1.0.2
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: generate header
+        shell: bash
+        run: ./gen_swap.sh squashfs_fs.h
+      - name: build
+        working-directory: ./win
+        shell: powershell
+        run: MSBuild.exe squashfuse_ls.vcxproj -p:PlatformToolset=v142
+      - name: test
+        working-directory: ./win
+        shell: bash
+        run: |
+          set -x
+          mkdir test
+          touch test/foo test/bar test/'iggy blah'
+          mksquashfs test test.squashfs
+          ls test | sort > expected
+          ./Debug/squashfuse_ls.exe test.squashfs | dos2unix | sort > actual
+          diff -u expected actual
