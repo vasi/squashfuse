@@ -12,11 +12,13 @@ pkg_add autoconf automake libtool pkg-config fuse \
 # Enter our source dir, and print nice data on exit
 cd /squashfuse
 cleanup() {
-  cat config.log || true
-  cat tests/*.log || true
-  mksquashfs || true
+  if [ "$?" != 0 ]; then
+    cat config.log || true
+    cat tests/*.log || true
+    mksquashfs || true
+  fi
 }
-trap "cleanup" TERM
+trap "cleanup" EXIT
 
 # Build
 ./autogen.sh

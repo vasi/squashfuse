@@ -6,24 +6,55 @@ on:
     # Every friday
     - cron: '0 0 * * 5'
 jobs:
-  macos:
-    runs-on: macos-latest
+  unit:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-latest
+          - name: No FUSE
+            os: ubuntu-latest
+            disable_fuse: "--disable-fuse"
+            check_features: demo
+          - name: Old distro
+            os: ubuntu-16.04
+          - name: Mac
+            os: macos-latest
+    env:
+      CHECK_FEATURES: ${{ matrix.check_features }}
+      DISABLE_FUSE: ${{ matrix.disable_fuse }}
     steps:
       - name: checkout
         uses: actions/checkout@v2
-      - name: dependencies
+      - name: apt dependencies
+        run: > 
+          sudo apt-get install -y automake autoconf libtool pkg-config
+          zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev
+          fio
+        if: runner.os == 'Linux'
+      - name: apt fuse 2
+        run: sudo apt-get install -y libfuse-dev fuse
+        if: matrix.os == 'ubuntu-16.04'
+      - name: apt fuse 3
+        run: sudo apt-get install -y libfuse3-dev fuse3
+        if: matrix.os == 'ubuntu-latest'
+      - name: homebrew dependencies
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install autoconf automake libtool pkgconfig squashfs coreutils
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask osxfuse
+          brew install autoconf automake libtool pkgconfig squashfs coreutils
+          brew install --cask osxfuse
+        if: runner.os == 'macOS'
       - name: build
         run: |
           ./autogen.sh
-          CPPFLAGS="-Werror" ./configure
-          make -j3 V=1
+          CPPFLAGS="-Werror" ./configure $DISABLE_FUSE
+          make -j2 V=1
       - name: test
         run: |
           make check
-          diff -u ci/expected-features/all ci/features
+          diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
       - name: install
         run: sudo make install
       - name: output
@@ -39,3 +70,31 @@ jobs:
             mksquashfs.log
             ci/features
         if: always()
+  windows:
+    runs-on: windows-2019
+    steps:
+      - name: install chocolatey dependencies
+        shell: powershell
+        run: choco install -y squashfs 
+      - name: setup msbuild
+        uses: microsoft/setup-msbuild@v1.0.2
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: generate header
+        shell: bash
+        run: ./gen_swap.sh squashfs_fs.h
+      - name: build
+        working-directory: ./win
+        shell: powershell
+        run: MSBuild.exe squashfuse_ls.vcxproj -p:PlatformToolset=v142
+      - name: test
+        working-directory: ./win
+        shell: bash
+        run: |
+          set -x
+          mkdir test
+          touch test/foo test/bar test/'iggy blah'
+          mksquashfs test test.squashfs
+          ls test | sort > expected
+          ./Debug/squashfuse_ls.exe test.squashfs | dos2unix | sort > actual
+          diff -u expected actual
