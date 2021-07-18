@@ -1,3 +1,5 @@
+/build*
+.vscode
 /*.inc
 squashfuse
 squashfuse_ll

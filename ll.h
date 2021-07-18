@@ -27,30 +27,26 @@
 
 #include "squashfuse.h"
 
-#if FUSE_USE_VERSION >= 30
-#include <fuse3/fuse_lowlevel.h>
-#else
 #include <fuse_lowlevel.h>
-#endif
 
 typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
 	sqfs fs;
-	
+
 	/* Converting inodes between squashfs and fuse */
 	fuse_ino_t (*ino_fuse)(sqfs_ll *ll, sqfs_inode_id i);
 	sqfs_inode_id (*ino_sqfs)(sqfs_ll *ll, fuse_ino_t i);
-	
+
 	/* Register a new inode, returning the fuse ID for it */
 	fuse_ino_t (*ino_register)(sqfs_ll *ll, sqfs_dir_entry *e);
 	void (*ino_forget)(sqfs_ll *ll, fuse_ino_t i, size_t refs);
-	
+
 	/* Like register, but don't actually remember it */
 	fuse_ino_t (*ino_fuse_num)(sqfs_ll *ll, sqfs_dir_entry *e);
-	
+
 	/* Private data, and how to destroy it */
 	void *ino_data;
-	void (*ino_destroy)(sqfs_ll *ll);	
+	void (*ino_destroy)(sqfs_ll *ll);
 };
 
 sqfs_err sqfs_ll_init(sqfs_ll *ll);

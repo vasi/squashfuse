@@ -1,0 +1,11 @@
+option('use_zlib', type: 'feature', value: 'auto')
+option('use_xz',   type: 'feature', value: 'auto')
+option('use_lzo',  type: 'feature', value: 'auto')
+option('use_lz4',  type: 'feature', value: 'auto')
+option('use_zstd', type: 'feature', value: 'auto')
+
+option('fuse_version', type: 'combo', choices: ['2', '3', 'off'], value: '3', description: 'The FUSE version to use')
+
+option('enable_hl',   type: 'boolean', value: true, description: 'Build high-level FUSE driver')
+option('enable_ll',   type: 'boolean', value: true, description: 'Build low-level FUSE driver')
+option('enable_demo', type: 'boolean', value: true, description: 'Build library demo')

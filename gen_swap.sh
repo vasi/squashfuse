@@ -23,6 +23,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+root="$PWD"
+[ -n "$2" ] && cd "$2"
+
 ${SED:-sed} -n '
 /^struct squashfs_/,/^}/{
 	s/^struct \(squashfs_\([^[:space:]]*\)\).*/void sqfs_swapin_\2(struct \1 *s){/p;t decl
@@ -33,4 +36,4 @@ d
 :decl
 s/{/;/
 w swap.h.inc
-' < "$1" > swap.c.inc
+' < "$root/$1" > swap.c.inc
