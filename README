@@ -51,6 +51,7 @@ Runtime requirements:
       - lzo2
       - xz (aka. liblzma)
       - lz4
+      - zstd
   - (optional) libattr, for better extended attribute support on Linux
 
 Build requirements:
@@ -210,7 +211,7 @@ Squashfuse currently comprises three programs:
 3c. Features
 ------------
 Squashfuse supports the following SquashFS features: 
-  - zlib, LZO, LZMA2 and LZ4 decompression
+  - zlib, LZO, LZMA2, LZ4 and zstd decompression
   - Fast, indexed directory lookup
   - Fast, indexed seeking within files
   - Caching of decompressed blocks
