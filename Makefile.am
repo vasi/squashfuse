@@ -17,8 +17,9 @@ noinst_LTLIBRARIES =
 
 pkgincludedir = @includedir@/squashfuse
 pkginclude_HEADERS = squashfuse.h squashfs_fs.h \
-	cache.h common.h config.h decompress.h dir.h file.h fs.h stack.h table.h \
-	traverse.h util.h xattr.h
+	cache.h common.h config.h decompress.h dir.h file.h fs.h \
+	fuseprivate.h hash.h nonstd.h nonstd-internal.h \
+	stack.h stat.h swap.h table.h traverse.h util.h xattr.h
 pkgconfigdir = @pkgconfigdir@
 pkgconfig_DATA 	= squashfuse.pc
 
