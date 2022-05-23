@@ -91,6 +91,7 @@ AS_IF([test "x$sq_tests" = x], [sq_tests=" none"])
 
 AC_SUBST([sq_mksquashfs_compressors])
 AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
+AC_CONFIG_FILES([tests/umount-test.sh],[chmod +x tests/umount-test.sh])
 
 
 AS_IF([test "x$sq_high_level$sq_low_level$sq_demo" = xnonono],
@@ -103,6 +104,14 @@ AC_ARG_ENABLE([multithreading],
     AC_DEFINE(SQFS_MULTITHREADED, 1, [Enable multi-threaded low-level FUSE driver])
     ])
 AM_CONDITIONAL([MULTITHREADED], [test x$enable_multithreading = xyes])
+
+AC_ARG_ENABLE([sigterm-handler],
+	AS_HELP_STRING([--enable-sigterm-handler], [enable lazy umount on SIGTERM in low-level FUSE driver]),
+	[
+    AC_CHECK_HEADER([linux/version.h], , [], AC_MSG_ERROR([linux host required for sigterm-handler.]))
+    AC_DEFINE(SQFS_SIGTERM_HANDLER, 1, [Enable lazy umount on SIGTERM in low-level FUSE driver])
+    ])
+AM_CONDITIONAL([SIGTERM_HANDLER], [test x$enable_sigterm_handler = xyes])
 
 AC_SUBST([sq_decompressors])
 AC_SUBST([sq_high_level])

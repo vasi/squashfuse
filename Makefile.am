@@ -111,6 +111,9 @@ if MULTITHREADED
 # that case.
 TESTS += tests/ll-smoke-singlethreaded.sh
 endif
+if SIGTERM_HANDLER
+TESTS += tests/umount-test.sh
+endif
 check_PROGRAMS = cachetest endiantest
 cachetest_SOURCES=tests/cachetest.c
 cachetest_LDADD=libsquashfuse.la $(COMPRESSION_LIBS)

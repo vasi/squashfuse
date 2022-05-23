@@ -1,0 +1,85 @@
+#!/bin/bash
+
+. "tests/lib.sh"
+
+SFLL=${1:-./squashfuse_ll}         # The squashfuse_ll binary.
+TIMEOUT=20
+
+case @build_os@ in
+    linux*)
+        ;;
+    *)
+        echo "This test is only enabled on linux hosts."
+        exit 0
+        ;;
+esac
+
+function cleanup {
+    set +e
+    if [[ -n "$TAIL_PID" ]]; then
+        kill "$TAIL_PID"
+    fi
+    @sq_fusermount@ -u "$MNTDIR" >& /dev/null
+    rm -rf "$WORKDIR"
+}
+
+set -e
+WORKDIR=$(mktemp -d)
+MNTDIR="$WORKDIR/mountpoint"
+mkdir -p "$MNTDIR"
+mkdir -p "$WORKDIR/source"
+trap cleanup EXIT
+
+# Make a tiny squashfs filesystem.
+echo "Hello world" >"$WORKDIR/source/hello"
+mksquashfs "$WORKDIR/source" "$WORKDIR/squashfs.image" -comp zstd -no-progress >& /dev/null
+
+# Mount it.
+$SFLL "$WORKDIR/squashfs.image" "$MNTDIR"
+SFPID=$(pgrep -f "squashfuse_ll.*$MNTDIR")
+
+if ! [[ -d /proc/$SFPID ]]; then
+    echo "squashfuse process missing"
+    exit 1
+fi
+if ! grep -q "$MNTDIR" /proc/mounts; then
+    echo "mount missing."
+    exit 1
+fi
+
+# background a task to hold a file open from the image.
+tail -f "${MNTDIR}/hello" >/dev/null &
+TAIL_PID=$!
+
+# SIGTERM the squashfuse process.
+kill -15 "$SFPID"
+
+# Now we expect the mountpoint to disappear due to lazy umount.
+if ! timeout $TIMEOUT bash -c \
+    "while grep -q $MNTDIR /proc/mounts; do \
+        sleep 1;
+     done"; then
+     echo "$MNTDIR did not dismount in response to SIGTERM."
+     exit 1
+fi
+
+# but the process should remain alive, because of the background task.
+if ! [[ -d /proc/$SFPID ]]; then
+    echo "squashfuse process missing"
+    exit 1
+fi
+
+# Now kill the background process.
+kill $TAIL_PID
+TAIL_PID=
+
+# Now we expect the process to die.
+if ! timeout $TIMEOUT bash -c \
+    "while [[ -d /proc/$SFPID ]]; do \
+        sleep 1;
+     done"; then
+     echo "squashfuse process did not die once filesystem was released."
+     exit 1
+fi
+
+echo "Success."
