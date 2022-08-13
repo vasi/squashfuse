@@ -70,7 +70,7 @@ sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
 /* Lookup a complete path, and replace *inode with the results.
 	 Uses / (slash) as the directory separator. */
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
-	bool *found);
+	bool *found, sqfs_inode_id *id);
 
 
 /* Accessors on sqfs_dir_entry */

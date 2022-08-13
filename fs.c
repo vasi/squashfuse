@@ -25,6 +25,7 @@
 #include "fs.h"
 
 #include "file.h"
+#include "dir.h"
 #include "nonstd.h"
 #include "swap.h"
 #include "xattr.h"
@@ -58,7 +59,7 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
@@ -93,6 +94,20 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
 	err |= sqfs_block_cache_init(&fs->data_cache, DATA_CACHED_BLKS);
 	err |= sqfs_block_cache_init(&fs->frag_cache, FRAG_CACHED_BLKS);
 	err |= sqfs_blockidx_init(&fs->blockidx);
+
+	if (subdir && subdir[0] != '\0') {
+		sqfs_inode root;
+		err |= sqfs_inode_get(fs, &root, sqfs_inode_root(fs));
+		sqfs_inode_id new_root;
+		bool found = false;
+		err |= sqfs_lookup_path(fs, &root, subdir, &found, &new_root);
+		if (!found) {
+			sqfs_destroy(fs);
+			return SQFS_ERR;
+		}
+		fs->sb.root_inode = new_root;
+	}
+
 	if (err) {
 		sqfs_destroy(fs);
 		return SQFS_ERR;

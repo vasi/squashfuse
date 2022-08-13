@@ -27,6 +27,7 @@
 #include "fs.h"
 #include "swap.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -252,12 +253,12 @@ sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
 	sqfs_err err;
 	sqfs_dir dir;
 	sqfs_dir_ff_name_t arg;
-	
+
 	*found = false;
-	
+
 	if ((err = sqfs_dir_open(fs, inode, &dir, 0)))
 		return err;
-	
+
 	/* Fast forward to header */
 	arg.cmp = name;
 	arg.cmplen = namelen;
@@ -273,20 +274,20 @@ sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
 		if (order >= 0)
 			break;
 	}
-	
+
 	return err;
 }
 
 
 sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
-		bool *found) {
+		bool *found, sqfs_inode_id *id) {
 	sqfs_err err;
 	sqfs_name buf;
 	sqfs_dir_entry entry;
 	
 	*found = false;
 	sqfs_dentry_init(&entry, buf);
-	
+
 	while (*path) {
 		const char *name;
 		size_t size;
@@ -307,7 +308,8 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
 			return err;
 		if (!dfound)
 			return SQFS_OK; /* not found */
-		
+		if (id)
+			*id = sqfs_dentry_inode(&entry);
 		if ((err = sqfs_inode_get(fs, inode, sqfs_dentry_inode(&entry))))
 			return err;
 	}
