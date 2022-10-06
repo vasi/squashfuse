@@ -49,14 +49,22 @@ sqfs_err sqfs_stat(sqfs *fs, sqfs_inode *inode, struct stat *st) {
 	
 	st->st_blksize = fs->sb.block_size; /* seriously? */
 	
-	err = sqfs_id_get(fs, inode->base.uid, &id);
-	if (err)
-		return err;
-	st->st_uid = id;
-	err = sqfs_id_get(fs, inode->base.guid, &id);
-	st->st_gid = id;
-	if (err)
-		return err;
+	if (fs->uid > 0) {
+		st->st_uid = fs->uid;
+	} else {
+		err = sqfs_id_get(fs, inode->base.uid, &id);
+		if (err)
+			return err;
+		st->st_uid = id;
+	}
+	if (fs->gid > 0) {
+		st->st_gid = fs->gid;
+	} else {
+		err = sqfs_id_get(fs, inode->base.guid, &id);
+		st->st_gid = id;
+		if (err)
+			return err;
+	}
 	
 	return SQFS_OK;
 }
