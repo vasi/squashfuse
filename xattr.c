@@ -41,8 +41,8 @@ typedef struct {
  
 sqfs_prefix sqfs_xattr_prefixes[] = {
 	{"user.", 5},
-	{"security.", 9},
 	{"trusted.", 8},
+	{"security.", 9},
 };
 
 
