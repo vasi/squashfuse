@@ -260,7 +260,9 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 		AC_CACHE_CHECK([for two-argument fuse_unmount],
 				[sq_cv_decl_fuse_unmount_two_arg],[
 			AC_LINK_IFELSE(
-				[AC_LANG_PROGRAM([#include <fuse_lowlevel.h>],
+				[AC_LANG_PROGRAM([
+				#include <fuse.h>
+				#include <fuse_lowlevel.h>],
 					[fuse_unmount(0,0)])],
 				[sq_cv_decl_fuse_unmount_two_arg=yes],
 				[sq_cv_decl_fuse_unmount_two_arg=no])
