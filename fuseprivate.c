@@ -59,12 +59,20 @@ int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 	return 0;
 }
 
-void sqfs_usage(char *progname, bool fuse_usage) {
+void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
 		progname ? progname : PACKAGE_NAME);
+	fprintf(stderr, "\n%s options:\n", progname);
+	fprintf(stderr, "    -o offset              offset into ARCHIVE to mount\n");
+	fprintf(stderr, "    -o timeout             idle seconds for automatic unmount\n");
+	if (ll_usage) {
+		fprintf(stderr, "    -o uid=N               set file owner\n");
+		fprintf(stderr, "    -o gid=N               set file group\n");
+	}
 	if (fuse_usage) {
 #if FUSE_USE_VERSION >= 30
+		fprintf(stderr, "\nFUSE options:\n");
 		fuse_cmdline_help();
 #else
 		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
@@ -92,7 +100,7 @@ int sqfs_opt_proc(void *data, const char *arg, int key,
 		}
 	} else if (key == FUSE_OPT_KEY_OPT) {
 		if (strncmp(arg, "-h", 2) == 0 || strncmp(arg, "--h", 3) == 0)
-			sqfs_usage(opts->progname, true);
+			return -1;
 	}
 	return 1; /* Keep */
 }

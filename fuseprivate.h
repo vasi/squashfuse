@@ -40,7 +40,7 @@
 int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
 
 /* Print a usage string */
-void sqfs_usage(char *progname, bool fuse_usage);
+void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage);
 
 /* Parse command-line arguments */
 typedef struct {
@@ -49,6 +49,8 @@ typedef struct {
 	int mountpoint;
 	size_t offset;
 	unsigned int idle_timeout_secs;
+	int uid;
+	int gid;
 } sqfs_opts;
 int sqfs_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);

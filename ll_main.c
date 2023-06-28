@@ -139,6 +139,8 @@ int main(int argc, char *argv[]) {
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%zu", offsetof(sqfs_opts, offset), 0},
 		{"timeout=%u", offsetof(sqfs_opts, idle_timeout_secs), 0},
+		{"uid=%d", offsetof(sqfs_opts, uid), 0},
+		{"gid=%d", offsetof(sqfs_opts, gid), 0},
 		FUSE_OPT_END
 	};
 	
@@ -169,8 +171,10 @@ int main(int argc, char *argv[]) {
 	opts.mountpoint = 0;
 	opts.offset = 0;
 	opts.idle_timeout_secs = 0;
+	opts.uid = 0;
+	opts.gid = 0;
 	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
-		sqfs_usage(argv[0], true);
+		sqfs_usage(argv[0], true, true);
 
 #if FUSE_USE_VERSION >= 30
 	if (fuse_parse_cmdline(&args, &fuse_cmdline_opts) != 0)
@@ -180,9 +184,9 @@ int main(int argc, char *argv[]) {
                            &fuse_cmdline_opts.mt,
                            &fuse_cmdline_opts.foreground) == -1)
 #endif
-		sqfs_usage(argv[0], true);
+		sqfs_usage(argv[0], true, true);
 	if (fuse_cmdline_opts.mountpoint == NULL)
-		sqfs_usage(argv[0], true);
+		sqfs_usage(argv[0], true, true);
 
 	/* fuse_daemonize() will unconditionally clobber fds 0-2.
 	 *
@@ -212,6 +216,8 @@ int main(int argc, char *argv[]) {
 	
 	/* STARTUP FUSE */
 	if (!err) {
+		ll->fs.uid = opts.uid;
+		ll->fs.gid = opts.gid;
 		sqfs_ll_chan ch;
 		err = -1;
 		if (sqfs_ll_mount(
