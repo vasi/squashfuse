@@ -26,7 +26,7 @@ pkgconfig_DATA 	= squashfuse.pc
 noinst_LTLIBRARIES += libsquashfuse_convenience.la
 libsquashfuse_convenience_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c \
 	decompress.c xattr.c hash.c stack.c traverse.c util.c \
-	nonstd-pread.c nonstd-stat.c \
+	nonstd-pread.c nonstd-stat.c cache_mt.c \
 	squashfs_fs.h common.h nonstd-internal.h nonstd.h swap.h cache.h table.h \
 	dir.h file.h decompress.h xattr.h squashfuse.h hash.h stack.h traverse.h \
 	util.h fs.h
@@ -105,9 +105,20 @@ endif
 TESTS =
 if SQ_FUSE_TESTS
 TESTS += tests/ll-smoke.sh
-check_PROGRAMS = endiantest
+if MULTITHREADED
+# I know this test looks backwards, but the default smoke test is multithreaded
+# when threading is enabled. So we additionally run a singlethreaded test in
+# that case.
+TESTS += tests/ll-smoke-singlethreaded.sh
+endif
+if SIGTERM_HANDLER
+TESTS += tests/umount-test.sh
+endif
+check_PROGRAMS = cachetest endiantest
+cachetest_SOURCES=tests/cachetest.c
+cachetest_LDADD=libsquashfuse.la $(COMPRESSION_LIBS)
 endiantest_SOURCES = tests/endiantest.c
-TESTS += endiantest
+TESTS += cachetest endiantest
 endif
 if SQ_DEMO_TESTS
 TESTS += tests/ls.sh

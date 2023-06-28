@@ -37,6 +37,90 @@
 #include <signal.h>
 #include <unistd.h>
 
+
+#if defined(SQFS_SIGTERM_HANDLER)
+#include <sys/utsname.h>
+#include <linux/version.h>
+static bool kernel_version_at_least(unsigned required_major,
+                                    unsigned required_minor,
+                                    unsigned required_micro) {
+    struct utsname info;
+
+    if (uname(&info) >= 0) {
+        unsigned major, minor, micro;
+
+        if (sscanf(info.release, "%u.%u.%u", &major, &minor, &micro) == 3) {
+            return KERNEL_VERSION(major, minor, micro) >=
+                KERNEL_VERSION(required_major, required_minor, required_micro);
+        }
+    }
+    return false;
+}
+
+/* libfuse's default SIGTERM handler (set up in fuse_set_signal_handlers())
+ * immediately calls fuse_session_exit(), which shuts down the filesystem
+ * even if there are active users. This leads to nastiness if other processes
+ * still depend on the filesystem.
+ *
+ * So: we respond to SIGTERM by starting a lazy unmount. This is done
+ * by exec'ing fusermount3, which works properly for unpriviledged
+ * users (we cannot use umount2() syscall because it is not signal safe;
+ * fork() and exec(), amazingly, are).
+ *
+ * If we fail to start the lazy umount, we signal ourself with SIGINT,
+ * which falls back to the old behavior of exiting ASAP.
+ */
+static const char *g_mount_point = NULL;
+static void sigterm_handler(int signum) {
+	/* Unfortunately, lazy umount of in-use fuse filesystem triggers
+	 * kernel bug on kernels < 5.2, Fixed by kernel commit
+	 * e8f3bd773d22f488724dffb886a1618da85c2966 in 5.2.
+	 */
+	if (g_mount_point && kernel_version_at_least(5,2,0)) {
+        int pid = fork();
+        if (pid == 0) {
+            /* child process: disassociate ourself from parent so
+             * we do not become zombie (as parent does not waitpid()).
+             */
+            pid_t parent = getppid();
+            setsid();
+            execl("/bin/fusermount3", "fusermount3",
+                  "-u", "-q", "-z", "--", g_mount_point, NULL);
+            execlp("fusermount3", "fusermount3",
+                   "-u", "-q", "-z", "--", g_mount_point, NULL);
+            /* if we get here, we can't run fusermount,
+             * kill the original process with a harshness.
+             */
+            kill(parent, SIGINT);
+            _exit(0);
+        } else if (pid > 0) {
+            /* parent process: nothing to do, murderous child will do us
+             * in one way or another.
+             */
+            return;
+        }
+    }
+    /* If we get here, we have failed to lazy unmount for whatever reason,
+     * kill ourself more brutally.
+     */
+    kill(getpid(), SIGINT);
+}
+
+static void set_sigterm_handler(const char *mountpoint) {
+    struct sigaction sa;
+
+    g_mount_point = mountpoint;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sigterm_handler;
+    sigemptyset(&(sa.sa_mask));
+    sa.sa_flags = SA_RESTART;
+
+    if (sigaction(SIGTERM, &sa, NULL) == -1) {
+        perror("sigaction(SIGTERM)");
+    }
+}
+#endif /* SQFS_SIGTERM_HANDLER */
+
 int main(int argc, char *argv[]) {
 	struct fuse_args args;
 	sqfs_opts opts;
@@ -139,11 +223,28 @@ int main(int argc, char *argv[]) {
                         ll) == SQFS_OK) {
 			if (sqfs_ll_daemonize(fuse_cmdline_opts.foreground) != -1) {
 				if (fuse_set_signal_handlers(ch.session) != -1) {
+#if defined(SQFS_SIGTERM_HANDLER)
+					set_sigterm_handler(fuse_cmdline_opts.mountpoint);
+#endif
 					if (opts.idle_timeout_secs) {
 						setup_idle_timeout(ch.session, opts.idle_timeout_secs);
 					}
-					/* FIXME: multithreading */
-					err = fuse_session_loop(ch.session);
+#ifdef SQFS_MULTITHREADED
+# if FUSE_USE_VERSION >= 30
+                    if (!fuse_cmdline_opts.singlethread) {
+                        struct fuse_loop_config config;
+                        config.clone_fd = 1;
+                        config.max_idle_threads = 10;
+                        err = fuse_session_loop_mt(ch.session, &config);
+                    }
+# else /* FUSE_USE_VERSION < 30 */
+		    if (fuse_cmdline_opts.mt) {
+			err = fuse_session_loop_mt(ch.session);
+		    }
+# endif /* FUSE_USE_VERSION */
+                    else
+#endif
+					    err = fuse_session_loop(ch.session);
 					teardown_idle_timeout();
 					fuse_remove_signal_handlers(ch.session);
 				}

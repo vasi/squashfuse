@@ -15,9 +15,9 @@ set -e
 WORKDIR=$(mktemp -d)
 
 sq_umount() {
-    case @build_os@ in
+    case linux-gnu in
         linux*)
-            @sq_fusermount@ -u $1
+            fusermount3 -u $1
             ;;
         *)
             umount $1
@@ -90,9 +90,9 @@ for comp in $compressors; do
     cmp "$WORKDIR/source/z1 with spaces" "$WORKDIR/mount/z1 with spaces"
 
     echo "Parallel md5sum..."
-    @sq_md5sum@ "$WORKDIR"/mount/* >"$WORKDIR/md5sums"
+    md5sum "$WORKDIR"/mount/* >"$WORKDIR/md5sums"
     split -l1 "$WORKDIR/md5sums" "$WORKDIR/sumpiece"
-    echo "$WORKDIR"/sumpiece* | xargs -P4 -n1 @sq_md5sum@ -c
+    echo "$WORKDIR"/sumpiece* | xargs -P4 -n1 md5sum -c
 
     echo "Lookup tests..."
     # Look for non-existent files to exercise failed lookup path.

@@ -34,8 +34,13 @@
 #include <sys/stat.h>
 
 
-#define DATA_CACHED_BLKS 1
-#define FRAG_CACHED_BLKS 3
+#ifdef SQFS_MULTITHREADED
+# define DATA_CACHED_BLKS 48
+# define FRAG_CACHED_BLKS 48
+#else
+# define DATA_CACHED_BLKS 1
+# define FRAG_CACHED_BLKS 3
+#endif
 
 void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 		int *max_minor) {
@@ -124,6 +129,8 @@ sqfs_err sqfs_block_read(sqfs *fs, sqfs_off_t pos, bool compressed,
 	sqfs_err err = SQFS_ERR;
 	if (!(*block = malloc(sizeof(**block))))
 		return SQFS_ERR;
+	/* start with refcount one, so dispose on failure path works as expected. */
+	(*block)->refcount = 1;
 	if (!((*block)->data = malloc(size)))
 		goto error;
 	
@@ -188,44 +195,81 @@ sqfs_err sqfs_data_block_read(sqfs *fs, sqfs_off_t pos, uint32_t hdr,
 }
 
 sqfs_err sqfs_md_cache(sqfs *fs, sqfs_off_t *pos, sqfs_block **block) {
-	sqfs_block_cache_entry *entry = sqfs_cache_get(
-		&fs->md_cache, *pos);
-	if (!entry) {
+	sqfs_block_cache_entry *entry = sqfs_cache_get(&fs->md_cache, *pos);
+	if (!sqfs_cache_entry_valid(&fs->md_cache, entry)) {
 		sqfs_err err = SQFS_OK;
-		entry = sqfs_cache_add(&fs->md_cache, *pos);
 		/* fprintf(stderr, "MD BLOCK: %12llx\n", (long long)*pos); */
 		err = sqfs_md_block_read(fs, *pos,
 			&entry->data_size, &entry->block);
 		if (err) {
-			sqfs_cache_invalidate(&fs->md_cache, *pos);
+			sqfs_cache_put(&fs->md_cache, entry);
 			return err;
 		}
+		sqfs_cache_entry_mark_valid(&fs->md_cache, entry);
 	}
+	/* block is created with refcount 1, which accounts for presence in the
+	 * cache (will be decremented on eviction).
+	 *
+	 * We increment it here as a convienience for the caller, who will
+	 * obviously want one. Therefore all callers must eventually call deref
+	 * by means of calling sqfs_block_dispose().
+	 */
 	*block = entry->block;
 	*pos += entry->data_size;
+
+	sqfs_block_ref(entry->block);
+    /* it is now safe to evict the entry from the cache, we have a
+     * reference to the block so eviction will not destroy it.
+     */
+	sqfs_cache_put(&fs->md_cache, entry);
+
 	return SQFS_OK;
 }
 
 sqfs_err sqfs_data_cache(sqfs *fs, sqfs_cache *cache, sqfs_off_t pos,
 		uint32_t hdr, sqfs_block **block) {
 	sqfs_block_cache_entry *entry = sqfs_cache_get(cache, pos);
-	if (!entry) {
+	if (!sqfs_cache_entry_valid(cache, entry)) {
 		sqfs_err err = SQFS_OK;
-		entry = sqfs_cache_add(cache, pos);
 		err = sqfs_data_block_read(fs, pos, hdr,
 			&entry->block);
 		if (err) {
-			sqfs_cache_invalidate(cache, pos);
+            sqfs_cache_put(cache, entry);
 			return err;
 		}
+		sqfs_cache_entry_mark_valid(cache, entry);
 	}
+	/* block is created with refcount 1, which accounts for presence in the
+	 * cache (will be decremented on eviction).
+	 *
+	 * We increment it here as a convenience for the caller, who will
+	 * obviously want one. Therefore all callers must eventually call deref
+	 * by means of calling sqfs_block_dispose().
+	 */
 	*block = entry->block;
+	sqfs_block_ref(*block);
+    /* it is now safe to evict the entry from the cache, we have a
+     * reference to the block so eviction will not destroy it.
+     */
+	sqfs_cache_put(cache, entry);
 	return SQFS_OK;
 }
 
 void sqfs_block_dispose(sqfs_block *block) {
-	free(block->data);
-	free(block);
+	if (sqfs_block_deref(block)) {
+		free(block->data);
+		free(block);
+	}
+}
+
+static void sqfs_block_cache_dispose(void *data) {
+	sqfs_block_cache_entry *entry = (sqfs_block_cache_entry*)data;
+	sqfs_block_dispose(entry->block);
+}
+
+sqfs_err sqfs_block_cache_init(sqfs_cache *cache, size_t count) {
+	return sqfs_cache_init(cache, sizeof(sqfs_block_cache_entry), count,
+			       &sqfs_block_cache_dispose);
 }
 
 void sqfs_md_cursor_inode(sqfs_md_cursor *cur, sqfs_inode_id id, sqfs_off_t base) {
@@ -247,7 +291,6 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 			take = size;		
 		if (buf)
 			memcpy(buf, (char*)block->data + cur->offset, take);
-		/* BLOCK CACHED, DON'T DISPOSE */
 		
 		if (buf)
 			buf = (char*)buf + take;
@@ -257,6 +300,7 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 			cur->block = pos;
 			cur->offset = 0;
 		}
+		sqfs_block_dispose(block);
 	}
 	return SQFS_OK;
 }

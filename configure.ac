@@ -10,6 +10,7 @@ AH_BOTTOM([#endif])
 AC_CANONICAL_BUILD
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign -Wall subdir-objects])
+AC_USE_SYSTEM_EXTENSIONS
 AM_SILENT_RULES(yes)
 AM_PROG_AR
 LT_INIT
@@ -23,10 +24,8 @@ AC_PROG_SED
 AC_PROG_CPP
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
-SQ_PROG_CPP_POSIX_2001
 SQ_PROG_CC_WALL
 
-AC_DEFINE([_POSIX_C_SOURCE], [200112L], [POSIX 2001 compatibility])
 
 # Non-POSIX declarations
 SQ_CHECK_DECL_MAKEDEV
@@ -92,10 +91,27 @@ AS_IF([test "x$sq_tests" = x], [sq_tests=" none"])
 
 AC_SUBST([sq_mksquashfs_compressors])
 AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
+AC_CONFIG_FILES([tests/umount-test.sh],[chmod +x tests/umount-test.sh])
 
 
 AS_IF([test "x$sq_high_level$sq_low_level$sq_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
+
+AC_ARG_ENABLE([multithreading],
+ 	AS_HELP_STRING([--enable-multithreading], [enable multi-threaded low-level FUSE driver]),
+	[
+    AC_CHECK_LIB([pthread], [pthread_mutex_lock], [], AC_MSG_ERROR([libpthread is required for multithreaded build]))
+    AC_DEFINE(SQFS_MULTITHREADED, 1, [Enable multi-threaded low-level FUSE driver])
+    ])
+AM_CONDITIONAL([MULTITHREADED], [test x$enable_multithreading = xyes])
+
+AC_ARG_ENABLE([sigterm-handler],
+	AS_HELP_STRING([--enable-sigterm-handler], [enable lazy umount on SIGTERM in low-level FUSE driver]),
+	[
+    AC_CHECK_HEADER([linux/version.h], , [], AC_MSG_ERROR([linux host required for sigterm-handler.]))
+    AC_DEFINE(SQFS_SIGTERM_HANDLER, 1, [Enable lazy umount on SIGTERM in low-level FUSE driver])
+    ])
+AM_CONDITIONAL([SIGTERM_HANDLER], [test x$enable_sigterm_handler = xyes])
 
 AC_SUBST([sq_decompressors])
 AC_SUBST([sq_high_level])
