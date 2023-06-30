@@ -1,9 +1,50 @@
-0.1.101
+0.2.0 - 30 June 2023
+
+  * Fix bug that swapped the "trusted" and "security" extended attribute
+    prefixes, often resulting in "No data available" errors
+  * Add multithreading support to squashfuse_ll
+  * Improve SIGTERM handling to do lazy unmount
+  * Add "-o uid" and "-o gid" options to squashfuse_ll, similar to the
+    corresponding FUSE library for high-level options
+  * Add support for LZMA legacy images
+  * Add squashfuse_ll man page and reconcile help messages with man pages
+  * Fix code to work with c99
+
+0.1.105 - 27 June 2022
+
+  * Use optimized linux byteswap macros if available
+  * Fix "No such file or directory" when launched with empty fd 0
+  * Negative cache failed lookups. This saves a FUSE operation when
+    repeatedly looking up non-existent files.
+  * Split squashfuse_ll into a lib and executable
+  * Remove redundant #if in ll header
+  * Add CI for NetBSD
+  * Move CI away from Travis
+  * Update FreeBSD CI job to build on 12.3
+
+0.1.104 - 27 March 2021
+
+  * Various bug fixes, new platform support
+  * Support libfuse version 3
+  * MacOS idle timeout support
+
+0.1.103 - 4 April 2018
+
+  * Fix crash bug when underlying IO fails
+  * Fix scanf format to be C99 compliant
+
+0.1.102 - 28 February 2018
+
+  * new feature -o timeout=SECONDS for squashfuse_ll to automatically
+    unmount a squashfuse mount if it has not been accessed in a certain
+    amount of time
+
+0.1.101 - 9 December 2017
 
   * zstd support
   * minor bug fixes
 
-0.1.100
+0.1.100 - 27 May 2016
 
   * minor bugfixes around symlink handling
   * performance improvements
