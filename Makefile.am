@@ -84,6 +84,7 @@ squashfuse_ll_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
 squashfuse_ll_LDADD = libsquashfuse_ll_convenience.la $(COMPRESSION_LIBS) $(FUSE_LIBS)
 
+dist_man_MANS += squashfuse_ll.1
 pkgconfig_DATA += squashfuse_ll.pc
 pkginclude_HEADERS += ll.h
 endif
