@@ -64,23 +64,36 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
 		progname ? progname : PACKAGE_NAME);
 	fprintf(stderr, "\n%s options:\n", progname);
-	fprintf(stderr, "    -o offset              offset into ARCHIVE to mount\n");
-	fprintf(stderr, "    -o timeout             idle seconds for automatic unmount\n");
+	fprintf(stderr, "    -o offset=N            offset N bytes into ARCHIVE to mount\n");
 	if (ll_usage) {
-		fprintf(stderr, "    -o uid=N               set file owner\n");
-		fprintf(stderr, "    -o gid=N               set file group\n");
+		fprintf(stderr, "    -o timeout=N           idle N seconds for automatic unmount\n");
+		fprintf(stderr, "    -o uid=N               set file owner to uid N\n");
+		fprintf(stderr, "    -o gid=N               set file group to gid N\n");
 	}
 	if (fuse_usage) {
+		if (ll_usage) {
 #if FUSE_USE_VERSION >= 30
-		fprintf(stderr, "\nFUSE options:\n");
-		fuse_cmdline_help();
+			fprintf(stderr, "\nFUSE options:\n");
+			fuse_cmdline_help();
 #else
-		struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
-		fuse_opt_add_arg(&args, ""); /* progname */
-		fuse_opt_add_arg(&args, "-ho");
-		fprintf(stderr, "\n");
-		fuse_parse_cmdline(&args, NULL, NULL, NULL);
+			struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+			fuse_opt_add_arg(&args, ""); /* progname */
+			fuse_opt_add_arg(&args, "-ho");
+			fprintf(stderr, "\n");
+			fuse_parse_cmdline(&args, NULL, NULL, NULL);
 #endif
+		} else {
+			/* Standard FUSE help includes confusing 
+			 * multi-threaded options so don't use it
+			 */
+			fprintf(stderr, "\nSelection of FUSE options:\n");
+			fprintf(stderr,"    -h   --help            print help\n");
+			fprintf(stderr,"    -V   --version         print version\n");
+			fprintf(stderr,"    -d   -o debug          enable debug output (implies -f)\n");
+			fprintf(stderr,"    -f                     foreground operation\n");
+			fprintf(stderr,"    -o allow_other         allow access by other users\n");
+			fprintf(stderr,"    -o allow_root          allow access by the superuser\n");
+		}
 	}
 	exit(-2);
 }
