@@ -1,0 +1,30 @@
+name: release
+on:
+  release:
+    types: [created]
+
+jobs:
+  release_assets:
+    name: release_assets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'created'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install apt dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool pkg-config \
+            zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev fio \
+            libfuse-dev fuse
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure
+          make dist V=1
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.tar.gz
