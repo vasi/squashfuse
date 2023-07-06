@@ -78,9 +78,8 @@ jobs:
         with:
           name: logs
           path: |
-            config.log
+            *.log
             tests/*.log
-            mksquashfs.log
             ci/features
         if: always()
   windows:
