@@ -71,7 +71,9 @@ jobs:
       - name: install
         run: sudo make install
       - name: output
-        run: mksquashfs > mksquashfs.log || true
+        run: |
+            cp /tmp/*.log . || true
+            mksquashfs > mksquashfs.log || true
         if: always()
       - name: upload
         uses: actions/upload-artifact@v2

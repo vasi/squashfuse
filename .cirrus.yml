@@ -21,5 +21,6 @@ freebsd_task:
     - sudo make install
   always:
     after_script:
-    - for f in *.log tests/*.log ci/features; do echo :$f; cat $f; done || true
+    - cp /tmp/*.log . || true
+    - for f in *.log tests/*.log ci/features; do echo ::: $f; cat $f; done || true
     - mksquashfs || true
