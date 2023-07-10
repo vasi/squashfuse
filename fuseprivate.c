@@ -65,11 +65,13 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 		progname ? progname : PACKAGE_NAME);
 	fprintf(stderr, "\n%s options:\n", progname);
 	fprintf(stderr, "    -o offset=N            offset N bytes into ARCHIVE to mount\n");
+	fprintf(stderr, "    -o subdir=PATH         mount subdirectory PATH of ARCHIVE\n");
 	if (ll_usage) {
 		fprintf(stderr, "    -o timeout=N           idle N seconds for automatic unmount\n");
 		fprintf(stderr, "    -o uid=N               set file owner to uid N\n");
 		fprintf(stderr, "    -o gid=N               set file group to gid N\n");
 	}
+
 	if (fuse_usage) {
 		if (ll_usage) {
 #if FUSE_USE_VERSION >= 30

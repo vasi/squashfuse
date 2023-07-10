@@ -157,6 +157,7 @@ size_t sqfs_ll_add_direntry(fuse_req_t req, char *buf, size_t bufsize,
 		return esize;
 	#endif
 }
+
 void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		off_t off, struct fuse_file_info *fi) {
 	sqfs_err sqerr;
@@ -561,7 +562,7 @@ void teardown_idle_timeout() {
 	fuse_instance = NULL;
 }
 
-sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
+sqfs_ll *sqfs_ll_open(const char *path, size_t offset, const char *subdir) {
 	sqfs_ll *ll;
 	
 	ll = malloc(sizeof(*ll));
@@ -570,7 +571,7 @@ sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
 	} else {
 		memset(ll, 0, sizeof(*ll));
 		ll->fs.offset = offset;
-		if (sqfs_open_image(&ll->fs, path, offset) == SQFS_OK) {
+		if (sqfs_open_image(&ll->fs, path, offset, subdir) == SQFS_OK) {
 			if (sqfs_ll_init(ll))
 				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else

@@ -48,10 +48,14 @@ implementation is single-threaded.
 Options supported by the
 .Xr fuse 8
 library are supported.
-In addition the following option is supported:
+In addition the following options are supported:
 .Bl -tag -width -indent
 .It Fl o Cm offset=N
 offset N bytes into archive to mount
+.El
+.Bl -tag -width -indent
+.It Fl o Cm subdir=PATH
+mount subdirectory PATH as filesystem root
 .El
 .Pp
 Here is a selection of generally useful FUSE library options:

@@ -141,6 +141,7 @@ int main(int argc, char *argv[]) {
 		{"timeout=%u", offsetof(sqfs_opts, idle_timeout_secs), 0},
 		{"uid=%d", offsetof(sqfs_opts, uid), 0},
 		{"gid=%d", offsetof(sqfs_opts, gid), 0},
+		{"subdir=%s", offsetof(sqfs_opts, subdir), 0},
 		FUSE_OPT_END
 	};
 	
@@ -173,6 +174,7 @@ int main(int argc, char *argv[]) {
 	opts.idle_timeout_secs = 0;
 	opts.uid = 0;
 	opts.gid = 0;
+	opts.subdir = NULL;
 	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
 		sqfs_usage(argv[0], true, true);
 
@@ -212,7 +214,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* OPEN FS */
-	err = !(ll = sqfs_ll_open(opts.image, opts.offset));
+	err = !(ll = sqfs_ll_open(opts.image, opts.offset, opts.subdir));
 	
 	/* STARTUP FUSE */
 	if (!err) {

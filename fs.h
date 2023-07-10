@@ -88,7 +88,7 @@ void sqfs_version_supported(int *min_major, int *min_minor, int *max_major,
 size_t sqfs_divceil(uint64_t total, size_t group);
 
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset);
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir);
 void sqfs_destroy(sqfs *fs);
 
 /* Ok to call these even on incompletely constructed filesystems */
