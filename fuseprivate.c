@@ -59,6 +59,14 @@ int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 	return 0;
 }
 
+void sqfs_minimal_fuse_usage() {
+	fprintf(stderr, "\nSelection of FUSE options:\n");
+	fprintf(stderr,"    -h   --help            print help\n");
+	fprintf(stderr,"    -V   --version         print version\n");
+	fprintf(stderr,"    -d   -o debug          enable debug output (implies -f)\n");
+	fprintf(stderr,"    -f                     foreground operation\n");
+}
+
 void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
@@ -74,6 +82,7 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 
 	if (fuse_usage) {
 		if (ll_usage) {
+#ifdef SQFS_MULTITHREADED
 #if FUSE_USE_VERSION >= 30
 			fprintf(stderr, "\nFUSE options:\n");
 			fuse_cmdline_help();
@@ -84,15 +93,15 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 			fprintf(stderr, "\n");
 			fuse_parse_cmdline(&args, NULL, NULL, NULL);
 #endif
+#else
+			/* Skip the multithreaded options */
+			sqfs_minimal_fuse_usage();
+#endif
 		} else {
 			/* Standard FUSE help includes confusing 
 			 * multi-threaded options so don't use it
 			 */
-			fprintf(stderr, "\nSelection of FUSE options:\n");
-			fprintf(stderr,"    -h   --help            print help\n");
-			fprintf(stderr,"    -V   --version         print version\n");
-			fprintf(stderr,"    -d   -o debug          enable debug output (implies -f)\n");
-			fprintf(stderr,"    -f                     foreground operation\n");
+			sqfs_minimal_fuse_usage();
 			fprintf(stderr,"    -o allow_other         allow access by other users\n");
 			fprintf(stderr,"    -o allow_root          allow access by the superuser\n");
 		}

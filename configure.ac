@@ -98,7 +98,9 @@ AS_IF([test "x$sq_high_level$sq_low_level$sq_demo" = xnonono],
 	AC_MSG_FAILURE([Nothing left to build]))
 
 AC_ARG_ENABLE([multithreading],
- 	AS_HELP_STRING([--enable-multithreading], [enable multi-threaded low-level FUSE driver]),
+ 	AS_HELP_STRING([--disable-multithreading], [disable multi-threaded low-level FUSE driver]),,
+    [enable_multithreading="yes"])
+AS_IF([test x$enable_multithreading = xyes],
 	[
     AC_CHECK_LIB([pthread], [pthread_mutex_lock], [], AC_MSG_ERROR([libpthread is required for multithreaded build]))
     AC_DEFINE(SQFS_MULTITHREADED, 1, [Enable multi-threaded low-level FUSE driver])
