@@ -29,3 +29,8 @@ win/Release
 *.opensdf
 *.suo
 *.vcxproj.user
+
+ci/features
+tests/lib.sh
+tests/ll-smoke.sh
+tests/umount-test.sh
