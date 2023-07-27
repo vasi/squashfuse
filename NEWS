@@ -1,8 +1,13 @@
+0.3.0 - 27 July 2023
+
+  * Add `--subdir` option for mounting a subdirectory
+  * Enable multithreading in squashfuse_ll by default
+
 0.2.0 - 30 June 2023
 
   * Fix bug that swapped the "trusted" and "security" extended attribute
     prefixes, often resulting in "No data available" errors
-  * Add multithreading support to squashfuse_ll
+  * Add multithreading support to squashfuse_ll with configure option
   * Improve SIGTERM handling to do lazy unmount
   * Add "-o uid" and "-o gid" options to squashfuse_ll, similar to the
     corresponding FUSE library for high-level options
