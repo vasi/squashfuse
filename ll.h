@@ -144,7 +144,8 @@ void setup_idle_timeout(struct fuse_session *se, unsigned int timeout_secs);
 
 void teardown_idle_timeout();
 
-sqfs_ll *sqfs_ll_open(const char *path, size_t offset, const char *subdir);
+sqfs_ll *sqfs_ll_open_with_subdir(const char *path, size_t offset, const char *subdir);
+sqfs_ll *sqfs_ll_open(const char *path, size_t offset);
 
 
 #endif

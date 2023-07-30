@@ -51,7 +51,7 @@ static sqfs_err sqfs_hl_lookup(sqfs **fs, sqfs_inode *inode,
 		*inode = hl->root; /* copy */
 
 	if (path) {
-		sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found, NULL);
+		sqfs_err err = sqfs_lookup_path(*fs, inode, path, &found);
 		if (err)
 			return err;
 		if (!found)
@@ -275,7 +275,7 @@ static sqfs_hl *sqfs_hl_open(const char *path, size_t offset, const char *subdir
 		perror("Can't allocate memory");
 	} else {
 		memset(hl, 0, sizeof(*hl));
-		if (sqfs_open_image(&hl->fs, path, offset, subdir) == SQFS_OK) {
+		if (sqfs_open_image_with_subdir(&hl->fs, path, offset, subdir) == SQFS_OK) {
 			if (sqfs_inode_get(&hl->fs, &hl->root, sqfs_inode_root(&hl->fs)))
 				fprintf(stderr, "Can't find the root of this filesystem!\n");
 			else

@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     image = argv[1];
     path_to_extract = argv[2];
     
-    if ((err = sqfs_open_image(&fs, image, 0, NULL)))
+    if ((err = sqfs_open_image(&fs, image, 0)))
         exit(ERR_OPEN);
     
     if ((err = sqfs_traverse_open(&trv, &fs, sqfs_inode_root(&fs))))

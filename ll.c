@@ -562,7 +562,7 @@ void teardown_idle_timeout() {
 	fuse_instance = NULL;
 }
 
-sqfs_ll *sqfs_ll_open(const char *path, size_t offset, const char *subdir) {
+sqfs_ll *sqfs_ll_open_with_subdir(const char *path, size_t offset, const char *subdir) {
 	sqfs_ll *ll;
 	
 	ll = malloc(sizeof(*ll));
@@ -571,7 +571,7 @@ sqfs_ll *sqfs_ll_open(const char *path, size_t offset, const char *subdir) {
 	} else {
 		memset(ll, 0, sizeof(*ll));
 		ll->fs.offset = offset;
-		if (sqfs_open_image(&ll->fs, path, offset, subdir) == SQFS_OK) {
+		if (sqfs_open_image_with_subdir(&ll->fs, path, offset, subdir) == SQFS_OK) {
 			if (sqfs_ll_init(ll))
 				fprintf(stderr, "Can't initialize this filesystem!\n");
 			else
@@ -582,4 +582,8 @@ sqfs_ll *sqfs_ll_open(const char *path, size_t offset, const char *subdir) {
 		free(ll);
 	}
 	return NULL;
+}
+
+sqfs_ll *sqfs_ll_open(const char *path, size_t offset) {
+	return sqfs_ll_open_with_subdir(path, offset, NULL);
 }

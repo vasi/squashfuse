@@ -35,7 +35,10 @@ sqfs_err sqfs_fd_open(const char *path, sqfs_fd_t *fd, bool print);
 /* Close a file */
 void sqfs_fd_close(sqfs_fd_t fd);
 
+/* Open a filesystem with subdir and print errors to stderr. */
+sqfs_err sqfs_open_image_with_subdir(sqfs *fs, const char *image, size_t offset, const char *subdir);
+
 /* Open a filesystem and print errors to stderr. */
-sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset, const char *subdir);
+sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset);
 
 #endif

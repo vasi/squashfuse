@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* OPEN FS */
-	err = !(ll = sqfs_ll_open(opts.image, opts.offset, opts.subdir));
+	err = !(ll = sqfs_ll_open_with_subdir(opts.image, opts.offset, opts.subdir));
 	
 	/* STARTUP FUSE */
 	if (!err) {
