@@ -279,7 +279,7 @@ sqfs_err sqfs_dir_lookup(sqfs *fs, sqfs_inode *inode,
 }
 
 
-sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
+sqfs_err sqfs_lookup_path_with_id(sqfs *fs, sqfs_inode *inode, const char *path,
 		bool *found, sqfs_inode_id *id) {
 	sqfs_err err;
 	sqfs_name buf;
@@ -317,3 +317,8 @@ sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
 	*found = true;
 	return SQFS_OK;
 }
+
+sqfs_err sqfs_lookup_path(sqfs *fs, sqfs_inode *inode, const char *path,
+		bool *found) {
+	return sqfs_lookup_path_with_id(fs, inode, path, found, NULL);
+};

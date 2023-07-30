@@ -67,14 +67,14 @@
 
 /* TODO: WIN32 implementation of open/close */
 /* TODO: i18n of error messages */
-sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset, const char *subdir) {
+sqfs_err sqfs_open_image_with_subdir(sqfs *fs, const char *image, size_t offset, const char *subdir) {
 	sqfs_err err;
 	sqfs_fd_t fd;
 
 	if ((err = sqfs_fd_open(image, &fd, stderr)))
 		return err;
 
-	err = sqfs_init(fs, fd, offset, subdir);
+	err = sqfs_init_with_subdir(fs, fd, offset, subdir);
 	switch (err) {
 		case SQFS_OK:
 			break;
@@ -123,3 +123,6 @@ sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset, const char 
 	return err;
 }
 
+sqfs_err sqfs_open_image(sqfs *fs, const char *image, size_t offset) {
+	return sqfs_open_image_with_subdir(fs, image, offset, NULL);
+}

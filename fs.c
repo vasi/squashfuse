@@ -59,7 +59,7 @@ sqfs_compression_type sqfs_compression(sqfs *fs) {
 	return fs->sb.compression;
 }
 
-sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir) {
+sqfs_err sqfs_init_with_subdir(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir) {
 	sqfs_err err = SQFS_OK;
 	memset(fs, 0, sizeof(*fs));
 	
@@ -100,7 +100,7 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir) {
 		err |= sqfs_inode_get(fs, &root, sqfs_inode_root(fs));
 		sqfs_inode_id new_root;
 		bool found = false;
-		err |= sqfs_lookup_path(fs, &root, subdir, &found, &new_root);
+		err |= sqfs_lookup_path_with_id(fs, &root, subdir, &found, &new_root);
 		if (!found) {
 			sqfs_destroy(fs);
 			return SQFS_ERR;
@@ -114,6 +114,10 @@ sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset, const char *subdir) {
 	}
 	
 	return SQFS_OK;
+}
+
+sqfs_err sqfs_init(sqfs *fs, sqfs_fd_t fd, size_t offset) {
+  return sqfs_init_with_subdir(fs, fd, offset, NULL);
 }
 
 void sqfs_destroy(sqfs *fs) {
