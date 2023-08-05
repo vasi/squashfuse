@@ -271,6 +271,9 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 			AC_DEFINE([HAVE_NEW_FUSE_UNMOUNT],1,
 					[Define if we have two-argument fuse_unmount])
 		])
+
+		AC_CHECK_DECLS([fuse_cmdline_help],,,
+		        [#include <fuse_lowlevel.h>])
 	])
 	
 	SQ_RESTORE_FLAGS

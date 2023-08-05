@@ -32,6 +32,10 @@
 
 #include "nonstd.h"
 
+#if HAVE_DECL_FUSE_CMDLINE_HELP
+    #include <fuse_lowlevel.h>
+#endif
+
 int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size) {
 	sqfs_xattr x;
 	size_t count = 0;
@@ -83,7 +87,7 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	if (fuse_usage) {
 		if (ll_usage) {
 #ifdef SQFS_MULTITHREADED
-#if FUSE_USE_VERSION >= 30
+#if HAVE_DECL_FUSE_CMDLINE_HELP
 			fprintf(stderr, "\nFUSE options:\n");
 			fuse_cmdline_help();
 #else
