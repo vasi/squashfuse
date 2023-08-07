@@ -27,11 +27,7 @@
 
 #include "squashfuse.h"
 
-#if FUSE_USE_VERSION >= 30
-#include <fuse3/fuse_lowlevel.h>
-#else
 #include <fuse_lowlevel.h>
-#endif
 
 typedef struct sqfs_ll sqfs_ll;
 struct sqfs_ll {
