@@ -111,6 +111,8 @@ void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
 		unsigned long nlookup);
 
+void sqfs_ll_op_init(void *userdata, struct fuse_conn_info *conn);
+
 void stfs_ll_op_statfs(fuse_req_t req, fuse_ino_t ino);
 
 

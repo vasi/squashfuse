@@ -57,6 +57,10 @@ offset N bytes into archive to mount
 .It Fl o Cm subdir=PATH
 mount subdirectory PATH as filesystem root
 .El
+.Bl -tag -width -indent
+.It Fl o Cm notify_pipe=PATH
+named pipe that will receive 's' (success) or 'f' (failure) when the mountpoint is ready
+.El
 .Pp
 Here is a selection of generally useful FUSE library options:
 .Bl -tag -width -indent

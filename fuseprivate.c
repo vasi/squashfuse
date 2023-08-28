@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "nonstd.h"
 
@@ -71,13 +72,14 @@ void sqfs_minimal_fuse_usage() {
 	fprintf(stderr,"    -f                     foreground operation\n");
 }
 
-void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
+int sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	fprintf(stderr, "%s (c) 2012 Dave Vasilevsky\n\n", PACKAGE_STRING);
 	fprintf(stderr, "Usage: %s [options] ARCHIVE MOUNTPOINT\n",
 		progname ? progname : PACKAGE_NAME);
 	fprintf(stderr, "\n%s options:\n", progname);
 	fprintf(stderr, "    -o offset=N            offset N bytes into ARCHIVE to mount\n");
 	fprintf(stderr, "    -o subdir=PATH         mount subdirectory PATH of ARCHIVE\n");
+	fprintf(stderr, "    -o notify_pipe=PATH    named pipe that will receive 's' (success) or 'f' (failure) when the mountpoint is ready\n");
 	if (ll_usage) {
 		fprintf(stderr, "    -o timeout=N           idle N seconds for automatic unmount\n");
 		fprintf(stderr, "    -o uid=N               set file owner to uid N\n");
@@ -110,7 +112,7 @@ void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 			fprintf(stderr,"    -o allow_root          allow access by the superuser\n");
 		}
 	}
-	exit(-2);
+	return -2;
 }
 
 int sqfs_opt_proc(void *data, const char *arg, int key,
@@ -147,4 +149,51 @@ int sqfs_statfs(sqfs *sq, struct statvfs *st) {
 	st->f_namemax = SQUASHFS_NAME_LEN;
 
 	return 0;
+}
+
+void notify_mount_ready(const char *notify_pipe, char status) {
+	struct stat stat_buf = {};
+
+	if (stat(notify_pipe, &stat_buf)) {
+		fprintf(stderr, "Cannot stat file \"%s\" (%d)\n", notify_pipe, errno);
+		goto err;
+	}
+
+	if (!(stat_buf.st_mode & S_IFIFO)) {
+		fprintf(stderr, "\"%s\" is not a pipe\n", notify_pipe);
+		goto err;
+	}
+
+	sqfs_fd_t pipe_fd = open(notify_pipe, O_WRONLY);
+	if(pipe_fd < 0) {
+		fprintf(stderr, "Open fifo failed \"%s\" (%d)\n", notify_pipe, errno);
+		goto err;
+	}
+
+	if (write(pipe_fd, &status, 1) < 0) {
+		fprintf(stderr, "Write to fifo failed \"%s\" (%d)\n", notify_pipe, errno);
+		goto err;
+	}
+
+	close(pipe_fd);
+
+err:
+	return;
+}
+
+void notify_mount_ready_async(const char *notify_pipe, char status) {
+	if (!notify_pipe) {
+		return;
+	}
+
+	pid_t pid = fork();
+	if (pid < 0) {
+		fprintf(stderr, "Fork Failed");
+	}
+	else if (pid == 0) { /* child process */
+		notify_mount_ready(notify_pipe, status);
+		exit(0);
+	}
+	else { /* parent process */
+	}
 }

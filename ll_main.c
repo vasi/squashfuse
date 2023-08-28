@@ -126,22 +126,24 @@ int main(int argc, char *argv[]) {
 	sqfs_opts opts;
 
 #if FUSE_USE_VERSION >= 30
-	struct fuse_cmdline_opts fuse_cmdline_opts;
+	struct fuse_cmdline_opts fuse_cmdline_opts = {};
 #else
 	struct {
 		char *mountpoint;
 		int mt, foreground;
-	} fuse_cmdline_opts;
+	} fuse_cmdline_opts = {};
 #endif
 	
 	int err;
-	sqfs_ll *ll;
+	int sqfs_err;
+	sqfs_ll *ll = NULL;
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%zu", offsetof(sqfs_opts, offset), 0},
 		{"timeout=%u", offsetof(sqfs_opts, idle_timeout_secs), 0},
 		{"uid=%d", offsetof(sqfs_opts, uid), 0},
 		{"gid=%d", offsetof(sqfs_opts, gid), 0},
 		{"subdir=%s", offsetof(sqfs_opts, subdir), 0},
+		{"notify_pipe=%s", offsetof(sqfs_opts, notify_pipe), 0},
 		FUSE_OPT_END
 	};
 	
@@ -161,6 +163,7 @@ int main(int argc, char *argv[]) {
 	sqfs_ll_ops.getxattr	= sqfs_ll_op_getxattr;
 	sqfs_ll_ops.forget		= sqfs_ll_op_forget;
 	sqfs_ll_ops.statfs    = stfs_ll_op_statfs;
+	sqfs_ll_ops.init    = sqfs_ll_op_init;
    
 	/* PARSE ARGS */
 	args.argc = argc;
@@ -175,20 +178,27 @@ int main(int argc, char *argv[]) {
 	opts.uid = 0;
 	opts.gid = 0;
 	opts.subdir = NULL;
-	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
-		sqfs_usage(argv[0], true, true);
+	opts.notify_pipe = NULL;
+	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1) {
+		err = sqfs_usage(argv[0], true, true);
+		goto out;
+	}
 
 #if FUSE_USE_VERSION >= 30
-	if (fuse_parse_cmdline(&args, &fuse_cmdline_opts) != 0)
+	if (fuse_parse_cmdline(&args, &fuse_cmdline_opts) != 0) {
 #else
 	if (fuse_parse_cmdline(&args,
                            &fuse_cmdline_opts.mountpoint,
                            &fuse_cmdline_opts.mt,
-                           &fuse_cmdline_opts.foreground) == -1)
+                           &fuse_cmdline_opts.foreground) == -1) {
 #endif
-		sqfs_usage(argv[0], true, true);
-	if (fuse_cmdline_opts.mountpoint == NULL)
-		sqfs_usage(argv[0], true, true);
+		err = sqfs_usage(argv[0], true, true);
+		goto out;
+	}
+	if (fuse_cmdline_opts.mountpoint == NULL) {
+		err = sqfs_usage(argv[0], true, true);
+		goto out;
+	}
 
 	/* fuse_daemonize() will unconditionally clobber fds 0-2.
 	 *
@@ -220,45 +230,56 @@ int main(int argc, char *argv[]) {
 	if (!err) {
 		ll->fs.uid = opts.uid;
 		ll->fs.gid = opts.gid;
+		ll->fs.notify_pipe = opts.notify_pipe;
+
 		sqfs_ll_chan ch;
 		err = -1;
-		if (sqfs_ll_mount(
-                        &ch,
-                        fuse_cmdline_opts.mountpoint,
-                        &args,
-                        &sqfs_ll_ops,
-                        sizeof(sqfs_ll_ops),
-                        ll) == SQFS_OK) {
-			if (sqfs_ll_daemonize(fuse_cmdline_opts.foreground) != -1) {
-				if (fuse_set_signal_handlers(ch.session) != -1) {
+		sqfs_err = sqfs_ll_mount(
+				&ch,
+				fuse_cmdline_opts.mountpoint,
+				&args,
+				&sqfs_ll_ops,
+				sizeof(sqfs_ll_ops),
+				ll);
+		if (sqfs_err != SQFS_OK) {
+			goto out;
+		}
+		if (sqfs_ll_daemonize(fuse_cmdline_opts.foreground) != -1) {
+			if (fuse_set_signal_handlers(ch.session) != -1) {
 #if defined(SQFS_SIGTERM_HANDLER)
-					set_sigterm_handler(fuse_cmdline_opts.mountpoint);
+				set_sigterm_handler(fuse_cmdline_opts.mountpoint);
 #endif
-					if (opts.idle_timeout_secs) {
-						setup_idle_timeout(ch.session, opts.idle_timeout_secs);
-					}
+				if (opts.idle_timeout_secs) {
+					setup_idle_timeout(ch.session, opts.idle_timeout_secs);
+				}
 #ifdef SQFS_MULTITHREADED
 # if FUSE_USE_VERSION >= 30
-                    if (!fuse_cmdline_opts.singlethread) {
-                        struct fuse_loop_config config;
-                        config.clone_fd = 1;
-                        config.max_idle_threads = 10;
-                        err = fuse_session_loop_mt(ch.session, &config);
-                    }
-# else /* FUSE_USE_VERSION < 30 */
-		    if (fuse_cmdline_opts.mt) {
-			err = fuse_session_loop_mt(ch.session);
-		    }
-# endif /* FUSE_USE_VERSION */
-                    else
-#endif
-					    err = fuse_session_loop(ch.session);
-					teardown_idle_timeout();
-					fuse_remove_signal_handlers(ch.session);
+				if (!fuse_cmdline_opts.singlethread) {
+					struct fuse_loop_config config;
+					config.clone_fd = 1;
+					config.max_idle_threads = 10;
+					err = fuse_session_loop_mt(ch.session, &config);
 				}
+# else /* FUSE_USE_VERSION < 30 */
+				if (fuse_cmdline_opts.mt) {
+					err = fuse_session_loop_mt(ch.session);
+				}
+# endif /* FUSE_USE_VERSION */
+				else
+#endif
+					err = fuse_session_loop(ch.session);
+				teardown_idle_timeout();
+				fuse_remove_signal_handlers(ch.session);
 			}
-			sqfs_ll_destroy(ll);
-			sqfs_ll_unmount(&ch, fuse_cmdline_opts.mountpoint);
+		}
+		sqfs_ll_destroy(ll);
+		sqfs_ll_unmount(&ch, fuse_cmdline_opts.mountpoint);
+	}
+
+out:
+	if (err) {
+		if (opts.notify_pipe) {
+			notify_mount_ready(opts.notify_pipe, NOTIFY_FAILURE);
 		}
 	}
 	fuse_opt_free_args(&args);

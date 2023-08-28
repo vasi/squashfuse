@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 
 typedef struct sqfs_hl sqfs_hl;
@@ -72,7 +73,11 @@ static void *sqfs_hl_op_init(struct fuse_conn_info *conn
 			     ,struct fuse_config *cfg
 #endif
 			     ) {
-	return fuse_get_context()->private_data;
+	sqfs_hl *hl = fuse_get_context()->private_data;
+
+	notify_mount_ready_async(hl->fs.notify_pipe, NOTIFY_SUCCESS);
+
+	return hl;
 }
 
 static int sqfs_hl_op_getattr(const char *path, struct stat *st
@@ -297,6 +302,7 @@ int main(int argc, char *argv[]) {
 	struct fuse_opt fuse_opts[] = {
 		{"offset=%zu", offsetof(sqfs_opts, offset), 0},
 		{"subdir=%s", offsetof(sqfs_opts, subdir), 0},
+		{"notify_pipe=%s", offsetof(sqfs_opts, notify_pipe), 0},
 		FUSE_OPT_END
 	};
 
@@ -326,17 +332,30 @@ int main(int argc, char *argv[]) {
 	opts.subdir = NULL;
 	opts.mountpoint = 0;
 	opts.offset = 0;
-	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1)
-		sqfs_usage(argv[0], true, false);
-	if (!opts.image)
-		sqfs_usage(argv[0], true, false);
+	opts.notify_pipe = NULL;
+	if (fuse_opt_parse(&args, &opts, fuse_opts, sqfs_opt_proc) == -1) {
+		ret = sqfs_usage(argv[0], true, false);
+		goto out;
+	}
+	if (!opts.image) {
+		ret = sqfs_usage(argv[0], true, false);
+		goto out;
+	}
 	
 	hl = sqfs_hl_open(opts.image, opts.offset, opts.subdir);
 	if (!hl)
 		return -1;
+
+	hl->fs.notify_pipe = opts.notify_pipe;
 	
 	fuse_opt_add_arg(&args, "-s"); /* single threaded */
 	ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+	if (ret) {
+		if (hl->fs.notify_pipe) {
+			notify_mount_ready(hl->fs.notify_pipe, NOTIFY_FAILURE);
+		}
+	}
+out:
 	fuse_opt_free_args(&args);
 	return ret;
 }
