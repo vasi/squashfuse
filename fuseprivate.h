@@ -29,13 +29,16 @@
 
 #include <fuse.h>
 
+#define NOTIFY_SUCCESS 's'
+#define NOTIFY_FAILURE 'f'
+
 /* Common functions for FUSE high- and low-level clients */
 
 /* Populate an xattr list. Return an errno value. */
 int sqfs_listxattr(sqfs *fs, sqfs_inode *inode, char *buf, size_t *size);
 
 /* Print a usage string */
-void sqfs_usage(char *progname, bool fuse_usage, bool ll_usage);
+int sqfs_usage(char *progname, bool fuse_usage, bool ll_usage);
 
 /* Parse command-line arguments */
 typedef struct {
@@ -47,11 +50,14 @@ typedef struct {
 	unsigned int idle_timeout_secs;
 	int uid;
 	int gid;
+	const char *notify_pipe;
 } sqfs_opts;
 int sqfs_opt_proc(void *data, const char *arg, int key,
 	struct fuse_args *outargs);
 
 /* Get filesystem super block info */
 int sqfs_statfs(sqfs *sq, struct statvfs *st);
+void notify_mount_ready(const char *notify_pipe, char status);
+void notify_mount_ready_async(const char *notify_pipe, char status);
 
 #endif

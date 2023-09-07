@@ -39,6 +39,7 @@ struct sqfs {
 	int uid;
 	int gid;
 	struct squashfs_super_block sb;
+	const char *notify_pipe;
 	sqfs_table id_table;
 	sqfs_table frag_table;
 	sqfs_table export_table;

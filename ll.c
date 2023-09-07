@@ -432,6 +432,12 @@ void stfs_ll_op_statfs(fuse_req_t req, fuse_ino_t ino) {
 	}
 }
 
+void sqfs_ll_op_init(void *userdata, struct fuse_conn_info *conn) {
+	sqfs_ll *ll = userdata;
+
+	notify_mount_ready_async(ll->fs.notify_pipe, NOTIFY_SUCCESS);
+}
+
 /* Helpers to abstract out FUSE 2.5 vs 3.0+ differences */
 
 #if FUSE_USE_VERSION >= 30
