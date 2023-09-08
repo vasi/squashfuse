@@ -79,7 +79,8 @@ int sqfs_usage(char *progname, bool fuse_usage, bool ll_usage) {
 	fprintf(stderr, "\n%s options:\n", progname);
 	fprintf(stderr, "    -o offset=N            offset N bytes into ARCHIVE to mount\n");
 	fprintf(stderr, "    -o subdir=PATH         mount subdirectory PATH of ARCHIVE\n");
-	fprintf(stderr, "    -o notify_pipe=PATH    named pipe that will receive 's' (success) or 'f' (failure) when the mountpoint is ready\n");
+	fprintf(stderr, "    -o notify_pipe=PATH    named pipe that will receive 's' (success)\n"
+			"                           or 'f' (failure) when the mountpoint is ready\n");
 	if (ll_usage) {
 		fprintf(stderr, "    -o timeout=N           idle N seconds for automatic unmount\n");
 		fprintf(stderr, "    -o uid=N               set file owner to uid N\n");

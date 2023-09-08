@@ -343,19 +343,21 @@ int main(int argc, char *argv[]) {
 	}
 	
 	hl = sqfs_hl_open(opts.image, opts.offset, opts.subdir);
-	if (!hl)
-		return -1;
+	if (!hl) {
+		ret = -1;
+		goto out;
+	}
 
 	hl->fs.notify_pipe = opts.notify_pipe;
 	
 	fuse_opt_add_arg(&args, "-s"); /* single threaded */
 	ret = fuse_main(args.argc, args.argv, &sqfs_hl_ops, hl);
+out:
 	if (ret) {
-		if (hl->fs.notify_pipe) {
-			notify_mount_ready(hl->fs.notify_pipe, NOTIFY_FAILURE);
+		if (opts.notify_pipe) {
+			notify_mount_ready(opts.notify_pipe, NOTIFY_FAILURE);
 		}
 	}
-out:
 	fuse_opt_free_args(&args);
 	return ret;
 }

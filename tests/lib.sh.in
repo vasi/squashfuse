@@ -1,3 +1,18 @@
+sq_umount() {
+    case @build_os@ in
+        linux*)
+            @sq_fusermount@ -u $1
+            ;;
+        *)
+            umount $1
+            ;;
+    esac
+}
+
+sq_is_mountpoint() {
+    mount | grep -q "$1"
+}
+
 find_compressors() {
   touch "$WORKDIR/comp_input"
   compressors=
