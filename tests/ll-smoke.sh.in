@@ -14,21 +14,6 @@ set -e
 
 WORKDIR=$(mktemp -d)
 
-sq_umount() {
-    case @build_os@ in
-        linux*)
-            @sq_fusermount@ -u $1
-            ;;
-        *)
-            umount $1
-            ;;
-    esac
-}
-
-sq_is_mountpoint() {
-    mount | grep -q "$1"
-}
-
 cleanup() {
     set +e # Don't care about errors here.
     if [ -n "$WORKDIR" ]; then
@@ -62,25 +47,25 @@ for comp in $compressors; do
     echo "Mounting squashfs image..."
     FIFO_1=$(mktemp -u)
     mkfifo "$FIFO_1"
-    $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_1" "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll_1.log" 2>&1 &
+    $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_1" "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squahfs_ll.log" 2>&1 &
     # Wait for the archive to be mounted. TSAN builds can take some time to mount.
     STATUS=$(head -c1 "$FIFO_1")
     if [ "$STATUS" != "s" ]; then
         echo "Image did not mount successfully"
-        cp "$WORKDIR/squashfs_ll_1.log" /tmp/squashfs_ll_1.smoke.log
-        echo "There may be clues in /tmp/squashfs_ll_1.smoke.log"
+        cp "$WORKDIR/squahfs_ll.log" /tmp/squahfs_ll.smoke.log
+        echo "There may be clues in /tmp/squahfs_ll.smoke.log"
         exit 1
     fi
 
     FIFO_2=$(mktemp -u)
     mkfifo "$FIFO_2"
-    $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_2" "$WORKDIR/squashfs.image" "$WORKDIR/nonexistent_mount" >"$WORKDIR/squashfs_ll_2.log" 2>&1 &
+    $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_2" "$WORKDIR/squashfs.image" "$WORKDIR/nonexistent_mount" >"$WORKDIR/squahfs_ll.log" 2>&1 &
     # This time the mount command should fail because the mountpoint doesn't exist
     STATUS=$(head -c1 "$FIFO_2")
     if [ "$STATUS" != "f" ]; then
         echo "Image mounted successfully when it should have failed"
-        cp "$WORKDIR/squashfs_ll_2.log" /tmp/squashfs_ll_2.smoke.log
-        echo "There may be clues in /tmp/squashfs_ll_2.smoke.log"
+        cp "$WORKDIR/squahfs_ll.log" /tmp/squahfs_ll.smoke.log
+        echo "There may be clues in /tmp/squahfs_ll.smoke.log"
         exit 1
     fi
 

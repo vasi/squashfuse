@@ -106,6 +106,7 @@ endif
 TESTS =
 if SQ_FUSE_TESTS
 TESTS += tests/ll-smoke.sh
+TESTS += tests/notify_test.sh
 if MULTITHREADED
 # I know this test looks backwards, but the default smoke test is multithreaded
 # when threading is enabled. So we additionally run a singlethreaded test in
