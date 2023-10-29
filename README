@@ -116,17 +116,31 @@ detailed instructions:
 
 For example on Ubuntu 16.04:
 
-sudo apt-get -y install git autoconf libtool make gcc libtool libfuse-dev liblzma-dev
-libtoolize --force
-aclocal
-autoheader
-automake --force-missing --add-missing
-autoconf
-./configure --with-xz=/usr/lib/
-make
+  $ sudo apt-get -y install git autoconf libtool \
+      make gcc libtool libfuse-dev liblzma-dev
+  $ libtoolize --force
+  $ aclocal
+  $ autoheader
+  $ automake --force-missing --add-missing
+  $ autoconf
+  $ ./configure --with-xz=/usr/lib/
+  $ make
 
+2e. Example: macOS
+------------------
 
-2e. Usage
+On macOS, for example:
+
+  $ brew install autoconf automake
+  $ glibtoolize --force
+  $ aclocal
+  $ autoheader
+  $ automake --force-missing --add-missing
+  $ autoconf
+  $ ./configure
+  $ make
+
+2f. Usage
 ---------
 You'll need a SquashFS archive to use squashfuse. If you don't already have
 one, you can create one using the `mksquashfs' utility from the squashfs-tools
