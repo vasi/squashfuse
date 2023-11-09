@@ -56,6 +56,11 @@ jobs:
           make check
           diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
         if: runner.os != 'macOS'
+      - name: distcheck
+        run: |
+          make distcheck
+        # This is expensive, run just once
+        if: matrix.name == 'Ubuntu'
       - name: test
         run: |
           # On macOS loading the macfuse extension is needed.  This

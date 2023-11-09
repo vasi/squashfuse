@@ -126,7 +126,7 @@ if SQ_DEMO_TESTS
 TESTS += tests/ls.sh
 endif
 tests/ll-smoke.sh tests/ls.sh: tests/lib.sh
-
+EXTRA_DIST += tests/ll-smoke-singlethreaded.sh tests/ls.sh tests/notify_test.sh
 
 # Handle generation of swap include files
 CLEANFILES = swap.h.inc swap.c.inc
@@ -134,3 +134,5 @@ EXTRA_DIST += swap.h.inc swap.c.inc
 $(libsquashfuse_convenience_la_OBJECTS): swap.h.inc
 swap.h.inc swap.c.inc: gen_swap.sh squashfs_fs.h Makefile
 	SED="$(SED)" $(srcdir)/gen_swap.sh $(srcdir)/squashfs_fs.h
+
+EXTRA_DIST += ci/expected-features/all ci/expected-features/demo
