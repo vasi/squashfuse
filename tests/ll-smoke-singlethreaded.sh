@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/sh
 
 # Singlethreaded ll-smoke test.
 #
