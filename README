@@ -114,17 +114,16 @@ detailed instructions:
 2d. Example: Ubuntu
 -------------------
 
-For example on Ubuntu 16.04:
+For example on Ubuntu 22.04:
 
-  $ sudo apt-get -y install git autoconf libtool \
-      make gcc libtool libfuse-dev liblzma-dev
-  $ libtoolize --force
-  $ aclocal
-  $ autoheader
-  $ automake --force-missing --add-missing
-  $ autoconf
-  $ ./configure --with-xz=/usr/lib/
-  $ make
+  $ sudo apt install pkg-config liblzma-dev libfuse3-dev \
+    automake autoconf libtool fio \
+    zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev
+  $ ./autogen.sh
+  $ ./configure
+  $ make -j4
+  $ make check
+  $ sudo make install
 
 2e. Example: macOS
 ------------------
