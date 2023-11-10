@@ -17,6 +17,8 @@ jobs:
             os: ubuntu-latest
             disable_fuse: "--disable-fuse"
             check_features: demo
+          - name: distcheck
+            os: ubuntu-latest
           - name: Old distro
             os: ubuntu-20.04
           - name: Mac
@@ -46,17 +48,20 @@ jobs:
           brew install autoconf automake libtool pkgconfig squashfs coreutils
           brew install --cask macfuse
         if: runner.os == 'macOS'
-      - name: build
+      - name: configure
         run: |
           ./autogen.sh
           CPPFLAGS="-Werror" ./configure $DISABLE_FUSE
+      - name: build
+        run: |
           make -j2 V=1
+        if: matrix.name != 'distcheck'
       - name: test
         run: |
           make check
           diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
-        if: runner.os != 'macOS'
-      - name: test
+        if: runner.os != 'macOS' && matrix.name != 'distcheck'
+      - name: test mac
         run: |
           # On macOS loading the macfuse extension is needed.  This
           # command should load it without rebooting, except System
@@ -68,8 +73,13 @@ jobs:
             diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
           fi
         if: runner.os == 'macOS'
+      - name: distcheck
+        run: |
+          make distcheck
+        if: matrix.name == 'distcheck'
       - name: install
         run: sudo make install
+        if: matrix.name != 'distcheck'
       - name: output
         run: |
             cp /tmp/*.log . || true

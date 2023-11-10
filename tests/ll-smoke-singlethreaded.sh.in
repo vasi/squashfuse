@@ -7,4 +7,4 @@
 # the FUSE '-s' commandline option.
 #
 # So we just re-run the normal ll-smoke test with the '-s' option.
-SFLL_EXTRA_ARGS="-s" $(dirname -- $0)/ll-smoke.sh
+SFLL_EXTRA_ARGS="-s" @builddir@/tests/ll-smoke.sh

@@ -116,9 +116,10 @@ detailed instructions:
 
 For example on Ubuntu 22.04:
 
-  $ sudo apt install pkg-config liblzma-dev libfuse3-dev \
-    automake autoconf libtool fio \
-    zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev
+  $ sudo apt install gcc make pkg-config libfuse3-dev \
+    zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev \
+    automake autoconf libtool \
+    fuse3 fio squashfs-tools
   $ ./autogen.sh
   $ ./configure
   $ make -j4

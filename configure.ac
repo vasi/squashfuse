@@ -91,6 +91,7 @@ AS_IF([test "x$sq_tests" = x], [sq_tests=" none"])
 
 AC_SUBST([sq_mksquashfs_compressors])
 AC_CONFIG_FILES([tests/ll-smoke.sh],[chmod +x tests/ll-smoke.sh])
+AC_CONFIG_FILES([tests/ll-smoke-singlethreaded.sh],[chmod +x tests/ll-smoke-singlethreaded.sh])
 AC_CONFIG_FILES([tests/umount-test.sh],[chmod +x tests/umount-test.sh])
 
 

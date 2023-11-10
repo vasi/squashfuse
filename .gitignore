@@ -33,4 +33,5 @@ win/Release
 ci/features
 tests/lib.sh
 tests/ll-smoke.sh
+tests/ll-smoke-singlethreaded.sh
 tests/umount-test.sh
