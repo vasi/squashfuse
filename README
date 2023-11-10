@@ -137,7 +137,7 @@ On macOS, for example:
   $ autoheader
   $ automake --force-missing --add-missing
   $ autoconf
-  $ ./configure --prefix=/Users/me/.local/ \
+  $ ./configure --prefix=/usr/local/ \
         --with-lzo=/usr/local/Cellar/lzo/2.10 \
         --with-xz=/usr/local/Cellar/xz/5.4.4
   $ make install
