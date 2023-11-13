@@ -131,14 +131,16 @@ For example on Ubuntu 22.04:
 
 On macOS, for example:
 
-  $ brew install autoconf automake
+  $ brew install autoconf automake pkg-config libtool lzo xz
   $ glibtoolize --force
   $ aclocal
   $ autoheader
   $ automake --force-missing --add-missing
   $ autoconf
-  $ ./configure
-  $ make
+  $ ./configure --prefix=/usr/local/ \
+        --with-lzo=/usr/local/Cellar/lzo/2.10 \
+        --with-xz=/usr/local/Cellar/xz/5.4.4
+  $ make install
 
 2f. Usage
 ---------
