@@ -4,12 +4,14 @@ pkgs.mkShell {
   nativeBuildInputs = with pkgs.buildPackages; [
     # Required build tools
     gcc
+    gnumake
     autoconf
     automake
     libtool
     pkg-config
 
     # Required libraries
+    fuse
     fuse3
     zlib
     zstd
