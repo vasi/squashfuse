@@ -126,7 +126,20 @@ For example on Ubuntu 22.04:
   $ make check
   $ sudo make install
 
-2e. Example: macOS
+2e. Example: NixOS
+------------------
+
+For example on NixOS:
+
+  $ nix-shell
+  $ ./autogen.sh
+  $ ./configure
+  $ make -j4
+
+To install to your system, a custom Nix package should be built. Otherwise,
+you can simply move the binaries to `~/.local/bin'
+
+2f. Example: macOS
 ------------------
 
 On macOS, for example:
@@ -142,7 +155,7 @@ On macOS, for example:
         --with-xz=/usr/local/Cellar/xz/5.4.4
   $ make install
 
-2f. Usage
+2g. Usage
 ---------
 You'll need a SquashFS archive to use squashfuse. If you don't already have
 one, you can create one using the `mksquashfs' utility from the squashfs-tools
