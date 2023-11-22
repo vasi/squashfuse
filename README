@@ -142,17 +142,15 @@ you can simply move the binaries to `~/.local/bin'
 2f. Example: macOS
 ------------------
 
-On macOS, for example:
+On macOS, for example, install macFUSE, and then:
 
   $ brew install autoconf automake pkg-config libtool lzo xz
-  $ glibtoolize --force
-  $ aclocal
-  $ autoheader
-  $ automake --force-missing --add-missing
-  $ autoconf
+  $ ./autogen.sh
   $ ./configure --prefix=/usr/local/ \
         --with-lzo=/usr/local/Cellar/lzo/2.10 \
         --with-xz=/usr/local/Cellar/xz/5.4.4
+  $ make -j
+  $ make check
   $ make install
 
 2g. Usage
