@@ -109,7 +109,12 @@ void sqfs_ll_op_getxattr(fuse_req_t req, fuse_ino_t ino,
 		);
 
 void sqfs_ll_op_forget(fuse_req_t req, fuse_ino_t ino,
-		unsigned long nlookup);
+#ifdef HAVE_FUSE_LL_FORGET_OP_64T
+		uint64_t nlookup
+#else
+		unsigned long nlookup
+#endif
+		);
 
 void sqfs_ll_op_init(void *userdata, struct fuse_conn_info *conn);
 

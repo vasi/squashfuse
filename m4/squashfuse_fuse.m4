@@ -272,6 +272,25 @@ AC_DEFUN([SQ_FUSE_API_VERSION],[
 					[Define if we have two-argument fuse_unmount])
 		])
 
+		AC_CACHE_CHECK([for 64_t third argument to fuse ll forget op],
+				[sq_cv_decl_fuse_forget_64_t],[
+			AC_LINK_IFELSE(
+				[AC_LANG_PROGRAM([
+				#include <fuse.h>
+				#include <fuse_lowlevel.h>],
+					[
+					void f(fuse_req_t, fuse_ino_t, uint64_t);
+					struct fuse_lowlevel_ops flo;
+					flo.forget = f;
+					])],
+				[sq_cv_decl_fuse_forget_64_t=yes],
+				[sq_cv_decl_fuse_forget_64_t=no])
+		])
+		AS_IF([test "x$sq_cv_decl_fuse_forget_64_t" = xyes],[
+			AC_DEFINE([HAVE_FUSE_LL_FORGET_OP_64T],1,
+					[Define if we have uint64_t as type of 3rd arg to ll forget op])
+		])
+
 		AC_CHECK_DECLS([fuse_cmdline_help],,,
 		        [#include <fuse_lowlevel.h>])
 	])
