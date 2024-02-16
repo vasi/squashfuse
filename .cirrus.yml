@@ -3,12 +3,12 @@ env:
 
 freebsd_task:
   freebsd_instance:
-    image_family: freebsd-12-3
+    image_family: freebsd-14-0
   setup_script:
     - pkg install -y autoconf automake libtool pkgconf fusefs-libs
     - pkg install -y lzo2 liblz4 zstd
     - pkg install -y squashfs-tools coreutils
-    - kldload fuse
+    - kldload fusefs
     - sysctl vfs.usermount=1
   build_script:
     - ./autogen.sh
