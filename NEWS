@@ -1,3 +1,8 @@
+0.5.1 - 19 February 2024
+
+  * Fix 32-bit builds
+  * Add nix as a supported build type
+
 0.5.0 - 13 September 2023
 
   * Add `--notify_fd` option
