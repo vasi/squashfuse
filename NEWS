@@ -1,3 +1,8 @@
+0.5.2 - 22 February 2024
+
+  * No code changes, just changing the tag style back to what it was,
+    without a `v` prefix.
+
 0.5.1 - 19 February 2024
 
   * Fix 32-bit builds
