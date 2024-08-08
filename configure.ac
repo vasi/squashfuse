@@ -116,6 +116,12 @@ AC_ARG_ENABLE([sigterm-handler],
     ])
 AM_CONDITIONAL([SIGTERM_HANDLER], [test x$enable_sigterm_handler = xyes])
 
+AC_ARG_ENABLE([broken-directory-offsets],
+	AS_HELP_STRING([--enable-broken-directory-offsets], [handle broken directory offsets, for implementations like FUSE-T]),
+	[broken_dir_offsets="yes"])
+AS_IF([test x$broken_dir_offsets = xyes],
+	[AC_DEFINE(SQFS_BROKEN_DIR_OFFSETS, 1, [Handle broken directory offsets])])
+
 AC_SUBST([sq_decompressors])
 AC_SUBST([sq_high_level])
 AC_SUBST([sq_low_level])

@@ -142,13 +142,20 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 	sqfs_hl_lookup(&fs, NULL, NULL);
 	inode = (sqfs_inode*)(intptr_t)fi->fh;
 		
+#ifdef SQFS_BROKEN_DIR_OFFSETS
+	offset = 0;
+#endif
 	if (sqfs_dir_open(fs, inode, &dir, offset))
 		return -EINVAL;
 	
 	memset(&st, 0, sizeof(st));
 	sqfs_dentry_init(&entry, namebuf);
 	while (sqfs_dir_next(fs, &dir, &entry, &err)) {
+#ifdef SQFS_BROKEN_DIR_OFFSETS
+		sqfs_off_t doff = 0;
+#else
 		sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
+#endif
 		st.st_mode = sqfs_dentry_mode(&entry);
 		if (filler(buf, sqfs_dentry_name(&entry), &st, doff
 #if FUSE_USE_VERSION >= 30
