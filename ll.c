@@ -172,7 +172,14 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	int err = 0;
 	
 	update_access_time();
-	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
+
+#ifdef SQFS_BROKEN_DIR_OFFSETS
+	off_t dir_offset = 0;
+#else
+	off_t dir_offset = off;
+#endif
+
+	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, dir_offset))
 		err = EINVAL;
 	if (!err && !(bufpos = buf = malloc(size)))
 		err = ENOMEM;
@@ -186,6 +193,15 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		
 			esize = sqfs_ll_add_direntry(req, bufpos, size, sqfs_dentry_name(&entry),
 				&st, sqfs_dentry_next_offset(&entry));
+
+#ifdef SQFS_BROKEN_DIR_OFFSETS
+			/* We couldn't fast-forwards earlier, so manually skip entries instead */
+			if (off > 0) {
+				off -= esize;
+				continue;
+			}
+#endif
+
 			if (esize > size)
 				break;
 		
