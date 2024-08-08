@@ -170,10 +170,19 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	char *buf = NULL, *bufpos = NULL;
 	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
 	int err = 0;
+	int broken_offsets = 0;
 	
 	update_access_time();
-	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off))
-		err = EINVAL;
+	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, off)) {
+		// Some FUSE implementations, like FUSE-T, don't properly support dir offsets.
+		// Try again with a zero offset.
+		if ((off != 0) && !sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, 0)) {
+			broken_offsets = 1;
+		} else {
+		  err = EINVAL;
+		}
+	}
+
 	if (!err && !(bufpos = buf = malloc(size)))
 		err = ENOMEM;
 	
@@ -186,6 +195,11 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 		
 			esize = sqfs_ll_add_direntry(req, bufpos, size, sqfs_dentry_name(&entry),
 				&st, sqfs_dentry_next_offset(&entry));
+			if (broken_offsets && off > 0) {
+				off -= esize;
+				continue;
+			}
+			
 			if (esize > size)
 				break;
 		
