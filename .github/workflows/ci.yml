@@ -87,7 +87,7 @@ jobs:
             mksquashfs > mksquashfs.log || true
         if: always()
       - name: upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: logs ${{ matrix.name }}
           path: |
