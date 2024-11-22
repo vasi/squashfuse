@@ -32,7 +32,7 @@ jobs:
       - name: apt dependencies
         run: > 
           sudo apt-get update &&
-          sudo apt-get install -y automake autoconf libtool pkg-config
+          sudo apt-get install -y automake autoconf libtool pkgconf
           zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev
           fio
         if: runner.os == 'Linux'
@@ -46,7 +46,11 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          brew install autoconf automake libtool pkgconfig squashfs coreutils
+          # Keep these until https://github.com/Homebrew/homebrew-core/pull/194885 is available by default
+          brew remove pkg-config
+          brew update
+
+          brew install autoconf automake libtool pkgconf squashfs coreutils
           brew install --cask macfuse
         if: runner.os == 'macOS'
       - name: configure
