@@ -17,9 +17,11 @@ if libtoolize --version > /dev/null 2>&1; then : ; else
   fi
 fi
 
-if pkg-config --version > /dev/null 2>&1; then : ; else
-  echo "Missing pkg-config"
-  exit 1
+if pkgconf --version > /dev/null 2>&1; then : ; else
+  if pkg-config --version > /dev/null 2>&1; then : ; else
+    echo "Missing pkg-config"
+    exit 1
+  fi
 fi
 
 exec autoreconf -i
