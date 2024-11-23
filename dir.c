@@ -66,6 +66,8 @@ sqfs_err sqfs_dir_open(sqfs *fs, sqfs_inode *inode, sqfs_dir *dir,
 	dir->offset = 0;
 	dir->total = inode->xtra.dir.dir_size <= 3 ? 0 :
                 inode->xtra.dir.dir_size - 3;
+	/* The first two offsets indicate unstored "." and ".." files */
+	dir->total += 2;
 	
 	if (offset) {
 		/* Fast forward to the given offset */
@@ -129,6 +131,25 @@ bool sqfs_dir_next(sqfs *fs, sqfs_dir *dir, sqfs_dir_entry *entry,
 	
 	*err = SQFS_OK;
 	entry->offset = dir->offset;
+
+	if (entry->offset < 2) {
+		/* offsets 0 and 1 are '.' and '..' which are not stored */
+		entry->type = SQUASHFS_DIR_TYPE;
+		if (entry->name != NULL) {
+			entry->name[0] = '.';
+			entry->name_size = 1;
+			if (entry->offset == 1) {
+				entry->name[1] = '.';
+				entry->name_size += 1;
+			}
+			entry->name[entry->name_size++] = '\0';
+		}
+		entry->inode = 0;
+		entry->inode_number = 0;
+		entry->next_offset = dir->offset;
+		dir->offset += 1;
+		return true;
+	}
 	
 	while (dir->header.count == 0) {
 		if (dir->offset >= dir->total)

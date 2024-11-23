@@ -145,10 +145,19 @@ bool sqfs_traverse_next(sqfs_traverse *trv, sqfs_err *err) {
 				found = sqfs_dir_next(trv->fs, &level->dir, &trv->entry, err);
 				if (*err)
 					goto error;
-				if (found)
+				if (found) {
+					char *name = trv->entry.name;
+					if ((name[0] == '.') &&
+					    ((name[1] == '\0') ||
+					     ((name[1] == '.') &&
+					      (name[2] == '\0')))) {
+						/* ignore '.' and '..' */
+						break;
+					}
 					trv->state = TRAVERSE_NAME_ADD;
-				else
+				} else {
 					trv->state = TRAVERSE_ASCEND;
+				}
 				break;
 			
 			case TRAVERSE_NAME_ADD:
