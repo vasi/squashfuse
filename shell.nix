@@ -3,16 +3,7 @@
 }:
 
 pkgs.mkShell {
-  nativeBuildInputs = with pkgs.buildPackages; [
-    # Required build tools
-    gcc
-    gnumake
-    autoconf
-    automake
-    libtool
-    pkg-config
-
-    # Required libraries
+  buildInputs = with pkgs.buildPackages; [
     fuse
     fuse3
     zlib
@@ -20,8 +11,22 @@ pkgs.mkShell {
     lzo
     lz4
     xz
+  ];
+
+  nativeBuildInputs = with pkgs; [
+    gcc
+    gnumake
+    autoconf
+    automake
+    libtool
+    pkg-config
 
     # For tests
     squashfsTools
   ];
+
+  shellHook = ''
+    # Get access to fusermount, if it's on the host
+    export PATH="/run/wrappers/bin:$PATH"
+  '';
 }
