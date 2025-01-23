@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.mkShell {
   nativeBuildInputs = with pkgs.buildPackages; [
@@ -18,5 +20,8 @@ pkgs.mkShell {
     lzo
     lz4
     xz
+
+    # For tests
+    squashfsTools
   ];
 }
