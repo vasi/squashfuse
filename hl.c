@@ -145,10 +145,31 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 #ifdef SQFS_BROKEN_DIR_OFFSETS
 	offset = 0;
 #endif
+
+	memset(&st, 0, sizeof(st));
+
+	st.st_mode = S_IFDIR;
+	while (offset < 2) {
+		/* fill "." for offset 0 and ".." for offset 1 */
+		const char *name;
+		if (offset == 0)
+			name = ".";
+		else
+			name = "..";
+		offset += 1;
+		if (filler(buf, name, &st, (sqfs_off_t) offset
+#if FUSE_USE_VERSION >= 30
+			   , 0
+#endif
+		     )) {
+			return 0;
+		}
+	}
+	offset -= 2;
+
 	if (sqfs_dir_open(fs, inode, &dir, offset))
 		return -EINVAL;
 	
-	memset(&st, 0, sizeof(st));
 	sqfs_dentry_init(&entry, namebuf);
 	while (sqfs_dir_next(fs, &dir, &entry, &err)) {
 #ifdef SQFS_BROKEN_DIR_OFFSETS
@@ -156,6 +177,7 @@ static int sqfs_hl_op_readdir(const char *path, void *buf,
 #else
 		sqfs_off_t doff = sqfs_dentry_next_offset(&entry);
 #endif
+		doff += 2; /* to skip "." and ".." */
 		st.st_mode = sqfs_dentry_mode(&entry);
 		if (filler(buf, sqfs_dentry_name(&entry), &st, doff
 #if FUSE_USE_VERSION >= 30
