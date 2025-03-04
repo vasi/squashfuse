@@ -3,7 +3,7 @@ env:
 
 freebsd_task:
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
   setup_script:
     - pkg install -y autoconf automake libtool pkgconf fusefs-libs
     - pkg install -y lzo2 liblz4 zstd

@@ -179,20 +179,43 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	off_t dir_offset = off;
 #endif
 
-	if (sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, dir_offset))
-		err = EINVAL;
-	if (!err && !(bufpos = buf = malloc(size)))
+	memset(&st, 0, sizeof(st));
+	if (!(bufpos = buf = malloc(size)))
 		err = ENOMEM;
+
+	if (!err) {
+		/* if ino is set to any non-zero value fuse will override it */
+		st.st_ino = 1;
+		st.st_mode = S_IFDIR;
+		while (dir_offset < 2) {
+			/* add "." for offset 0 and ".." for offset 1 */
+			const char *name;
+			if (dir_offset == 0)
+				name = ".";
+			else
+				name = "..";
+			dir_offset += 1;
+			esize = sqfs_ll_add_direntry(req, bufpos, size, name, &st, dir_offset);
+			if (esize > size)
+				break;
+			bufpos += esize;
+			size -= esize;
+		}
+		dir_offset -= 2;
+	}
+
+	if (!err && sqfs_dir_open(&lli->ll->fs, &lli->inode, &dir, dir_offset))
+		err = EINVAL;
 	
 	if (!err) {
-		memset(&st, 0, sizeof(st));
 		sqfs_dentry_init(&entry, namebuf);
 		while (sqfs_dir_next(&lli->ll->fs, &dir, &entry, &sqerr)) {
 			st.st_ino = lli->ll->ino_fuse_num(lli->ll, &entry);
 			st.st_mode = sqfs_dentry_mode(&entry);
 		
+			/* the offset +2 here is to skip "." and ".." */
 			esize = sqfs_ll_add_direntry(req, bufpos, size, sqfs_dentry_name(&entry),
-				&st, sqfs_dentry_next_offset(&entry));
+				&st, sqfs_dentry_next_offset(&entry) + 2);
 
 #ifdef SQFS_BROKEN_DIR_OFFSETS
 			/* We couldn't fast-forwards earlier, so manually skip entries instead */
