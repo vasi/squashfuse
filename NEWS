@@ -1,3 +1,9 @@
+0.6.0 - 4 March 2025
+
+  * Add `.` and `..` in directory listings.
+  * Add `--enable-broken-directory-offsets` configure option to compensate
+    for a macOS FUSE-T bug.
+
 0.5.2 - 22 February 2024
 
   * No code changes, just changing the tag style back to what it was,
