@@ -106,7 +106,7 @@ jobs:
         shell: powershell
         run: choco install -y squashfs 
       - name: setup msbuild
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v2
       - name: checkout
         uses: actions/checkout@v2
       - name: generate header
