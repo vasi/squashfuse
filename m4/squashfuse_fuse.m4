@@ -322,3 +322,35 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
 	
 	SQ_RESTORE_FLAGS
 ])
+
+# SQ_FUSE_API_MACFUSE_EXTENSIONS
+#
+# Check if we need to disable macFUSE extensions
+AC_DEFUN([SQ_FUSE_API_MACFUSE_EXTENSIONS],[
+	AC_DEFUN([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],[
+		AC_LANG_PROGRAM([#include <fuse.h>],[
+			struct fuse_operations ops;
+			int (*getattr_func)(const char*, struct stat*, struct fuse_file_info*);
+			ops.getattr = getattr_func;
+	])])
+
+	AC_CACHE_CHECK([if we need to disable macFUSE extensions],
+		[sq_cv_decl_fuse_macfuse_extensions],[
+		SQ_SAVE_FLAGS
+		LIBS="$LIBS $FUSE_LIBS"
+		CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
+		AC_COMPILE_IFELSE([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],
+			[sq_cv_decl_fuse_macfuse_extensions=no],
+			[
+				CPPFLAGS="$CPPFLAGS -DFUSE_DARWIN_ENABLE_EXTENSIONS=0"
+				AC_COMPILE_IFELSE([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],
+					[sq_cv_decl_fuse_macfuse_extensions=yes],
+					[sq_cv_decl_fuse_macfuse_extensions=no])
+			])
+		SQ_RESTORE_FLAGS
+	])
+
+	AS_IF([test "x$sq_cv_decl_fuse_macfuse_extensions" = xyes],[
+		CPPFLAGS="$CPPFLAGS -DFUSE_DARWIN_ENABLE_EXTENSIONS=0"
+	])
+])
