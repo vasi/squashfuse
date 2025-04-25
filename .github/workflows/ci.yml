@@ -1,6 +1,7 @@
 name: Github Actions CI
 on:
   pull_request:
+  push:
   schedule:
     # Every friday
     - cron: '0 0 * * 5'
