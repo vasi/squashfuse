@@ -22,7 +22,7 @@ jobs:
           - name: Old distro
             os: ubuntu-22.04
           - name: Mac
-            os: macos-latest
+            os: macos-15
     env:
       CHECK_FEATURES: ${{ matrix.check_features }}
       DISABLE_FUSE: ${{ matrix.disable_fuse }}
