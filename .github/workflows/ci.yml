@@ -26,11 +26,11 @@ jobs:
             os: macos-15
           - name: FUSE-T
             os: macos-15
-            configure_vars: 'LDFLAGS=-Wl,-rpath,/usr/local/lib'
+            ldflags: '-Wl,-rpath,/usr/local/lib'
             configure_args: '--with-fuse-soname=fuse-t'
     env:
       CHECK_FEATURES: ${{ matrix.check_features }}
-      CONFIGURE_VARS: ${{ matrix.configure_vars }}
+      LDFLAGS: ${{ matrix.ldflags }}
       CONFIGURE_ARGS: ${{ matrix.configure_args }}
     steps:
       - name: checkout
@@ -52,11 +52,9 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          # Keep these until https://github.com/Homebrew/homebrew-core/pull/194885 is available by default
-          brew remove pkg-config
-          brew update
-
-          brew install autoconf automake libtool pkgconf squashfs coreutils lzo lz4 zstd
+          brew install autoconf automake libtool squashfs coreutils
+          echo "BREW_LDFLAGS=-L$(brew --prefix)/lib" >> $GITHUB_ENV
+          echo "BREW_CPPFLAGS=-I$(brew --prefix)/include" >> $GITHUB_ENV
         if: runner.os == 'macOS'
       - name: macfuse
         run: brew install --cask macfuse
@@ -70,20 +68,19 @@ jobs:
       - name: configure
         run: |
           ./autogen.sh
-          env CPPFLAGS="-Werror" $CONFIGURE_VARS ./configure $CONFIGURE_ARGS
+          env CPPFLAGS="-Werror $BREW_CPPFLAGS" LDFLAGS="$LDFLAGS $BREW_LDFLAGS" ./configure $CONFIGURE_ARGS
+      - name: check discovered features
+        run: diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
+        if: matrix.name != 'distcheck'
       - name: build
-        run: |
-          make -j2 V=1
+        run: make -j2 V=1
         if: matrix.name != 'distcheck'
       - name: test
-        run: |
-          make check
-          diff -u ci/expected-features/${CHECK_FEATURES:-all} ci/features
+        run: make check
         # Can't accept security warning to allow macFUSE kext to work in CI
         if: matrix.name != 'macFUSE' && matrix.name != 'distcheck'
       - name: distcheck
-        run: |
-          make distcheck
+        run: make distcheck
         if: matrix.name == 'distcheck'
       - name: install
         run: sudo make install
