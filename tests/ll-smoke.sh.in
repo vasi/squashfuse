@@ -28,7 +28,7 @@ cleanup() {
 
 test_nonexistent_mountpoint=yes
 test_idle_timeout=yes
-wait_sleeping=$(sq_skip_notify)
+wait_sleeping=$(sq_skip_notify || true)
 case "$OSTYPE" in
     darwin*)
         # macOS may auto-create mountpoints, weird!
