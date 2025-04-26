@@ -28,3 +28,16 @@ find_compressors() {
   fi
   echo "Found compressors:$compressors"
 }
+
+sq_skip_notify() {
+  case @build_os@ in
+    darwin*)
+      if otool -L ./squashfuse | grep -q fuse-t; then
+        echo "yes"
+        return 0
+      fi
+    ;;
+  esac
+  echo "no"
+  return 1
+}

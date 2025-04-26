@@ -163,6 +163,18 @@ AC_DEFUN([SQ_FIND_FUSE],[
 			[:])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
 	])
+	# Use pkgconfig to look for fuse-t
+	AS_IF([test "x$sq_fuse_found" = xyes],,[
+        AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
+		SQ_SAVE_FLAGS
+		SQ_PKG([fuse_t],[fuse-t],[
+			# FUSE-T bug can mis-install header path: https://github.com/macos-fuse-t/fuse-t/issues/77
+			CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -I/Library/Frameworks/fuse_t.framework/Headers"
+			SQ_TRY_FUSE([fuse-t],[sq_fuse_found=yes],
+	        [AC_MSG_FAILURE([Can't find fuse-t with pkgconfig])])
+		], [:])
+		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
+	])
 	
 	# Default search locations
 	AS_IF([test "x$sq_cv_lib_fuse_LIBS" = x],[SQ_SEARCH_FUSE_DIRS],[
@@ -321,4 +333,36 @@ AC_DEFUN([SQ_FUSE_API_XATTR_POSITION],[
 	])
 	
 	SQ_RESTORE_FLAGS
+])
+
+# SQ_FUSE_API_MACFUSE_EXTENSIONS
+#
+# Check if we need to disable macFUSE extensions
+AC_DEFUN([SQ_FUSE_API_MACFUSE_EXTENSIONS],[
+	AC_DEFUN([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],[
+		AC_LANG_PROGRAM([#include <fuse.h>],[
+			struct fuse_operations ops;
+			int (*getattr_func)(const char*, struct stat*, struct fuse_file_info*);
+			ops.getattr = getattr_func;
+	])])
+
+	AC_CACHE_CHECK([if we need to disable macFUSE extensions],
+		[sq_cv_decl_fuse_macfuse_extensions],[
+		SQ_SAVE_FLAGS
+		LIBS="$LIBS $FUSE_LIBS"
+		CPPFLAGS="$CPPFLAGS $FUSE_CPPFLAGS"
+		AC_COMPILE_IFELSE([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],
+			[sq_cv_decl_fuse_macfuse_extensions=no],
+			[
+				CPPFLAGS="$CPPFLAGS -DFUSE_DARWIN_ENABLE_EXTENSIONS=0"
+				AC_COMPILE_IFELSE([SQ_FUSE_API_MACFUSE_EXTENSIONS_SOURCE],
+					[sq_cv_decl_fuse_macfuse_extensions=yes],
+					[sq_cv_decl_fuse_macfuse_extensions=no])
+			])
+		SQ_RESTORE_FLAGS
+	])
+
+	AS_IF([test "x$sq_cv_decl_fuse_macfuse_extensions" = xyes],[
+		CPPFLAGS="$CPPFLAGS -DFUSE_DARWIN_ENABLE_EXTENSIONS=0"
+	])
 ])
