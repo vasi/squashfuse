@@ -163,6 +163,18 @@ AC_DEFUN([SQ_FIND_FUSE],[
 			[:])
 		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
 	])
+	# Use pkgconfig to look for fuse-t
+	AS_IF([test "x$sq_fuse_found" = xyes],,[
+        AC_DEFINE([FUSE_USE_VERSION], [26], [Version of FUSE API to use])
+		SQ_SAVE_FLAGS
+		SQ_PKG([fuse_t],[fuse-t],[
+			# FUSE-T bug can mis-install header path: https://github.com/macos-fuse-t/fuse-t/issues/77
+			CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64 -I/Library/Frameworks/fuse_t.framework/Headers"
+			SQ_TRY_FUSE([fuse-t],[sq_fuse_found=yes],
+	        [AC_MSG_FAILURE([Can't find fuse-t with pkgconfig])])
+		], [:])
+		SQ_KEEP_FLAGS([FUSE],[$sq_fuse_found])
+	])
 	
 	# Default search locations
 	AS_IF([test "x$sq_cv_lib_fuse_LIBS" = x],[SQ_SEARCH_FUSE_DIRS],[
