@@ -11,18 +11,6 @@ IDLE_TIMEOUT=5
 
 trap cleanup EXIT
 set -e
-
-test_nonexistent_mountpoint=yes
-test_idle_timeout=yes
-case "$OSTYPE" in
-    darwin*)
-      # macOS may auto-create mountpoints, weird!
-      test_nonexistent_mountpoint=no
-      # macOS background processes poke around in a filesystem, can inhibit timeout
-      test_idle_timeout=no
-      ;;
-esac
-
 WORKDIR=$(mktemp -d)
 
 cleanup() {
@@ -37,6 +25,19 @@ cleanup() {
         rm -rf "$WORKDIR"
     fi
 }
+
+test_nonexistent_mountpoint=yes
+test_idle_timeout=yes
+wait_sleeping=$(sq_skip_notify)
+case "$OSTYPE" in
+    darwin*)
+        # macOS may auto-create mountpoints, weird!
+        test_nonexistent_mountpoint=no
+
+        # macOS background processes can inhibit timeout
+        test_idle_timeout=no
+    ;;
+esac
 
 find_compressors
 
@@ -60,6 +61,9 @@ for comp in $compressors; do
     mkfifo "$FIFO_1"
     $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_1" "$WORKDIR/squashfs.image" "$WORKDIR/mount" >"$WORKDIR/squashfs_ll.log" 2>&1 &
     # Wait for the archive to be mounted. TSAN builds can take some time to mount.
+    if [ "x$wait_sleeping" = xyes ]; then
+        sleep 5
+    fi
     STATUS=$(head -c1 "$FIFO_1")
     if [ "$STATUS" != "s" ]; then
         echo "Image did not mount successfully"
@@ -150,7 +154,7 @@ for comp in $compressors; do
     sq_umount "$WORKDIR/mount"
 
     # Only test timeouts once, it takes a long time
-    if [ "x$test_idle_timeout" = yes -a -z "$did_timeout" ]; then
+    if [ "x$test_idle_timeout" = xyes -a -z "$did_timeout" ]; then
         echo "Remounting with idle unmount option..."
         $SFLL $SFLL_EXTRA_ARGS -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
         if ! sq_is_mountpoint "$WORKDIR/mount"; then

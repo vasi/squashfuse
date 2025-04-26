@@ -20,6 +20,12 @@ cleanup() {
         rm -rf "$WORKDIR"
     fi
 }
+
+if sq_skip_notify >/dev/null; then
+  echo exit
+  exit 77
+fi
+
 echo "Generating random test files..."
 mkdir -p "$WORKDIR/source"
 mkdir -p "$WORKDIR/mount"
