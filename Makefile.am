@@ -33,7 +33,7 @@ libsquashfuse_convenience_la_SOURCES = swap.c cache.c table.c dir.c file.c fs.c 
 	util.h fs.h
 libsquashfuse_convenience_la_CPPFLAGS = $(ZLIB_CPPFLAGS) $(XZ_CPPFLAGS) $(LZO_CPPFLAGS) \
 	$(LZ4_CPPFLAGS) $(ZSTD_CPPFLAGS) $(FUSE_CPPFLAGS)
-libsquashfuse_convenience_la_LIBADD = $(COMPRESSION_LIBS) $(FUSE_LIBS)
+libsquashfuse_convenience_la_LIBADD = $(COMPRESSION_LIBS)
 
 # Main library: libsquashfuse
 lib_LTLIBRARIES += libsquashfuse.la
