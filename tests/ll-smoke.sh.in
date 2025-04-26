@@ -12,6 +12,17 @@ IDLE_TIMEOUT=5
 trap cleanup EXIT
 set -e
 
+test_nonexistent_mountpoint=yes
+test_idle_timeout=yes
+case "$OSTYPE" in
+    darwin*)
+      # macOS may auto-create mountpoints, weird!
+      test_nonexistent_mountpoint=no
+      # macOS background processes poke around in a filesystem, can inhibit timeout
+      test_idle_timeout=no
+      ;;
+esac
+
 WORKDIR=$(mktemp -d)
 
 cleanup() {
@@ -57,16 +68,18 @@ for comp in $compressors; do
         exit 1
     fi
 
-    FIFO_2=$(mktemp -u)
-    mkfifo "$FIFO_2"
-    $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_2" "$WORKDIR/squashfs.image" "$WORKDIR/nonexistent_mount" >"$WORKDIR/squahfs_ll.log" 2>&1 &
-    # This time the mount command should fail because the mountpoint doesn't exist
-    STATUS=$(head -c1 "$FIFO_2")
-    if [ "$STATUS" != "f" ]; then
-        echo "Image mounted successfully when it should have failed"
-        cp "$WORKDIR/squahfs_ll.log" /tmp/squahfs_ll.smoke.log
-        echo "There may be clues in /tmp/squahfs_ll.smoke.log"
-        exit 1
+    if [ "x$test_nonexistent_mountpoint" = xyes ]; then
+        FIFO_2=$(mktemp -u)
+        mkfifo "$FIFO_2"
+        $SFLL -f $SFLL_EXTRA_ARGS -o notify_pipe="$FIFO_2" "$WORKDIR/squashfs.image" "$WORKDIR/nonexistent_mount" >"$WORKDIR/squahfs_ll.log" 2>&1 &
+        # This time the mount command should fail because the mountpoint doesn't exist
+        STATUS=$(head -c1 "$FIFO_2")
+        if [ "$STATUS" != "f" ]; then
+            echo "Image mounted successfully when it should have failed"
+            cp "$WORKDIR/squashfs_ll.log" /tmp/squashfs_ll.smoke.log
+            echo "There may be clues in /tmp/squashfs_ll.smoke.log"
+            exit 1
+        fi
     fi
 
     if command -v fio >/dev/null; then
@@ -137,7 +150,7 @@ for comp in $compressors; do
     sq_umount "$WORKDIR/mount"
 
     # Only test timeouts once, it takes a long time
-    if [ -z "$did_timeout" ]; then
+    if [ "x$test_idle_timeout" = yes -a -z "$did_timeout" ]; then
         echo "Remounting with idle unmount option..."
         $SFLL $SFLL_EXTRA_ARGS -otimeout=$IDLE_TIMEOUT "$WORKDIR/squashfs.image" "$WORKDIR/mount"
         if ! sq_is_mountpoint "$WORKDIR/mount"; then
