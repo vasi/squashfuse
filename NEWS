@@ -1,3 +1,8 @@
+0.6.1 - 26 April 2025
+
+  * Build out-of-the-box with FUSE-T
+  * Disable parts of tests that fail on macOS
+
 0.6.0 - 4 March 2025
 
   * Add `.` and `..` in directory listings.
