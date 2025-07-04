@@ -96,7 +96,7 @@ jobs:
             ci/features
         if: always()
   windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - name: install chocolatey dependencies
         shell: powershell
