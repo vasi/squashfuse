@@ -35,11 +35,11 @@ SQ_CHECK_DECL_ENOATTR([:])
 SQ_CHECK_DECL_SYMLINK
 
 # Decompression
-SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],,[gzip])
+SQ_CHECK_DECOMPRESS([ZLIB],[z],[uncompress],[zlib.h],[zlib],[gzip])
 SQ_CHECK_DECOMPRESS([XZ],[lzma],[lzma_stream_buffer_decode],[lzma.h],[liblzma],[xz])
-SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],,[lzo])
-SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],,[lz4])
-SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],,[zstd])
+SQ_CHECK_DECOMPRESS([LZO],[lzo2],[lzo1x_decompress_safe],[lzo/lzo1x.h],[lzo2],[lzo])
+SQ_CHECK_DECOMPRESS([LZ4],[lz4],[LZ4_decompress_safe],[lz4.h],[liblz4],[lz4])
+SQ_CHECK_DECOMPRESS([ZSTD],[zstd],[ZSTD_decompress],[zstd.h],[libzstd],[zstd])
 AS_IF([test "x$sq_decompressors" = x],
 	[AC_MSG_FAILURE([At least one decompression library must exist])])
 
@@ -124,6 +124,7 @@ AS_IF([test x$broken_dir_offsets = xyes],
 	[AC_DEFINE(SQFS_BROKEN_DIR_OFFSETS, 1, [Handle broken directory offsets])])
 
 AC_SUBST([sq_decompressors])
+AC_SUBST([sq_decompressors_pkgconf])
 AC_SUBST([sq_high_level])
 AC_SUBST([sq_low_level])
 AC_SUBST([sq_demo])
