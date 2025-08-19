@@ -7,6 +7,7 @@ Name: squashfuse_ll
 Description: squashfuse low-level library to mount squashfs archives
 Version: @VERSION@
 
-Requires:
-Libs: -L${libdir} -lsquashfuse -lsquashfuse_ll
+Requires: squashfuse
+Requires.private: fuse
+Libs: -L${libdir} -lsquashfuse_ll
 Cflags: -I${includedir}

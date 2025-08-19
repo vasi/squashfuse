@@ -8,5 +8,6 @@ Description: squashfuse library to mount squashfs archives
 Version: @VERSION@
 
 Requires:
+Requires.private: @sq_decompressors_pkgconf@
 Libs: -L${libdir} -lsquashfuse
 Cflags: -I${includedir}
