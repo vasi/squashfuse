@@ -225,7 +225,7 @@ sqfs_err sqfs_xattr_find(sqfs_xattr *x, const char *name, bool *found) {
 	while (x->remain) {
 		if ((err = sqfs_xattr_read(x)))
 			goto done;
-		if (x->type != type && x->entry.size != len)
+		if (x->type != type || x->entry.size != len)
 			continue;
 		if ((err = sqfs_xattr_name(x, cmp, false)))
 			goto done;
