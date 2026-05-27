@@ -32,7 +32,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: apt dependencies
-        run: > 
+        run: >
           sudo apt-get update &&
           sudo apt-get install -y automake autoconf libtool pkgconf
           zlib1g-dev liblzo2-dev liblzma-dev liblz4-dev libzstd-dev
@@ -100,7 +100,7 @@ jobs:
     steps:
       - name: install chocolatey dependencies
         shell: powershell
-        run: choco install -y squashfs 
+        run: choco install -y squashfs
       - name: setup msbuild
         uses: microsoft/setup-msbuild@v2
       - name: checkout
@@ -123,3 +123,28 @@ jobs:
           ls test | sort > expected
           ./Debug/squashfuse_ls.exe test.squashfs | dos2unix | sort > actual
           diff -u expected actual
+  freebsd:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: start FreeBSD VM
+      uses: vmactions/freebsd-vm@v1
+      with:
+        release: "14.4"
+        run: |
+          set -x
+          # install dependencies
+          pkg install -y autoconf automake libtool pkgconf fusefs-libs3
+          pkg install -y lzo2 liblz4 zstd
+          pkg install -y squashfs-tools coreutils
+          sysctl vfs.usermount=1
+          # build
+          ./autogen.sh
+          CPPFLAGS="-I/usr/local/include -Werror" LDFLAGS="-L/usr/local/lib" ./configure
+          make
+          # test
+          make check
+          diff -u ci/expected-features/all ci/features
+          # install check
+          make install
