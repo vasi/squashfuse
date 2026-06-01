@@ -1,3 +1,10 @@
+0.6.2 - 1 May 2026
+
+  * Fix segfault with long extended attributes
+  * pkg-config --static squashfuse now includes all private dependencies, 
+    which is required for static linking
+  * Update Windows and freebsd CI checks
+
 0.6.1 - 26 April 2025
 
   * Build out-of-the-box with FUSE-T
