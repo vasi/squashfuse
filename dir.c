@@ -150,7 +150,11 @@ bool sqfs_dir_next(sqfs *fs, sqfs_dir *dir, sqfs_dir_entry *entry,
 	entry->inode = ((uint64_t)dir->header.start_block << 16) + e.offset;
 	/* e.inode_number is signed */
 	entry->inode_number = dir->header.inode_number + (int16_t)e.inode_number;
-	
+
+	if (entry->name_size > SQUASHFS_NAME_LEN) {
+		*err = SQFS_ERR;
+		return false;
+	}
 	*err = sqfs_dir_md_read(fs, dir, entry->name, sqfs_dentry_name_size(entry));
 	if (*err)
 		return false;
@@ -236,7 +240,9 @@ static sqfs_err sqfs_dir_ff_name_f(sqfs *fs, sqfs_md_cursor *cur,
 	sqfs_err err;
 	sqfs_dir_ff_name_t *args = (sqfs_dir_ff_name_t*)arg;
 	size_t name_size = index->size + 1;
-	
+	if (name_size > SQUASHFS_NAME_LEN)
+		return SQFS_ERR;
+
 	if ((err = sqfs_md_read(fs, cur, args->name, name_size)))
 		return err;
 	args->name[name_size] = '\0';
