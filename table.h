@@ -29,6 +29,7 @@
 
 typedef struct {
 	size_t each;
+	size_t count;
 	uint64_t *blocks;
 } sqfs_table;
 

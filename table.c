@@ -44,6 +44,7 @@ sqfs_err sqfs_table_init(sqfs_table *table, sqfs_fd_t fd, sqfs_off_t start, size
 	bread = nblocks * sizeof(uint64_t);
 	
 	table->each = each;
+	table->count = count;
 	if (!(table->blocks = malloc(bread)))
 		goto err;
 	if (sqfs_pread(fd, table->blocks, bread, start) != bread)
@@ -67,11 +68,17 @@ void sqfs_table_destroy(sqfs_table *table) {
 
 sqfs_err sqfs_table_get(sqfs_table *table, sqfs *fs, size_t idx, void *buf) {
 	sqfs_block *block;
-	size_t pos = idx * table->each;
-	size_t bnum = pos / SQUASHFS_METADATA_SIZE,
-		off = pos % SQUASHFS_METADATA_SIZE;
-	
-	sqfs_off_t bpos = table->blocks[bnum];
+	size_t pos, bnum, off;
+	sqfs_off_t bpos;
+
+	if (idx >= table->count)
+		return SQFS_ERR;
+
+	pos = idx * table->each;
+	bnum = pos / SQUASHFS_METADATA_SIZE;
+	off = pos % SQUASHFS_METADATA_SIZE;
+
+	bpos = table->blocks[bnum];
 	if (sqfs_md_cache(fs, &bpos, &block))
 		return SQFS_ERR;
 	
