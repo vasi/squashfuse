@@ -92,7 +92,8 @@ static sqfs_err sqfs_decompressor_lzma(void *in, size_t insz,
 	}
 
 	memcpy(lzma_header, in, LZMA_HEADER_SIZE);
-	uncompressed_size = *((uint32_t*)(lzma_header + LZMA_PROPS_SIZE));
+	memcpy(&uncompressed_size, lzma_header + LZMA_PROPS_SIZE,
+		sizeof(uncompressed_size));
 	sqfs_swapin32(&uncompressed_size);
 
 	if (uncompressed_size > *outsz) {
