@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: Install apt dependencies
         run: |
           sudo apt-get update
@@ -24,7 +24,7 @@ jobs:
           ./configure
           make dist V=1
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             *.tar.gz

@@ -30,7 +30,7 @@ jobs:
       CONFIGURE_ARGS: ${{ matrix.configure_args }}
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: apt dependencies
         run: >
           sudo apt-get update &&
@@ -48,9 +48,14 @@ jobs:
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
+          # We don't actually need this tap, and it gives warnings about being untrusted,
+          # but it's installed by default on macOS runners.
+          if brew tap | grep -qx aws/tap; then
+            brew untap aws/tap
+          fi
           brew install autoconf automake libtool squashfs coreutils
-          echo "LDFLAGS=-L$(brew --prefix)/lib" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I$(brew --prefix)/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix)/lib" >> "$GITHUB_ENV"
+          echo "CPPFLAGS=-I$(brew --prefix)/include" >> "$GITHUB_ENV"
         if: runner.os == 'macOS'
       - name: macfuse
         run: brew install --cask macfuse
@@ -87,7 +92,7 @@ jobs:
             mksquashfs > mksquashfs.log || true
         if: always()
       - name: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: logs ${{ matrix.name }}
           path: |
@@ -102,9 +107,9 @@ jobs:
         shell: powershell
         run: choco install -y squashfs
       - name: setup msbuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: generate header
         shell: bash
         run: ./gen_swap.sh squashfs_fs.h
@@ -127,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v7
     - name: start FreeBSD VM
       uses: vmactions/freebsd-vm@v1
       with:
@@ -138,13 +143,19 @@ jobs:
           pkg install -y autoconf automake libtool pkgconf fusefs-libs3
           pkg install -y lzo2 liblz4 zstd
           pkg install -y squashfs-tools coreutils
+          if ! kldstat -q -m fusefs; then
+            kldload fusefs
+          fi
           sysctl vfs.usermount=1
           # build
           ./autogen.sh
           CPPFLAGS="-I/usr/local/include -Werror" LDFLAGS="-L/usr/local/lib" ./configure
           make
           # test
-          make check
+          if ! make check; then
+            cat test-suite.log
+            exit 1
+          fi
           diff -u ci/expected-features/all ci/features
           # install check
           make install
