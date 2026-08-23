@@ -82,6 +82,9 @@ static sqfs_err sqfs_decompressor_lzma(void *in, size_t insz,
 	uint32_t uncompressed_size = 0, res;
 	unsigned char lzma_header[LZMA_HEADER_SIZE];
 
+	if (insz < LZMA_HEADER_SIZE)
+		return SQFS_ERR;
+
 	res = lzma_alone_decoder(&strm, MEMLIMIT);
 	if (res != LZMA_OK) {
 		lzma_end(&strm);
