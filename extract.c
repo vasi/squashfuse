@@ -87,7 +87,8 @@ int main(int argc, char *argv[]) {
                     die("sqfs_inode_get error");
                 fprintf(stderr, "inode.base.inode_type: %i\n", inode.base.inode_type);
                 fprintf(stderr, "inode.xtra.reg.file_size: %llu\n", (unsigned long long)inode.xtra.reg.file_size);
-                if (inode.base.inode_type == SQUASHFS_DIR_TYPE){
+                if (inode.base.inode_type == SQUASHFS_DIR_TYPE ||
+                    inode.base.inode_type == SQUASHFS_LDIR_TYPE){
                     fprintf(stderr, "inode.xtra.dir.parent_inode: %ui\n", inode.xtra.dir.parent_inode);
                     fprintf(stderr, "mkdir: %s/\n", prefixed_path_to_extract);
                     if (access(prefixed_path_to_extract, F_OK ) == -1 ) {
@@ -96,7 +97,8 @@ int main(int argc, char *argv[]) {
                             exit(1);
                         }
                     }
-                } else if (inode.base.inode_type == SQUASHFS_REG_TYPE){
+                } else if (inode.base.inode_type == SQUASHFS_REG_TYPE ||
+                    inode.base.inode_type == SQUASHFS_LREG_TYPE){
                     fprintf(stderr, "Extract to: %s\n", prefixed_path_to_extract);
                     if (sqfs_stat(&fs, &inode, &st) != 0)
                         die("sqfs_stat error");
@@ -131,7 +133,8 @@ int main(int argc, char *argv[]) {
                     }
                     fclose(f);
                     chmod (prefixed_path_to_extract, st.st_mode);
-                } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE){
+                } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE ||
+                    inode.base.inode_type == SQUASHFS_LSYMLINK_TYPE){
                     size_t size = strlen(trv.path)+1;
                     char buf[size];
                     int ret = sqfs_readlink(&fs, &inode, buf, &size);
