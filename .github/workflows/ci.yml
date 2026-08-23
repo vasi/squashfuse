@@ -143,13 +143,19 @@ jobs:
           pkg install -y autoconf automake libtool pkgconf fusefs-libs3
           pkg install -y lzo2 liblz4 zstd
           pkg install -y squashfs-tools coreutils
+          if ! kldstat -q -m fusefs; then
+            kldload fusefs
+          fi
           sysctl vfs.usermount=1
           # build
           ./autogen.sh
           CPPFLAGS="-I/usr/local/include -Werror" LDFLAGS="-L/usr/local/lib" ./configure
           make
           # test
-          make check
+          if ! make check; then
+            cat test-suite.log
+            exit 1
+          fi
           diff -u ci/expected-features/all ci/features
           # install check
           make install
