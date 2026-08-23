@@ -4,6 +4,7 @@
 #include "stat.h"
 
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,8 +42,7 @@ int main(int argc, char *argv[]) {
     sqfs fs;
     char *image;
     char *path_to_extract;
-    char *prefix;
-    char prefixed_path_to_extract[1024];
+    const char *prefix;
     struct stat st;
     
     prefix = "squashfs-root/";
@@ -67,6 +67,19 @@ int main(int argc, char *argv[]) {
     while (sqfs_traverse_next(&trv, &err)) {
         if (!trv.dir_end) {
             if ((starts_with(path_to_extract, trv.path) != 0) || (strcmp("-a", path_to_extract) == 0)){
+                size_t prefix_len = strlen(prefix);
+                size_t path_len = strlen(trv.path);
+                char *prefixed_path_to_extract;
+
+                if (path_len > SIZE_MAX - prefix_len - 1)
+                    die("path too long");
+                prefixed_path_to_extract = malloc(prefix_len + path_len + 1);
+                if (!prefixed_path_to_extract)
+                    die("malloc error");
+                memcpy(prefixed_path_to_extract, prefix, prefix_len);
+                memcpy(prefixed_path_to_extract + prefix_len, trv.path,
+                    path_len + 1);
+
                 fprintf(stderr, "trv.path: %s\n", trv.path);
                 fprintf(stderr, "sqfs_inode_id: %llu\n", (unsigned long long)trv.entry.inode);
                 sqfs_inode inode;
@@ -74,8 +87,6 @@ int main(int argc, char *argv[]) {
                     die("sqfs_inode_get error");
                 fprintf(stderr, "inode.base.inode_type: %i\n", inode.base.inode_type);
                 fprintf(stderr, "inode.xtra.reg.file_size: %llu\n", (unsigned long long)inode.xtra.reg.file_size);
-                strcpy(prefixed_path_to_extract, "");
-                strcat(strcat(prefixed_path_to_extract, prefix), trv.path);
                 if (inode.base.inode_type == SQUASHFS_DIR_TYPE){
                     fprintf(stderr, "inode.xtra.dir.parent_inode: %ui\n", inode.xtra.dir.parent_inode);
                     fprintf(stderr, "mkdir: %s/\n", prefixed_path_to_extract);
@@ -134,6 +145,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     fprintf(stderr, "TODO: Implement inode.base.inode_type %i\n", inode.base.inode_type);
                 }
+                free(prefixed_path_to_extract);
                 fprintf(stderr, "\n");
             }
         }
