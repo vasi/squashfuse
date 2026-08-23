@@ -135,14 +135,21 @@ int main(int argc, char *argv[]) {
                     chmod (prefixed_path_to_extract, st.st_mode);
                 } else if (inode.base.inode_type == SQUASHFS_SYMLINK_TYPE ||
                     inode.base.inode_type == SQUASHFS_LSYMLINK_TYPE){
-                    size_t size = strlen(trv.path)+1;
-                    char buf[size];
-                    int ret = sqfs_readlink(&fs, &inode, buf, &size);
+                    size_t size;
+                    char *buf;
+                    int ret = sqfs_readlink(&fs, &inode, NULL, &size);
+                    if (ret != 0)
+                        die("sqfs_readlink error");
+                    buf = malloc(size);
+                    if (!buf)
+                        die("malloc error");
+                    ret = sqfs_readlink(&fs, &inode, buf, &size);
                     if (ret != 0)
                         die("sqfs_readlink error");
                     fprintf(stderr, "Symlink: %s to %s \n", prefixed_path_to_extract, buf);
                     unlink(prefixed_path_to_extract);
                     ret = sqfs_symlink(buf, prefixed_path_to_extract);
+                    free(buf);
                     if (ret != 0)
                         die("symlink error");
                 } else {
