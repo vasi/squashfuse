@@ -77,6 +77,12 @@ sqfs_err sqfs_init_with_subdir(sqfs *fs, sqfs_fd_t fd, size_t offset, const char
 	}
 	if (fs->sb.s_major != SQUASHFS_MAJOR || fs->sb.s_minor > SQUASHFS_MINOR)
 		return SQFS_BADVERSION;
+	if (fs->sb.block_size == 0 ||
+			fs->sb.block_size > SQUASHFS_FILE_MAX_SIZE ||
+			(fs->sb.block_size & (fs->sb.block_size - 1)) != 0 ||
+			fs->sb.block_log > SQUASHFS_FILE_MAX_LOG ||
+			fs->sb.block_size != (1U << fs->sb.block_log))
+		return SQFS_BADFORMAT;
 	
 	if (!(fs->decompressor = sqfs_decompressor_get(fs->sb.compression)))
 		return SQFS_BADCOMP;
@@ -304,6 +310,10 @@ sqfs_err sqfs_md_read(sqfs *fs, sqfs_md_cursor *cur, void *buf, size_t size) {
 		sqfs_err err = sqfs_md_cache(fs, &pos, &block);
 		if (err)
 			return err;
+		if (cur->offset >= block->size) {
+			sqfs_block_dispose(block);
+			return SQFS_ERR;
+		}
 		
 		take = block->size - cur->offset;
 		if (take > size)

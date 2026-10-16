@@ -105,6 +105,13 @@ squashfuse_extract_LDADD = libsquashfuse.la $(COMPRESSION_LIBS) \
 endif
 
 TESTS =
+check_PROGRAMS =
+if SQ_ZLIB_TESTS
+TESTS += malformedtest
+check_PROGRAMS += malformedtest
+malformedtest_SOURCES = tests/malformedtest.c
+malformedtest_LDADD = libsquashfuse.la $(COMPRESSION_LIBS)
+endif
 if SQ_FUSE_TESTS
 TESTS += tests/ll-smoke.sh
 TESTS += tests/notify_test.sh
@@ -117,7 +124,7 @@ endif
 if SIGTERM_HANDLER
 TESTS += tests/umount-test.sh
 endif
-check_PROGRAMS = cachetest endiantest
+check_PROGRAMS += cachetest endiantest
 cachetest_SOURCES=tests/cachetest.c
 cachetest_LDADD=libsquashfuse.la $(COMPRESSION_LIBS)
 endiantest_SOURCES = tests/endiantest.c
