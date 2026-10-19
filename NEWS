@@ -1,3 +1,7 @@
+0.6.4 - 19 Oct 2026
+
+  * Fix validation of fields
+
 0.6.3 - 23 Aug 2026
 
   * Fix several memory bugs
