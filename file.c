@@ -63,6 +63,11 @@ sqfs_err sqfs_frag_block(sqfs *fs, sqfs_inode *inode,
 	
 	*offset = inode->xtra.reg.frag_off;
 	*size = inode->xtra.reg.file_size % fs->sb.block_size;
+	if (*offset > (*block)->size || *size > (*block)->size - *offset) {
+		sqfs_block_dispose(*block);
+		*block = NULL;
+		return SQFS_ERR;
+	}
 	return SQFS_OK;
 }
 
@@ -172,6 +177,11 @@ sqfs_err sqfs_read_range(sqfs *fs, sqfs_inode *inode, sqfs_off_t start,
 			}
 		}
 		
+		if (read_off >= data_size) {
+			if (block)
+				sqfs_block_dispose(block);
+			return SQFS_ERR;
+		}
 		take = data_size - read_off;
 		if (take > *size)
 			take = (size_t)(*size);
