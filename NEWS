@@ -1,3 +1,8 @@
+0.6.5 - 19 Oct 2026
+
+  * No code changes since 0.6.4; republish with a source tarball
+  * Fix release workflow
+
 0.6.4 - 19 Oct 2026
 
   * Fix validation of fields
