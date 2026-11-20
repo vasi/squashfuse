@@ -52,6 +52,15 @@ static sig_atomic_t open_refcount = 0;
 /* same as lib/fuse_signals.c */
 static struct fuse_session *fuse_instance = NULL;
 
+#ifdef FUSE_CAP_NO_OPENDIR_SUPPORT
+/* The image is read-only, so directory handles carry no state worth a round
+ * trip. If the kernel supports it, answer OPENDIR with ENOSYS: the kernel then
+ * stops sending OPENDIR/RELEASEDIR altogether and caches readdir results as if
+ * opendir had returned FOPEN_KEEP_CACHE | FOPEN_CACHE_DIR. Set once in
+ * sqfs_ll_op_init, before any other request is processed. */
+static int no_opendir = 0;
+#endif
+
 static void update_access_time(void) {
 #ifdef SQFS_MULTITHREADED
 	/* We only need to track access time if we have an idle timeout,
@@ -110,6 +119,13 @@ void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 		struct fuse_file_info *fi) {
 	sqfs_ll_i *lli;
 	update_access_time();
+
+#ifdef FUSE_CAP_NO_OPENDIR_SUPPORT
+	if (no_opendir) {
+		fuse_reply_err(req, ENOSYS);
+		return;
+	}
+#endif
 	
 	fi->fh = (intptr_t)NULL;
 	
@@ -124,6 +140,13 @@ void sqfs_ll_op_opendir(fuse_req_t req, fuse_ino_t ino,
 			fuse_reply_err(req, ENOTDIR);
 		} else {
 			fi->fh = (intptr_t)lli;
+#ifdef FUSE_CAP_NO_OPENDIR_SUPPORT
+			/* the image is read-only: let the kernel cache readdir results
+			 * (FOPEN_CACHE_DIR) and keep them across opendir calls, so that
+			 * repeated traversals don't round-trip READDIR to userspace */
+			fi->cache_readdir = 1;
+			fi->keep_cache = 1;
+#endif
 			update_open_refcount(1);
 			fuse_reply_open(req, fi);
 			return;
@@ -169,9 +192,18 @@ void sqfs_ll_op_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
 	
 	char *buf = NULL, *bufpos = NULL;
 	sqfs_ll_i *lli = (sqfs_ll_i*)(intptr_t)fi->fh;
+	sqfs_ll_i lli_noopen;
 	int err = 0;
 	
 	update_access_time();
+
+	if (!lli) {
+		/* no handle from opendir (see no_opendir): look up the inode for
+		 * this request only. */
+		if (sqfs_ll_iget(req, &lli_noopen, ino))
+			return; /* sqfs_ll_iget already replied */
+		lli = &lli_noopen;
+	}
 
 #ifdef SQFS_BROKEN_DIR_OFFSETS
 	off_t dir_offset = 0;
@@ -479,6 +511,9 @@ void stfs_ll_op_statfs(fuse_req_t req, fuse_ino_t ino) {
 void sqfs_ll_op_init(void *userdata, struct fuse_conn_info *conn) {
 	sqfs_ll *ll = userdata;
 
+#ifdef FUSE_CAP_NO_OPENDIR_SUPPORT
+	no_opendir = (conn->capable & FUSE_CAP_NO_OPENDIR_SUPPORT) != 0;
+#endif
 	notify_mount_ready_async(ll->fs.notify_pipe, NOTIFY_SUCCESS);
 }
 
